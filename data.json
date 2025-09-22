@@ -1,0 +1,11 @@
+{
+  "organisations": [
+    {"id": "o1", "name": "TasWater", "region": "Hobart"}
+  ],
+  "contacts": [
+    {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane@taswater.com", "organisation_id": "o1"}
+  ],
+  "interactions": [
+    {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-18T00:00:00Z", "type": "email_in", "subject": "Hello", "summary": "Body preview", "message_id": "<abc@id>"}
+  ]
+}
