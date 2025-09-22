@@ -4,31 +4,34 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>MPDC Stakeholder CRM — Static Viewer</title>
-  <!-- Tailwind CDN for quick styling; OK for Netlify static sites -->
+  <!-- Tailwind CDN for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-  /* Unified table look & tidy, single-line cells with ellipsis */
-  .datawrap { overflow:auto; background:#fff; border:1px solid #e5e7eb; border-radius:0.5rem; }
-  .table-ish { width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
-  .table-ish thead th { position:sticky; top:0; z-index:10; background:#F9FAFB; border-bottom:1px solid #e5e7eb; }
-  .table-ish th, .table-ish td { padding:0.5rem; text-align:left; vertical-align:middle; }
-  .cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-  /* Column width hints (tweak any time) */
-  .w-name{ width:180px; }     /* shrink name */
-  .w-org{ width:220px; }      /* keep visible */
-  .w-group{ width:160px; }    /* keep visible */
-  .w-role{ width:160px; }
-  .w-email{ width:220px; }
-  .w-phone{ width:140px; }
-  .w-mpdc{ width:160px; }
-  .w-last{ width:150px; }
-  .w-subj{ width:220px; }
-  .w-notes{ width:260px; }
-  /* Row look */
-  .row { border-bottom:1px solid #e5e7eb; }
-  .row:last-child { border-bottom:0; }
-  .row:hover { background:#fafafa; }
-</style>
+    /* Clean, uniform tables */
+    .datawrap { overflow:auto; background:#fff; border:1px solid #e5e7eb; border-radius:0.5rem; }
+    .table-ish { width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
+    .table-ish thead th {
+      position:sticky; top:0; z-index:10; background:#F9FAFB;
+      border-bottom:1px solid #e5e7eb; padding:0.5rem; text-align:left;
+      white-space:nowrap; font-weight:600; cursor:default;
+    }
+    .table-ish tbody td { border-bottom:1px solid #e5e7eb; padding:0.5rem; vertical-align:middle; }
+    .table-ish tbody tr:last-child td { border-bottom:0; }
+    .row:hover { background:#fafafa; }
+    .cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+
+    /* Column width hints (adjust anytime) */
+    .w-name{ width:180px; }     /* smaller name */
+    .w-org{ width:220px; }      /* keep visible */
+    .w-group{ width:160px; }    /* keep visible */
+    .w-role{ width:160px; }
+    .w-email{ width:220px; }
+    .w-phone{ width:140px; }
+    .w-mpdc{ width:160px; }
+    .w-last{ width:150px; }
+    .w-subj{ width:220px; }
+    .w-notes{ width:260px; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
   <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
@@ -38,7 +41,6 @@
         <a href="#contacts" class="px-3 py-1 rounded hover:bg-gray-100">Contacts</a>
         <a href="#organisations" class="px-3 py-1 rounded hover:bg-gray-100">Organisations</a>
         <a href="#interactions" class="px-3 py-1 rounded hover:bg-gray-100">Interactions</a>
-        
       </nav>
     </div>
   </header>
@@ -48,7 +50,7 @@
       <div class="flex flex-col gap-3">
         <div>
           <h1 class="text-2xl font-semibold">Stakeholder overview</h1>
-          <p class="text-sm text-gray-600">Read-only viewer that loads <code>data/data.json</code> if present (GitHub/Netlify). Falls back to sample data embedded below.</p>
+          <p class="text-sm text-gray-600">Read-only viewer that loads <code>data/data.json</code> (Netlify) with a safe embedded fallback below.</p>
         </div>
         <div class="flex items-center gap-2">
           <input id="search" class="border rounded px-3 py-2 w-72" placeholder="Search contacts, orgs, subjects…"/>
@@ -58,42 +60,51 @@
       <div id="summary" class="mt-4 grid grid-cols-1 gap-3"></div>
     </section>
 
+    <!-- Contacts -->
     <section id="contacts" class="mb-10">
-  <div class="flex items-center justify-between mb-2">
-    <h2 class="text-xl font-semibold">Contacts</h2>
-    <div class="flex items-center gap-2 text-sm">
-      <button id="toggleContacts" class="px-3 py-1 rounded border">Expand list</button>
-    </div>
-  </div>
-  <div id="contactsWrap" class="datawrap">
-    <table id="contactsTable" class="table-ish">
-      <thead>
-        <tr>
-          <th class="cell w-name" data-sort="display_name">Name</th>
-          <th class="cell w-org" data-sort="org_name">Organisation</th>
-          <th class="cell w-group" data-sort="group">Group</th>
-          <th class="cell w-role" data-sort="job_title">Role</th>
-          <th class="cell w-email" data-sort="email">Email</th>
-          <th class="cell w-phone" data-sort="phone">Phone</th>
-          <th class="cell w-mpdc" data-sort="mpdc_contact">MPDC contact</th>
-          <th class="cell w-last" data-sort="last_contact_at">Last contact</th>
-          <th class="cell w-subj">Last subject</th>
-          <th class="cell w-notes">Notes</th>
-        </tr>
-      </thead>
-      <tbody id="contactsBody"></tbody>
-    </table>
-  </div>
-</section>
-
-    <div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Organisations</h2><div class="flex items-center gap-2 text-sm"><button id="toggleOrgs" class="px-3 py-1 rounded border">Expand list</button></div></div><div id="orgsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
-        <table class="table w-full text-sm" id="orgsTable">
-          <thead class="bg-gray-50 border-b">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold">Contacts</h2>
+        <div class="flex items-center gap-2 text-sm">
+          <button id="toggleContacts" class="px-3 py-1 rounded border">Expand list</button>
+        </div>
+      </div>
+      <div id="contactsWrap" class="datawrap">
+        <table id="contactsTable" class="table-ish">
+          <thead>
             <tr>
-              <th class="p-2 text-left" data-sort="name">Organisation</th>
-              <th class="p-2 text-left" data-sort="contacts">Contacts</th>
-              <th class="p-2 text-left" data-sort="last">Last contact</th>
-              <th class="p-2 text-left">Recent topics</th>
+              <th class="cell w-name"  data-sort="display_name">Name</th>
+              <th class="cell w-org"   data-sort="org_name">Organisation</th>
+              <th class="cell w-group" data-sort="group">Group</th>
+              <th class="cell w-role"  data-sort="job_title">Role</th>
+              <th class="cell w-email" data-sort="email">Email</th>
+              <th class="cell w-phone" data-sort="phone">Phone</th>
+              <th class="cell w-mpdc"  data-sort="mpdc_contact">MPDC contact</th>
+              <th class="cell w-last"  data-sort="last_contact_at">Last contact</th>
+              <th class="cell w-subj">Last subject</th>
+              <th class="cell w-notes">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="contactsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Organisations -->
+    <section id="organisations" class="mb-10">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold">Organisations</h2>
+        <div class="flex items-center gap-2 text-sm">
+          <button id="toggleOrgs" class="px-3 py-1 rounded border">Expand list</button>
+        </div>
+      </div>
+      <div id="orgsWrap" class="datawrap">
+        <table id="orgsTable" class="table-ish">
+          <thead>
+            <tr>
+              <th class="cell" data-sort="name">Organisation</th>
+              <th class="cell" data-sort="contact_count">Contacts</th>
+              <th class="cell" data-sort="last_contact_at">Last contact</th>
+              <th class="cell">Recent topics</th>
             </tr>
           </thead>
           <tbody id="orgsBody"></tbody>
@@ -101,45 +112,50 @@
       </div>
     </section>
 
-    <div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Interactions</h2><div class="flex items-center gap-2 text-sm"><button id="toggleInts" class="px-3 py-1 rounded border">Expand list</button></div></div><div id="intsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
-        <table class="table w-full text-sm" id="intsTable">
-          <thead class="bg-gray-50 border-b">
+    <!-- Interactions -->
+    <section id="interactions" class="mb-10">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold">Interactions</h2>
+        <div class="flex items-center gap-2 text-sm">
+          <button id="toggleInts" class="px-3 py-1 rounded border">Expand list</button>
+        </div>
+      </div>
+      <div id="intsWrap" class="datawrap">
+        <table id="intsTable" class="table-ish">
+          <thead>
             <tr>
-              <th class="p-2 text-left" data-sort="date">Date</th>
-              <th class="p-2 text-left" data-sort="who">Contact</th>
-              <th class="p-2 text-left">Subject</th>
-              <th class="p-2 text-left">Summary</th>
-              <th class="p-2 text-left" data-sort="type">Type</th>
+              <th class="cell" data-sort="occurred_at">Date</th>
+              <th class="cell">Contact</th>
+              <th class="cell">Subject</th>
+              <th class="cell">Summary</th>
+              <th class="cell" data-sort="type">Type</th>
             </tr>
           </thead>
           <tbody id="intsBody"></tbody>
         </table>
       </div>
     </section>
-
-    
   </main>
 
-  <!-- Fallback sample data. If /data/data.json exists, we load that instead. -->
+  <!-- Fallback sample data (used only if /data/data.json is missing) -->
   <script id="sample-data" type="application/json">{
     "organisations": [
       {"id": "o1", "name": "TasWater", "region": "Hobart"},
       {"id": "o2", "name": "TasPorts", "region": "Hobart"}
     ],
     "contacts": [
-      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1"},
-      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2"}
+      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1", "group":"Utilities"},
+      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2", "group":"Ports"}
     ],
     "interactions": [
-      {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-10T01:00:00Z", "type": "email_in", "subject": "District Infrastructure Scheme – coordination", "summary": "Discussed staging and utilities interfaces.", "message_id": "<m1@x>"},
-      {"id": "i2", "contact_id": "c2", "occurred_at": "2025-09-14T03:30:00Z", "type": "meeting", "subject": "Northern Access Road – traffic management", "summary": "Walked through proposed detours and comms timeline.", "message_id": "<m2@x>"},
-      {"id": "i3", "contact_id": "c1", "occurred_at": "2025-09-18T00:15:00Z", "type": "email_out", "subject": "Follow-up actions", "summary": "Sent notes and next steps.", "message_id": "<m3@x>"}
+      {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-10T01:00:00Z", "type": "email_in", "subject": "District Infrastructure Scheme – coordination", "summary": "Discussed staging and utilities interfaces."},
+      {"id": "i2", "contact_id": "c2", "occurred_at": "2025-09-14T03:30:00Z", "type": "meeting",  "subject": "Northern Access Road – traffic management", "summary": "Detours and comms timeline."}
     ]
   }</script>
 
   <script>
     'use strict';
-    // --- Error surface so blank pages are obvious ---
+    // Tiny error box so blank pages never hide errors
     (function(){
       const box = document.createElement('div');
       box.id = 'errbox';
@@ -149,78 +165,66 @@
       window.addEventListener('error', e=> show('JS error: '+ (e.message||'') ));
     })();
 
-    // --- Utility helpers ---
+    // Helpers
     const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
     const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
-    const safe = s => (s||'').toString();
+    const safe = s => (s??'').toString();
     const trunc = (s, n = 120) => { const t = safe(s); return t.length > n ? t.slice(0, n-1) + '…' : t; };
 
-    // --- State ---
+    // State
     let state = { organisations: [], contacts: [], interactions: [] };
     let filtered = { contacts: [], organisations: [], interactions: [] };
     let expand = { contacts: false, organisations: false, interactions: false };
     const LIMIT = { contacts: 50, organisations: 50, interactions: 100 };
 
     async function loadData() {
-      // Try /data/data.json first
       try {
         const resp = await fetch('data/data.json', { cache: 'no-store' });
         if (resp.ok) {
           const json = await resp.json();
           if (json && (Array.isArray(json.contacts) || Array.isArray(json.organisations))) return json;
         }
-      } catch (e) { /* ignore: fallback to embedded */ }
-      // Fallback to embedded sample
-      const embedded = document.getElementById('sample-data').textContent;
-      try { return JSON.parse(embedded); } catch { return {organisations:[],contacts:[],interactions:[]}; }
+      } catch (e) { /* fall back below */ }
+      try { return JSON.parse(document.getElementById('sample-data').textContent); }
+      catch { return {organisations:[],contacts:[],interactions:[]}; }
     }
 
-    function derive(state) {
-      const orgMap = new Map((state.organisations||[]).map(o => [o.id, o]));
-      const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
+    function derive(st) {
+      const orgMap = new Map((st.organisations||[]).map(o => [o.id, o]));
+      const contactMap = new Map((st.contacts||[]).map(c => [c.id, c]));
 
       // Last contact per contact from interactions
       const intsByContact = new Map();
-      (state.interactions||[]).forEach(i => {
+      (st.interactions||[]).forEach(i => {
         if (!i || !i.contact_id) return;
-        if (!intsByContact.has(i.contact_id)) intsByContact.set(i.contact_id, []);
-        intsByContact.get(i.contact_id).push(i);
+        (intsByContact.get(i.contact_id) || intsByContact.set(i.contact_id, []).get(i.contact_id)).push(i);
       });
-      (state.contacts||[]).forEach(c => {
+      (st.contacts||[]).forEach(c => {
         const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
         c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
         c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
-        c.org_name = orgMap.get(c.organisation_id)?.name || (c.organisation || '') || '';
-        c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || (c.name || '');
+        c.org_name = orgMap.get(c.organisation_id)?.name || c.organisation || '';
+        c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.name || '';
         c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
       });
 
       // Per-organisation aggregates
       const intsByOrg = new Map();
-      (state.interactions||[]).forEach(i => {
+      (st.interactions||[]).forEach(i => {
         const contact = contactMap.get(i.contact_id);
         const orgId = contact?.organisation_id;
         if (!orgId) return;
-        if (!intsByOrg.has(orgId)) intsByOrg.set(orgId, []);
-        intsByOrg.get(orgId).push(i);
+        (intsByOrg.get(orgId) || intsByOrg.set(orgId, []).get(orgId)).push(i);
       });
-      (state.organisations||[]).forEach(o => {
+      (st.organisations||[]).forEach(o => {
         const list = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
         o.last_contact_at = list[0]?.occurred_at || null;
-        o.contact_count = (state.contacts||[]).filter(c=>c.organisation_id===o.id).length;
+        o.contact_count = (st.contacts||[]).filter(c=>c.organisation_id===o.id).length;
         const recentSubjects = list.slice(0,6).map(i=>i.subject||'').join(' ');
         const tokens = recentSubjects.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x && x.length>3);
-        const freq = {};
-        tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
+        const freq = {}; tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
         o.topics = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
       });
-    }
-
-    function updateToggleLabels(){
-      const b1 = $('#toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
-      const b2 = $('#toggleOrgs'); if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
-      const b3 = $('#toggleInts'); if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
     }
 
     function renderSummary() {
@@ -233,103 +237,61 @@
         <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
     }
 
-    function renderContacts(list) {
-  const wrap = $('#contactsWrap'); if (wrap) wrap.style.maxHeight = expand.contacts ? '' : '28rem';
-  const visible = expand.contacts ? list : (list||[]).slice(0, LIMIT.contacts);
-  const rows = (visible||[]).map(c=>`
-    <tr class="row cursor-pointer" data-id="${safe(c.id)}">
-      <td class="cell w-name" title="${safe(c.display_name)}">${safe(c.display_name)}</td>
-      <td class="cell w-org" title="${safe(c.org_name)}">${safe(c.org_name)}</td>
-      <td class="cell w-group" title="${safe(c.group)}">${safe(c.group)}</td>
-      <td class="cell w-role" title="${safe(c.job_title)}">${safe(c.job_title)}</td>
-      <td class="cell w-email" title="${safe(c.email)}"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
-      <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
-      <td class="cell w-mpdc" title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
-      <td class="cell w-last" title="${c.last_contact_at? fmtDate(c.last_contact_at): ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
-      <td class="cell w-subj" title="${safe(c.last_subject)}">${safe(c.last_subject)}</td>
-      <td class="cell w-notes" title="${safe(c.notes)}">${safe(c.notes)}</td>
-    </tr>`).join('');
-  const body = document.querySelector('#contactsBody') || document.querySelector('#contactsTable tbody');
-  if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
-} {
+    function renderContacts(rowsSrc) {
+      const list = rowsSrc || [];
       const wrap = $('#contactsWrap'); if (wrap) wrap.style.maxHeight = expand.contacts ? '' : '28rem';
-      const visible = expand.contacts ? list : (list||[]).slice(0, LIMIT.contacts);
-      const rows = (visible||[]).map(c=>`
-        <tr class="border-b last:border-0">
-          <td class="p-2 whitespace-nowrap">${safe(c.display_name)}</td>
-          <td class="p-2">${safe(c.org_name)}</td>
-          <td class="p-2">${safe(c.group)}</td>
-          <td class="p-2">${safe(c.job_title)}</td>
-          <td class="p-2"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
-          <td class="p-2">${safe(c.phone)}</td>
-          <td class="p-2">${safe(c.mpdc_contact)}</td>
-          <td class="p-2">${c.last_contact_at ? fmtDate(c.last_contact_at) : '<span class="text-gray-400">—</span>'}</td>
-          <td class="p-2">${safe(c.last_subject)}</td>
-          <td class="p-2" title="${safe(c.notes)}">${trunc(c.notes, 120)}</td>
+      const visible = expand.contacts ? list : list.slice(0, LIMIT.contacts);
+      const rows = visible.map(c=>`
+        <tr class="row cursor-pointer" data-id="${safe(c.id)}">
+          <td class="cell w-name"  title="${safe(c.display_name)}">${safe(c.display_name)}</td>
+          <td class="cell w-org"   title="${safe(c.org_name)}">${safe(c.org_name)}</td>
+          <td class="cell w-group" title="${safe(c.group)}">${safe(c.group)}</td>
+          <td class="cell w-role"  title="${safe(c.job_title)}">${safe(c.job_title)}</td>
+          <td class="cell w-email" title="${safe(c.email)}"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
+          <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
+          <td class="cell w-mpdc"  title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
+          <td class="cell w-last"  title="${c.last_contact_at ? fmtDate(c.last_contact_at) : ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
+          <td class="cell w-subj"  title="${safe(c.last_subject)}">${safe(c.last_subject)}</td>
+          <td class="cell w-notes" title="${safe(c.notes)}">${safe(c.notes)}</td>
         </tr>`).join('');
-      const _cb = document.querySelector('#contactsBody') || document.querySelector('#contactsTable tbody'); if(_cb){ _cb.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`; }
+      const body = document.getElementById('contactsBody');
+      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
     }
 
-    function renderOrgs(list) {
-  const wrap = $('#orgsWrap'); if (wrap) wrap.style.maxHeight = expand.organisations ? '' : '28rem';
-  const visible = expand.organisations ? list : (list||[]).slice(0, LIMIT.organisations);
-  const rows = (visible||[]).map(o=>`
-    <tr class="row">
-      <td class="cell" title="${safe(o.name)}">${safe(o.name)}</td>
-      <td class="cell" title="${o.contact_count||0}">${o.contact_count||0}</td>
-      <td class="cell" title="${o.last_contact_at? fmtDate(o.last_contact_at): ''}">${o.last_contact_at ? fmtDate(o.last_contact_at) : '—'}</td>
-      <td class="cell">${(o.topics||[]).map(t=>`<span class=\"inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100\">${t}</span>`).join(' ')}</td>
-    </tr>`).join('');
-  const body = document.querySelector('#orgsBody') || document.querySelector('#orgsTable tbody');
-  if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
-} {
+    function renderOrgs(rowsSrc) {
+      const list = rowsSrc || [];
       const wrap = $('#orgsWrap'); if (wrap) wrap.style.maxHeight = expand.organisations ? '' : '28rem';
-      const visible = expand.organisations ? list : (list||[]).slice(0, LIMIT.organisations);
-      const rows = (visible||[]).map(o=>`
-        <tr class="border-b last:border-0">
-          <td class="p-2">${safe(o.name)}</td>
-          <td class="p-2">${o.contact_count||0}</td>
-          <td class="p-2">${o.last_contact_at ? fmtDate(o.last_contact_at) : '<span class="text-gray-400">—</span>'}</td>
-          <td class="p-2 space-x-1">${(o.topics||[]).map(t=>`<span class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100">${t}</span>`).join(' ')}</td>
+      const visible = expand.organisations ? list : list.slice(0, LIMIT.organisations);
+      const rows = visible.map(o=>`
+        <tr class="row">
+          <td class="cell" title="${safe(o.name)}">${safe(o.name)}</td>
+          <td class="cell" title="${o.contact_count||0}">${o.contact_count||0}</td>
+          <td class="cell" title="${o.last_contact_at ? fmtDate(o.last_contact_at) : ''}">${o.last_contact_at ? fmtDate(o.last_contact_at) : '—'}</td>
+          <td class="cell">${(o.topics||[]).map(t=>`<span class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100">${t}</span>`).join(' ')}</td>
         </tr>`).join('');
-      const _ob = document.querySelector('#orgsBody') || document.querySelector('#orgsTable tbody'); if(_ob){ _ob.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`; }
+      const body = document.getElementById('orgsBody');
+      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
     }
 
-    function renderInts(list) {
-  const wrap = $('#intsWrap'); if (wrap) wrap.style.maxHeight = expand.interactions ? '' : '28rem';
-  const visible = expand.interactions ? list : (list||[]).slice(0, LIMIT.interactions);
-  const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
-  const rows = (visible||[]).map(i=>{
-    const c = contactMap.get(i.contact_id);
-    const who = c ? safe(c.display_name) : '';
-    return `
-    <tr class="row">
-      <td class="cell" title="${i.occurred_at? fmtDate(i.occurred_at): ''}">${fmtDate(i.occurred_at)}</td>
-      <td class="cell" title="${who}">${who}</td>
-      <td class="cell" title="${safe(i.subject)}">${safe(i.subject)}</td>
-      <td class="cell" title="${safe(i.summary)}">${safe(i.summary)}</td>
-      <td class="cell" title="${safe(i.type)}">${safe(i.type)}</td>
-    </tr>`;
-  }).join('');
-  const body = document.querySelector('#intsBody') || document.querySelector('#intsTable tbody');
-  if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
-} {
+    function renderInts(rowsSrc) {
+      const list = rowsSrc || [];
       const wrap = $('#intsWrap'); if (wrap) wrap.style.maxHeight = expand.interactions ? '' : '28rem';
-      const visible = expand.interactions ? list : (list||[]).slice(0, LIMIT.interactions);
+      const visible = expand.interactions ? list : list.slice(0, LIMIT.interactions);
       const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
-      const rows = (visible||[]).map(i=>{
+      const rows = visible.map(i=>{
         const c = contactMap.get(i.contact_id);
         const who = c ? safe(c.display_name) : '';
         return `
-        <tr class="border-b last:border-0">
-          <td class="p-2 whitespace-nowrap">${fmtDate(i.occurred_at)}</td>
-          <td class="p-2">${who}</td>
-          <td class="p-2">${safe(i.subject)}</td>
-          <td class="p-2">${safe(i.summary)}</td>
-          <td class="p-2">${safe(i.type)}</td>
+        <tr class="row">
+          <td class="cell" title="${i.occurred_at ? fmtDate(i.occurred_at) : ''}">${fmtDate(i.occurred_at)}</td>
+          <td class="cell" title="${who}">${who}</td>
+          <td class="cell" title="${safe(i.subject)}">${safe(i.subject)}</td>
+          <td class="cell" title="${safe(i.summary)}">${safe(i.summary)}</td>
+          <td class="cell" title="${safe(i.type)}">${safe(i.type)}</td>
         </tr>`;
       }).join('');
-      const _ib = document.querySelector('#intsBody') || document.querySelector('#intsTable tbody'); if(_ib){ _ib.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`; }
+      const body = document.getElementById('intsBody');
+      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
     }
 
     function applySearch(q) {
@@ -351,10 +313,13 @@
 
     function renderAll() {
       renderSummary();
-      renderContacts(filtered.contacts);
-      renderOrgs(filtered.organisations);
-      renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)));
-      updateToggleLabels();
+      renderContacts(filtered.contacts || []);
+      renderOrgs(filtered.organisations || []);
+      renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)) || []);
+      // toggle labels
+      const b1 = document.getElementById('toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
+      const b2 = document.getElementById('toggleOrgs');     if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
+      const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
     }
 
     function exportJSON() {
@@ -367,7 +332,7 @@
       const a = document.createElement('a'); a.href = url; a.download = 'data.json'; a.click(); URL.revokeObjectURL(url);
     }
 
-    // Sorting (by clicking table headers)
+    // Sorting (by clicking table headers with a data-sort attr)
     function makeSortable(tableId, accessor) {
       const thead = document.querySelector(`#${tableId} thead`);
       if (!thead) return;
@@ -375,18 +340,16 @@
       thead.addEventListener('click', e => {
         const th = e.target.closest('th'); if (!th || !th.dataset.sort) return;
         const newKey = th.dataset.sort; dir = key === newKey ? -dir : 1; key = newKey;
-        const list = accessor();
-        list.sort((a,b)=>{
-          if (['last_contact_at','occurred_at','date'].includes(key)) {
-            return (new Date(a[key]) - new Date(b[key])) * dir;
-          }
-          const av = safe(a[key]).toLowerCase();
-          const bv = safe(b[key]).toLowerCase();
+        const arr = accessor() || [];
+        arr.sort((a,b)=>{
+          if (['last_contact_at','occurred_at'].includes(key)) return (new Date(a[key]) - new Date(b[key])) * dir;
+          const av = safe(a[key] ?? '').toLowerCase();
+          const bv = safe(b[key] ?? '').toLowerCase();
           if (av>bv) return dir; if (av<bv) return -dir; return 0;
         });
-        if (tableId==='contactsTable') renderContacts(list);
-        if (tableId==='orgsTable') renderOrgs(list);
-        if (tableId==='intsTable') renderInts(list);
+        if (tableId==='contactsTable') renderContacts(arr);
+        if (tableId==='orgsTable')     renderOrgs(arr);
+        if (tableId==='intsTable')     renderInts(arr);
       });
     }
 
@@ -400,69 +363,24 @@
         filtered.interactions = [...(state.interactions||[])];
         renderAll();
 
-        // Wire search and export
-        $('#search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
-        $('#exportBtn')?.addEventListener('click', exportJSON);
+        // Search & export
+        document.getElementById('search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
+        document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
 
         // Sorting hooks
         makeSortable('contactsTable', ()=>filtered.contacts);
-        makeSortable('orgsTable', ()=>filtered.organisations);
-        makeSortable('intsTable', ()=>filtered.interactions);
+        makeSortable('orgsTable',     ()=>filtered.organisations);
+        makeSortable('intsTable',     ()=>filtered.interactions);
 
         // Expand/Collapse toggles
-        $('#toggleContacts')?.addEventListener('click', ()=>{ expand.contacts=!expand.contacts; renderAll(); });
-        $('#toggleOrgs')?.addEventListener('click', ()=>{ expand.organisations=!expand.organisations; renderAll(); });
-        $('#toggleInts')?.addEventListener('click', ()=>{ expand.interactions=!expand.interactions; renderAll(); });
+        document.getElementById('toggleContacts')?.addEventListener('click', ()=>{ expand.contacts=!expand.contacts; renderAll(); });
+        document.getElementById('toggleOrgs')?.addEventListener('click',     ()=>{ expand.organisations=!expand.organisations; renderAll(); });
+        document.getElementById('toggleInts')?.addEventListener('click',     ()=>{ expand.interactions=!expand.interactions; renderAll(); });
       } catch (e) {
         const box = document.getElementById('errbox'); if (box) { box.style.display='block'; box.textContent = 'Init error: '+ (e.message||e); }
         console.error(e);
       }
     })();
   </script>
-<style>
-  /* widen tables to avoid squashed headers */
-  #contactsTable{min-width:1200px}
-  #orgsTable,#intsTable{min-width:900px}
-  #contactsWrap,#orgsWrap,#intsWrap{overflow:auto}
-  #contactsTable thead,#orgsTable thead,#intsTable thead{position:sticky;top:0;z-index:10}
-</style>
-<script>
-(function(){
-  const safe = s => (s||'').toString();
-  const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
-  const trunc = (s,n=120)=>{const t=safe(s); return t.length>n?t.slice(0,n-1)+'…':t;};
-  function rerenderContacts(){
-    try{
-      const st = window.state || {};
-      const orgMap = new Map((st.organisations||[]).map(o => [o.id,o]));
-      (st.contacts||[]).forEach(c=>{
-        if(!c) return;
-        c.org_name = c.org_name || orgMap.get(c.organisation_id)?.name || '';
-        c.display_name = c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || (c.name||'');
-      });
-      const list = (st.contacts||[]);
-      const expanded = (window.expand && window.expand.contacts) ? true : false;
-      const visible = expanded ? list : list.slice(0, Math.min(50, list.length));
-      const rows = visible.map(c=>`<tr class="border-b last:border-0">
-          <td class="p-2 whitespace-nowrap">${safe(c.display_name)}</td>
-          <td class="p-2">${safe(c.org_name)}</td>
-          <td class="p-2">${safe(c.group||'')}</td>
-          <td class="p-2">${safe(c.job_title||'')}</td>
-          <td class="p-2"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
-          <td class="p-2">${safe(c.phone||'')}</td>
-          <td class="p-2">${safe(c.mpdc_contact||'')}</td>
-          <td class="p-2">${c.last_contact_at? fmtDate(c.last_contact_at): '<span class="text-gray-400">—</span>'}</td>
-          <td class="p-2">${safe(c.last_subject||'')}</td>
-          <td class="p-2" title="${safe(c.notes||'')}">${trunc(c.notes,120)}</td>
-        </tr>`).join('');
-      const body = document.querySelector('#contactsBody') || document.querySelector('#contactsTable tbody');
-      if(body){ body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`; }
-    }catch(e){ console.error('contacts rerender', e); }
-  }
-  // Re-render after the main init runs
-  setTimeout(rerenderContacts, 400);
-  window.addEventListener('load', rerenderContacts);
-})();
-</script>
 </body>
 </html>
