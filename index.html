@@ -20,14 +20,14 @@
         <a href="#contacts" class="px-3 py-1 rounded hover:bg-gray-100">Contacts</a>
         <a href="#organisations" class="px-3 py-1 rounded hover:bg-gray-100">Organisations</a>
         <a href="#interactions" class="px-3 py-1 rounded hover:bg-gray-100">Interactions</a>
-        <a href="#how" class="px-3 py-1 rounded hover:bg-gray-100">How updates work</a>
+        
       </nav>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6">
     <section id="dashboard" class="mb-8">
-      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div class="flex flex-col gap-3">
         <div>
           <h1 class="text-2xl font-semibold">Stakeholder overview</h1>
           <p class="text-sm text-gray-600">Read-only viewer that loads <code>data/data.json</code> if present (GitHub/Netlify). Falls back to sample data embedded below.</p>
@@ -37,7 +37,7 @@
           <button id="exportBtn" class="px-3 py-2 rounded bg-gray-900 text-white">Export current JSON</button>
         </div>
       </div>
-      <div id="summary" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+      <div id="summary" class="mt-4 grid grid-cols-1 gap-3"></div>
     </section>
 
     $1<div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Contacts<\/h2><div class="flex items-center gap-2 text-sm"><button id="toggleContacts" class="px-3 py-1 rounded border">Expand list<\/button><\/div><\/div><div id="contactsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
@@ -91,14 +91,7 @@
       </div>
     </section>
 
-    <section id="how" class="mb-16">
-      <h2 class="text-xl font-semibold mb-2">How updates work (simple path)</h2>
-      <ol class="list-decimal ml-6 space-y-2 text-sm text-gray-700">
-        <li><strong>Phase 1 — Manual:</strong> Keep a file at <code>/data/data.json</code> in your repo. Update it via GitHub’s web editor. This page auto-loads that file when deployed on Netlify.</li>
-        <li><strong>Phase 2 — Power Automate (optional):</strong> Use the shared mailbox trigger for <em>communications@macpoint.com</em> to parse key fields (Message-Id, From, Subject, BodyPreview, ReceivedTime). Then update <code>data/data.json</code> in GitHub via the GitHub connector or HTTP action (append a new Interaction; dedupe by Message-Id). No servers needed.</li>
-      </ol>
-      <p class="mt-2 text-sm text-gray-600">Data shape: <code>{ organisations:[], contacts:[], interactions:[] }</code> — see embedded sample below. IDs can be simple strings.</p>
-    </section>
+    
   </main>
 
   <!-- Fallback sample data. If /data/data.json exists, we load that instead. -->
