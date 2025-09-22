@@ -14,7 +14,7 @@
 </head>
 <body class="bg-gray-50 text-gray-900">
   <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
       <div class="font-bold text-lg">MPDC Stakeholder CRM — Viewer (Static)</div>
       <nav class="ml-auto flex items-center gap-2 text-sm">
         <a href="#contacts" class="px-3 py-1 rounded hover:bg-gray-100">Contacts</a>
@@ -25,7 +25,7 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6">
+  <main class="max-w-7xl mx-auto px-4 py-6">
     <section id="dashboard" class="mb-8">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
@@ -40,14 +40,12 @@
       <div id="summary" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"></div>
     </section>
 
-    <section id="contacts" class="mb-10">
-      <h2 class="text-xl font-semibold mb-2">Contacts</h2>
-      <div class="overflow-x-auto bg-white border rounded-lg">
-        <table class="table w-full text-sm" id="contactsTable">
-          <thead class="bg-gray-50 border-b">
+    $1<div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Contacts<\/h2><div class="flex items-center gap-2 text-sm"><button id="toggleContacts" class="px-3 py-1 rounded border">Expand list<\/button><\/div><\/div><div id="contactsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
+        $1
             <tr>
               <th class="p-2 text-left" data-sort="display_name">Name</th>
               <th class="p-2 text-left" data-sort="org_name">Organisation</th>
+              <th class="p-2 text-left" data-sort="group">Group</th>
               <th class="p-2 text-left" data-sort="job_title">Role</th>
               <th class="p-2 text-left" data-sort="email">Email</th>
               <th class="p-2 text-left" data-sort="phone">Phone</th>
@@ -56,15 +54,13 @@
               <th class="p-2 text-left">Last subject</th>
               <th class="p-2 text-left">Notes</th>
             </tr>
-          </thead>
+          $2
           <tbody id="contactsBody"></tbody>
         </table>
       </div>
     </section>
 
-    <section id="organisations" class="mb-10">
-      <h2 class="text-xl font-semibold mb-2">Organisations</h2>
-      <div class="overflow-x-auto bg-white border rounded-lg">
+    $1<div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Organisations<\/h2><div class="flex items-center gap-2 text-sm"><button id="toggleOrgs" class="px-3 py-1 rounded border">Expand list<\/button><\/div><\/div><div id="orgsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
         <table class="table w-full text-sm" id="orgsTable">
           <thead class="bg-gray-50 border-b">
             <tr>
@@ -79,9 +75,7 @@
       </div>
     </section>
 
-    <section id="interactions" class="mb-10">
-      <h2 class="text-xl font-semibold mb-2">Interactions</h2>
-      <div class="overflow-x-auto bg-white border rounded-lg">
+    $1<div class="flex items-center justify-between mb-2"><h2 class="text-xl font-semibold">Interactions<\/h2><div class="flex items-center gap-2 text-sm"><button id="toggleInts" class="px-3 py-1 rounded border">Expand list<\/button><\/div><\/div><div id="intsWrap" class="overflow-x-auto overflow-y-auto bg-white border rounded-lg">
         <table class="table w-full text-sm" id="intsTable">
           <thead class="bg-gray-50 border-b">
             <tr>
@@ -140,16 +134,14 @@
     const $ = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
     const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
-    const by = k => (a,b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0);
     const safe = s => (s||'').toString();
-    const trunc = (s, n = 120) => {
-      const t = safe(s);
-      return t.length > n ? t.slice(0, n-1) + '…' : t;
-    };
+    const trunc = (s, n = 120) => { const t = safe(s); return t.length > n ? t.slice(0, n-1) + '…' : t; };
 
     // --- State ---
     let state = { organisations: [], contacts: [], interactions: [] };
     let filtered = { contacts: [], organisations: [], interactions: [] };
+    let expand = { contacts: false, organisations: false, interactions: false };
+    const LIMIT = { contacts: 50, organisations: 50, interactions: 100 };
 
     async function loadData() {
       // Try /data/data.json first
@@ -182,6 +174,7 @@
         c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
         c.org_name = orgMap.get(c.organisation_id)?.name || (c.organisation || '') || '';
         c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || (c.name || '');
+        c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
       });
 
       // Per-organisation aggregates
@@ -205,6 +198,12 @@
       });
     }
 
+    function updateToggleLabels(){
+      const b1 = $('#toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
+      const b2 = $('#toggleOrgs'); if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
+      const b3 = $('#toggleInts'); if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
+    }
+
     function renderSummary() {
       const totalContacts = (state.contacts||[]).length;
       const totalOrgs = (state.organisations||[]).length;
@@ -216,10 +215,13 @@
     }
 
     function renderContacts(list) {
-      const rows = (list||[]).map(c=>`
+      const wrap = $('#contactsWrap'); if (wrap) wrap.style.maxHeight = expand.contacts ? '' : '28rem';
+      const visible = expand.contacts ? list : (list||[]).slice(0, LIMIT.contacts);
+      const rows = (visible||[]).map(c=>`
         <tr class="border-b last:border-0">
           <td class="p-2 whitespace-nowrap">${safe(c.display_name)}</td>
           <td class="p-2">${safe(c.org_name)}</td>
+          <td class="p-2">${safe(c.group)}</td>
           <td class="p-2">${safe(c.job_title)}</td>
           <td class="p-2"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
           <td class="p-2">${safe(c.phone)}</td>
@@ -228,11 +230,13 @@
           <td class="p-2">${safe(c.last_subject)}</td>
           <td class="p-2" title="${safe(c.notes)}">${trunc(c.notes, 120)}</td>
         </tr>`).join('');
-      $('#contactsBody').innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="9">No contacts</td></tr>`;
+      $('#contactsBody').innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
     }
 
     function renderOrgs(list) {
-      const rows = (list||[]).map(o=>`
+      const wrap = $('#orgsWrap'); if (wrap) wrap.style.maxHeight = expand.organisations ? '' : '28rem';
+      const visible = expand.organisations ? list : (list||[]).slice(0, LIMIT.organisations);
+      const rows = (visible||[]).map(o=>`
         <tr class="border-b last:border-0">
           <td class="p-2">${safe(o.name)}</td>
           <td class="p-2">${o.contact_count||0}</td>
@@ -243,8 +247,10 @@
     }
 
     function renderInts(list) {
+      const wrap = $('#intsWrap'); if (wrap) wrap.style.maxHeight = expand.interactions ? '' : '28rem';
+      const visible = expand.interactions ? list : (list||[]).slice(0, LIMIT.interactions);
       const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
-      const rows = (list||[]).map(i=>{
+      const rows = (visible||[]).map(i=>{
         const c = contactMap.get(i.contact_id);
         const who = c ? safe(c.display_name) : '';
         return `
@@ -267,7 +273,7 @@
         filtered.interactions = [...(state.interactions||[])];
         return;
       }
-      const inContact = c => [c.display_name, c.email, c.org_name, c.job_title, c.mpdc_contact, c.notes].some(v=>safe(v).toLowerCase().includes(needle));
+      const inContact = c => [c.display_name, c.email, c.org_name, c.group, c.job_title, c.mpdc_contact, c.notes].some(v=>safe(v).toLowerCase().includes(needle));
       filtered.contacts = (state.contacts||[]).filter(inContact);
       filtered.organisations = (state.organisations||[]).filter(o=> safe(o.name).toLowerCase().includes(needle));
       filtered.interactions = (state.interactions||[]).filter(i=>{
@@ -281,6 +287,7 @@
       renderContacts(filtered.contacts);
       renderOrgs(filtered.organisations);
       renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)));
+      updateToggleLabels();
     }
 
     function exportJSON() {
@@ -290,8 +297,7 @@
         interactions: state.interactions
       }, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'data.json'; a.click(); URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = url; a.download = 'data.json'; a.click(); URL.revokeObjectURL(url);
     }
 
     // Sorting (by clicking table headers)
@@ -328,13 +334,18 @@
         renderAll();
 
         // Wire search and export
-        const searchEl = $('#search'); if (searchEl) searchEl.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
-        const exportBtn = $('#exportBtn'); if (exportBtn) exportBtn.addEventListener('click', exportJSON);
+        $('#search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
+        $('#exportBtn')?.addEventListener('click', exportJSON);
 
         // Sorting hooks
         makeSortable('contactsTable', ()=>filtered.contacts);
         makeSortable('orgsTable', ()=>filtered.organisations);
         makeSortable('intsTable', ()=>filtered.interactions);
+
+        // Expand/Collapse toggles
+        $('#toggleContacts')?.addEventListener('click', ()=>{ expand.contacts=!expand.contacts; renderAll(); });
+        $('#toggleOrgs')?.addEventListener('click', ()=>{ expand.organisations=!expand.organisations; renderAll(); });
+        $('#toggleInts')?.addEventListener('click', ()=>{ expand.interactions=!expand.interactions; renderAll(); });
       } catch (e) {
         const box = document.getElementById('errbox'); if (box) { box.style.display='block'; box.textContent = 'Init error: '+ (e.message||e); }
         console.error(e);
