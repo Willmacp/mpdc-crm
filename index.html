@@ -158,8 +158,8 @@
       });
       state.contacts.forEach(c => {
         const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        c.last_contact_at = list[0]?.occurred_at || null;
-        c.last_subject = list[0]?.subject || '';
+        c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
+        c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
         c.org_name = orgMap.get(c.organisation_id)?.name || '';
       });
 
