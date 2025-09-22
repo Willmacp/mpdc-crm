@@ -46,11 +46,15 @@
         <table class="table w-full text-sm" id="contactsTable">
           <thead class="bg-gray-50 border-b">
             <tr>
-              <th class="p-2 text-left" data-sort="name">Name</th>
-              <th class="p-2 text-left" data-sort="org">Organisation</th>
+              <th class="p-2 text-left" data-sort="display_name">Name</th>
+              <th class="p-2 text-left" data-sort="org_name">Organisation</th>
+              <th class="p-2 text-left" data-sort="job_title">Role</th>
               <th class="p-2 text-left" data-sort="email">Email</th>
-              <th class="p-2 text-left" data-sort="last">Last contact</th>
+              <th class="p-2 text-left" data-sort="phone">Phone</th>
+              <th class="p-2 text-left" data-sort="mpdc_contact">MPDC contact</th>
+              <th class="p-2 text-left" data-sort="last_contact_at">Last contact</th>
               <th class="p-2 text-left">Last subject</th>
+              <th class="p-2 text-left">Notes</th>
             </tr>
           </thead>
           <tbody id="contactsBody"></tbody>
@@ -127,6 +131,10 @@
     const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
     const by = k => (a,b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0);
     const safe = s => (s||'').toString();
+    const trunc = (s, n = 120) => {
+      const t = safe(s);
+      return t.length > n ? t.slice(0, n-1) + '…' : t;
+    };
 
     // --- State ---
     let state = { organisations: [], contacts: [], interactions: [] };
@@ -161,6 +169,7 @@
         c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
         c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
         c.org_name = orgMap.get(c.organisation_id)?.name || '';
+        c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
       });
 
       // Last contact per organisation + topics (naive from subject words)
@@ -196,8 +205,19 @@
 
     function renderContacts(list) {
       const rows = list.map(c=>`
-        <tr class="border-b last:border-0">
-          <td class="p-2 whitespace-nowrap">${safe(c.first_name)} ${safe(c.last_name)}</td>
+        <tr class=\"border-b last:border-0\">
+          <td class=\"p-2 whitespace-nowrap\">${safe(c.first_name)} ${safe(c.last_name)}</td>
+          <td class=\"p-2\">${safe(c.org_name)}</td>
+          <td class=\"p-2\">${safe(c.job_title)}</td>
+          <td class=\"p-2\"><a class=\"text-blue-600 hover:underline\" href=\"mailto:${safe(c.email)}\">${safe(c.email)}</a></td>
+          <td class=\"p-2\">${safe(c.phone)}</td>
+          <td class=\"p-2\">${safe(c.mpdc_contact)}</td>
+          <td class=\"p-2\">${c.last_contact_at ? fmtDate(c.last_contact_at) : '<span class=\"text-gray-400\">—</span>'}</td>
+          <td class=\"p-2\">${safe(c.last_subject)}</td>
+          <td class=\"p-2\" title=\"${safe(c.notes)}\">${trunc(c.notes, 120)}</td>
+        </tr>`).join('');
+      $('#contactsBody').innerHTML = rows || `<tr><td class=\"p-3 text-center text-gray-500\" colspan=\"9\">No contacts</td></tr>`;
+    } ${safe(c.last_name)}</td>
           <td class="p-2">${safe(c.org_name)}</td>
           <td class="p-2"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
           <td class="p-2">${c.last_contact_at ? fmtDate(c.last_contact_at) : '<span class="text-gray-400">—</span>'}</td>
