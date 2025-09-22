@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>MPDC Stakeholder CRM — Static Viewer</title>
+  <!-- Tailwind CDN for quick styling; OK for Netlify static sites -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Minimal tweaks */
+    .table th { cursor: pointer; }
+    .badge { @apply inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
+      <div class="font-bold text-lg">MPDC Stakeholder CRM — Viewer (Static)</div>
+      <nav class="ml-auto flex items-center gap-2 text-sm">
+        <a href="#contacts" class="px-3 py-1 rounded hover:bg-gray-100">Contacts</a>
+        <a href="#organisations" class="px-3 py-1 rounded hover:bg-gray-100">Organisations</a>
+        <a href="#interactions" class="px-3 py-1 rounded hover:bg-gray-100">Interactions</a>
+        <a href="#how" class="px-3 py-1 rounded hover:bg-gray-100">How updates work</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <section id="dashboard" class="mb-8">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold">Stakeholder overview</h1>
+          <p class="text-sm text-gray-600">Read-only viewer that loads <code>data/data.json</code> if present (GitHub/Netlify). Falls back to sample data embedded below.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="search" class="border rounded px-3 py-2 w-72" placeholder="Search contacts, orgs, subjects…"/>
+          <button id="exportBtn" class="px-3 py-2 rounded bg-gray-900 text-white">Export current JSON</button>
+        </div>
+      </div>
+      <div id="summary" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+    </section>
+
+    <section id="contacts" class="mb-10">
+      <h2 class="text-xl font-semibold mb-2">Contacts</h2>
+      <div class="overflow-x-auto bg-white border rounded-lg">
+        <table class="table w-full text-sm" id="contactsTable">
+          <thead class="bg-gray-50 border-b">
+            <tr>
+              <th class="p-2 text-left" data-sort="name">Name</th>
+              <th class="p-2 text-left" data-sort="org">Organisation</th>
+              <th class="p-2 text-left" data-sort="email">Email</th>
+              <th class="p-2 text-left" data-sort="last">Last contact</th>
+              <th class="p-2 text-left">Last subject</th>
+            </tr>
+          </thead>
+          <tbody id="contactsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="organisations" class="mb-10">
+      <h2 class="text-xl font-semibold mb-2">Organisations</h2>
+      <div class="overflow-x-auto bg-white border rounded-lg">
+        <table class="table w-full text-sm" id="orgsTable">
+          <thead class="bg-gray-50 border-b">
+            <tr>
+              <th class="p-2 text-left" data-sort="name">Organisation</th>
+              <th class="p-2 text-left" data-sort="contacts">Contacts</th>
+              <th class="p-2 text-left" data-sort="last">Last contact</th>
+              <th class="p-2 text-left">Recent topics</th>
+            </tr>
+          </thead>
+          <tbody id="orgsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="interactions" class="mb-10">
+      <h2 class="text-xl font-semibold mb-2">Interactions</h2>
+      <div class="overflow-x-auto bg-white border rounded-lg">
+        <table class="table w-full text-sm" id="intsTable">
+          <thead class="bg-gray-50 border-b">
+            <tr>
+              <th class="p-2 text-left" data-sort="date">Date</th>
+              <th class="p-2 text-left" data-sort="who">Contact</th>
+              <th class="p-2 text-left">Subject</th>
+              <th class="p-2 text-left">Summary</th>
+              <th class="p-2 text-left" data-sort="type">Type</th>
+            </tr>
+          </thead>
+          <tbody id="intsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="how" class="mb-16">
+      <h2 class="text-xl font-semibold mb-2">How updates work (simple path)</h2>
+      <ol class="list-decimal ml-6 space-y-2 text-sm text-gray-700">
+        <li><strong>Phase 1 — Manual:</strong> Keep a file at <code>/data/data.json</code> in your repo. Update it via GitHub’s web editor. This page auto-loads that file when deployed on Netlify.</li>
+        <li><strong>Phase 2 — Power Automate (optional):</strong> Use the shared mailbox trigger for <em>communications@macpoint.com</em> to parse key fields (Message-Id, From, Subject, BodyPreview, ReceivedTime). Then update <code>data/data.json</code> in GitHub via the GitHub connector or HTTP action (append a new Interaction; dedupe by Message-Id). No servers needed.</li>
+      </ol>
+      <p class="mt-2 text-sm text-gray-600">Data shape: <code>{ organisations:[], contacts:[], interactions:[] }</code> — see embedded sample below. IDs can be simple strings.</p>
+    </section>
+  </main>
+
+  <!-- Fallback sample data. If /data/data.json exists, we load that instead. -->
+  <script id="sample-data" type="application/json">{
+    "organisations": [
+      {"id": "o1", "name": "TasWater", "region": "Hobart"},
+      {"id": "o2", "name": "TasPorts", "region": "Hobart"}
+    ],
+    "contacts": [
+      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1"},
+      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2"}
+    ],
+    "interactions": [
+      {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-10T01:00:00Z", "type": "email_in", "subject": "District Infrastructure Scheme – coordination", "summary": "Discussed staging and utilities interfaces.", "message_id": "<m1@x>"},
+      {"id": "i2", "contact_id": "c2", "occurred_at": "2025-09-14T03:30:00Z", "type": "meeting", "subject": "Northern Access Road – traffic management", "summary": "Walked through proposed detours and comms timeline.", "message_id": "<m2@x>"},
+      {"id": "i3", "contact_id": "c1", "occurred_at": "2025-09-18T00:15:00Z", "type": "email_out", "subject": "Follow-up actions", "summary": "Sent notes and next steps.", "message_id": "<m3@x>"}
+    ]
+  }</script>
+
+  <script>
+    // --- Utility helpers ---
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
+    const by = k => (a,b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0);
+    const safe = s => (s||'').toString();
+
+    // --- State ---
+    let state = { organisations: [], contacts: [], interactions: [] };
+    let filtered = { contacts: [], organisations: [], interactions: [] };
+
+    async function loadData() {
+      // Try /data/data.json first
+      try {
+        const resp = await fetch('data/data.json', { cache: 'no-store' });
+        if (resp.ok) {
+          const json = await resp.json();
+          return json;
+        }
+      } catch (e) { /* ignore: fallback to embedded */ }
+      // Fallback to embedded sample
+      const embedded = document.getElementById('sample-data').textContent;
+      return JSON.parse(embedded);
+    }
+
+    function derive(state) {
+      const orgMap = new Map(state.organisations.map(o => [o.id, o]));
+      const contactMap = new Map(state.contacts.map(c => [c.id, c]));
+
+      // Last contact per contact
+      const intsByContact = new Map();
+      state.interactions.forEach(i => {
+        if (!intsByContact.has(i.contact_id)) intsByContact.set(i.contact_id, []);
+        intsByContact.get(i.contact_id).push(i);
+      });
+      state.contacts.forEach(c => {
+        const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        c.last_contact_at = list[0]?.occurred_at || null;
+        c.last_subject = list[0]?.subject || '';
+        c.org_name = orgMap.get(c.organisation_id)?.name || '';
+      });
+
+      // Last contact per organisation + topics (naive from subject words)
+      const intsByOrg = new Map();
+      state.interactions.forEach(i => {
+        const contact = contactMap.get(i.contact_id);
+        const orgId = contact?.organisation_id;
+        if (!orgId) return;
+        if (!intsByOrg.has(orgId)) intsByOrg.set(orgId, []);
+        intsByOrg.get(orgId).push(i);
+      });
+      state.organisations.forEach(o => {
+        const list = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        o.last_contact_at = list[0]?.occurred_at || null;
+        o.contact_count = state.contacts.filter(c=>c.organisation_id===o.id).length;
+        const recentSubjects = list.slice(0,6).map(i=>i.subject||'').join(' ');
+        const tokens = recentSubjects.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x && x.length>3);
+        const freq = {};
+        tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
+        o.topics = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
+      });
+    }
+
+    function renderSummary() {
+      const totalContacts = state.contacts.length;
+      const totalOrgs = state.organisations.length;
+      const last7 = state.interactions.filter(i => (Date.now() - new Date(i.occurred_at)) < 7*864e5).length;
+      $('#summary').innerHTML = `
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Contacts</div><div class="text-2xl font-semibold">${totalContacts}</div></div>
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Organisations</div><div class="text-2xl font-semibold">${totalOrgs}</div></div>
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
+    }
+
+    function renderContacts(list) {
+      const rows = list.map(c=>`
+        <tr class="border-b last:border-0">
+          <td class="p-2 whitespace-nowrap">${safe(c.first_name)} ${safe(c.last_name)}</td>
+          <td class="p-2">${safe(c.org_name)}</td>
+          <td class="p-2"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
+          <td class="p-2">${c.last_contact_at ? fmtDate(c.last_contact_at) : '<span class="text-gray-400">—</span>'}</td>
+          <td class="p-2">${safe(c.last_subject)}</td>
+        </tr>`).join('');
+      $('#contactsBody').innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No contacts</td></tr>`;
+    }
+
+    function renderOrgs(list) {
+      const rows = list.map(o=>`
+        <tr class="border-b last:border-0">
+          <td class="p-2">${safe(o.name)}</td>
+          <td class="p-2">${o.contact_count||0}</td>
+          <td class="p-2">${o.last_contact_at ? fmtDate(o.last_contact_at) : '<span class="text-gray-400">—</span>'}</td>
+          <td class="p-2 space-x-1">${(o.topics||[]).map(t=>`<span class="badge">${t}</span>`).join(' ')}</td>
+        </tr>`).join('');
+      $('#orgsBody').innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
+    }
+
+    function renderInts(list) {
+      const contactMap = new Map(state.contacts.map(c => [c.id, c]));
+      const rows = list.map(i=>{
+        const c = contactMap.get(i.contact_id);
+        const who = c ? `${safe(c.first_name)} ${safe(c.last_name)}` : '';
+        return `
+        <tr class="border-b last:border-0">
+          <td class="p-2 whitespace-nowrap">${fmtDate(i.occurred_at)}</td>
+          <td class="p-2">${who}</td>
+          <td class="p-2">${safe(i.subject)}</td>
+          <td class="p-2">${safe(i.summary)}</td>
+          <td class="p-2">${safe(i.type)}</td>
+        </tr>`;
+      }).join('');
+      $('#intsBody').innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
+    }
+
+    function applySearch(q) {
+      const needle = q.trim().toLowerCase();
+      if (!needle) {
+        filtered.contacts = [...state.contacts];
+        filtered.organisations = [...state.organisations];
+        filtered.interactions = [...state.interactions];
+        return;
+      }
+      const inContact = c => [c.first_name, c.last_name, c.email, c.org_name].some(v=>safe(v).toLowerCase().includes(needle));
+      const contactIds = new Set();
+      filtered.contacts = state.contacts.filter(c=>{
+        const ok = inContact(c);
+        if (ok) contactIds.add(c.id);
+        return ok;
+      });
+      filtered.organisations = state.organisations.filter(o=> safe(o.name).toLowerCase().includes(needle));
+      filtered.interactions = state.interactions.filter(i=>{
+        const c = state.contacts.find(x=>x.id===i.contact_id);
+        return [i.subject, i.summary, c?.first_name, c?.last_name, c?.email].some(v=>safe(v).toLowerCase().includes(needle));
+      });
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderContacts(filtered.contacts);
+      renderOrgs(filtered.organisations);
+      renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)));
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify({
+        organisations: state.organisations,
+        contacts: state.contacts,
+        interactions: state.interactions
+      }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Sorting (by clicking table headers)
+    function makeSortable(tableId, bodyId, accessor) {
+      const thead = document.querySelector(`#${tableId} thead`);
+      let dir = 1; let key = null;
+      thead.addEventListener('click', e => {
+        const th = e.target.closest('th'); if (!th || !th.dataset.sort) return;
+        const newKey = th.dataset.sort; dir = key === newKey ? -dir : 1; key = newKey;
+        const list = accessor();
+        list.sort((a,b)=>{
+          const av = (a[key]||'').toString().toLowerCase();
+          const bv = (b[key]||'').toString().toLowerCase();
+          if (av>bv) return dir; if (av<bv) return -dir; return 0;
+        });
+        // re-render specific table
+        if (tableId==='contactsTable') renderContacts(list);
+        if (tableId==='orgsTable') renderOrgs(list);
+        if (tableId==='intsTable') renderInts(list);
+      });
+    }
+
+    // Init
+    (async function init(){
+      state = await loadData();
+      derive(state);
+      filtered.contacts = [...state.contacts];
+      filtered.organisations = [...state.organisations];
+      filtered.interactions = [...state.interactions];
+      renderAll();
+
+      // Wire search and export
+      $('#search').addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
+      $('#exportBtn').addEventListener('click', exportJSON);
+
+      // Sorting hooks
+      makeSortable('contactsTable', 'contactsBody', ()=>filtered.contacts);
+      makeSortable('orgsTable', 'orgsBody', ()=>filtered.organisations);
+      makeSortable('intsTable', 'intsBody', ()=>filtered.interactions);
+    })();
+  </script>
+</body>
+</html>
