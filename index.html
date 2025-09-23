@@ -143,8 +143,8 @@
       {"id": "o2", "name": "TasPorts"}
     ],
     "contacts": [
-      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1", "group":"Utilities"},
-      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2", "group":"Ports"}
+      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1", "group": "Utilities", "job_title": "Stakeholder Lead"},
+      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2", "group": "Ports", "job_title": "Harbour Master"}
     ],
     "interactions": [
       {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-10T01:00:00Z", "type": "email_in", "subject": "District Infrastructure Scheme – coordination", "summary": "Discussed staging and utilities interfaces."},
@@ -202,6 +202,33 @@
       catch { return {organisations:[],contacts:[],interactions:[]}; }
     }
 
+    // If there are no interactions, inject demo orgs/contacts/interactions so the UX is obvious
+    function injectDemoIfEmpty(st) {
+      if ((st.interactions||[]).length > 0) return;
+
+      // Demo orgs (skip if a name already exists)
+      const names = new Set((st.organisations||[]).map(o => (o.name||'').toLowerCase()));
+      const addOrg = (id, name) => { if (!names.has(name.toLowerCase())) st.organisations.push({id, name}); };
+      addOrg('o_demo_1', 'Department of State Growth');
+      addOrg('o_demo_2', 'Aurora Energy');
+
+      // Demo contacts
+      const have = new Set((st.contacts||[]).map(c => c.email?.toLowerCase()).filter(Boolean));
+      const addContact = c => { if (!have.has((c.email||'').toLowerCase())) st.contacts.push(c); };
+      addContact({ id: 'c_demo_1', first_name: 'Kara',  last_name: 'Ng',   email: 'kara.ng@stategrowth.tas.gov.au', organisation_id: 'o_demo_1', group: 'Government',  job_title: 'Project Liaison', phone: '03 7000 1234', mpdc_contact: 'communications@macpoint.com', notes: 'Focus on approvals & comms.' });
+      addContact({ id: 'c_demo_2', first_name: 'Liam',  last_name: 'Reid', email: 'liam.reid@auroraenergy.com.au',   organisation_id: 'o_demo_2', group: 'Utilities',  job_title: 'Network Planner',  phone: '03 7000 2345', mpdc_contact: 'communications@macpoint.com', notes: 'Interface for substation works.' });
+      addContact({ id: 'c_demo_3', first_name: 'Ava',   last_name: 'Hall', email: 'ava.hall@stategrowth.tas.gov.au',   organisation_id: 'o_demo_1', group: 'Government', job_title: 'Stakeholder Lead',  phone: '03 7000 3456', mpdc_contact: 'communications@macpoint.com', notes: 'Community engagement lead.' });
+
+      // Demo interactions (recent dates)
+      const pushInt = (id, contact_id, iso, type, subject, summary) =>
+        st.interactions.push({ id, contact_id, occurred_at: iso, type, subject, summary });
+
+      pushInt('i_demo_1', 'c_demo_1', '2025-09-18T01:15:00Z', 'meeting',  'Approvals & staging workshop', 'Agreed to weekly cadence and draft comms plan.');
+      pushInt('i_demo_2', 'c_demo_2', '2025-09-20T04:30:00Z', 'email_in', 'Load shedding windows',       'Shared preliminary window constraints; awaiting design inputs.');
+      pushInt('i_demo_3', 'c_demo_3', '2025-09-21T00:45:00Z', 'call',     'Community briefing invite',    'Confirmed attendance; requested agenda.');
+      pushInt('i_demo_4', 'c_demo_2', '2025-09-22T02:00:00Z', 'email_out','Follow-up actions',            'Sent notes and next steps re: network tie-in.');
+    }
+
     function derive(st) {
       const orgMap = new Map((st.organisations||[]).map(o => [o.id, o]));
       const contactMap = new Map((st.contacts||[]).map(c => [c.id, c]));
@@ -210,12 +237,13 @@
       const intsByContact = new Map();
       (st.interactions||[]).forEach(i => {
         if (!i || !i.contact_id) return;
-        (intsByContact.get(i.contact_id) || intsByContact.set(i.contact_id, []).get(i.contact_id)).push(i);
+        if (!intsByContact.has(i.contact_id)) intsByContact.set(i.contact_id, []);
+        intsByContact.get(i.contact_id).push(i);
       });
       (st.contacts||[]).forEach(c => {
-        const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
-        c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
+        const arr = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        c.last_contact_at = arr[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
+        c.last_subject = arr[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
         c.org_name = orgMap.get(c.organisation_id)?.name || c.organisation || '';
         c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.name || '';
         c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
@@ -227,13 +255,14 @@
         const contact = contactMap.get(i.contact_id);
         const orgId = contact?.organisation_id;
         if (!orgId) return;
-        (intsByOrg.get(orgId) || intsByOrg.set(orgId, []).get(orgId)).push(i);
+        if (!intsByOrg.has(orgId)) intsByOrg.set(orgId, []);
+        intsByOrg.get(orgId).push(i);
       });
       (st.organisations||[]).forEach(o => {
-        const list = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        o.last_contact_at = list[0]?.occurred_at || null;
+        const arr = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        o.last_contact_at = arr[0]?.occurred_at || null;
         o.contact_count = (st.contacts||[]).filter(c=>c.organisation_id===o.id).length;
-        const recentSubjects = list.slice(0,6).map(i=>i.subject||'').join(' ');
+        const recentSubjects = arr.slice(0,6).map(i=>i.subject||'').join(' ');
         const tokens = recentSubjects.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x && x.length>3);
         const freq = {}; tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
         o.topics = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
@@ -281,7 +310,7 @@
           <td class="cell w-email" title="${safe(c.email)}"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
           <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
           <td class="cell w-mpdc"  title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
-          <td class="cell w-last"  title="${list.last_contact_at ? fmtDate(list.last_contact_at) : ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
+          <td class="cell w-last"  title="${c.last_contact_at ? fmtDate(c.last_contact_at) : ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
           <td class="cell w-subj"  title="${safe(c.last_subject)}">${safe(c.last_subject)}</td>
           <td class="cell w-notes" title="${safe(c.notes)}">${safe(c.notes)}</td>
         </tr>`).join('');
@@ -420,10 +449,31 @@
       });
     }
 
+    // Keyboard: PageUp/PageDown scroll inside expanded section
+    document.addEventListener('keydown', (e) => {
+      if (['PageDown','PageUp'].includes(e.key)) {
+        const targetWrapId = expand.contacts ? 'contactsWrap'
+                             : expand.organisations ? 'orgsWrap'
+                             : expand.interactions ? 'intsWrap'
+                             : null;
+        if (!targetWrapId) return; // nothing expanded
+        // don't hijack when typing in inputs
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (['input','textarea','select'].includes(tag)) return;
+
+        const wrap = document.getElementById(targetWrapId);
+        if (!wrap) return;
+        const delta = wrap.clientHeight - 40; // almost a page
+        wrap.scrollBy({ top: e.key === 'PageDown' ? delta : -delta, behavior: 'smooth' });
+        e.preventDefault();
+      }
+    });
+
     // Init
     (async function init(){
       try {
         state = await loadData();
+        injectDemoIfEmpty(state);
         derive(state);
         filtered.contacts = [...(state.contacts||[])];
         filtered.organisations = [...(state.organisations||[])];
