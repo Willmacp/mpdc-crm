@@ -8,10 +8,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root{
-      --accent:#5f809b;        /* your main blue-grey */
+      --accent:#5f809b;        /* main blue-grey */
       --accent-dark:#4a667f;   /* slightly darker */
       --accent-50:#eef3f6;     /* very light tint for headers */
-      --gray:#6d6e71;          /* your brand grey */
+      --gray:#6d6e71;          /* brand grey */
       --text:#1f2937;          /* neutral dark for body text */
       --border:#e5e7eb;        /* light borders */
       --row-alt:#fafbfc;       /* zebra */
@@ -19,6 +19,7 @@
       --white:#ffffff;
     }
 
+    html { scroll-behavior:smooth; }
     body { color: var(--text); }
 
     /* Header: full accent background, white text */
@@ -27,8 +28,12 @@
       color: var(--white);
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
-    header a { color: var(--white); opacity: .95; }
-    header a:hover { opacity: 1; text-decoration: underline; }
+    .nav-link {
+      color:#fff; opacity:.95; padding:.35rem .6rem; border-radius:999px; transition:all .15s ease;
+      border:1px solid transparent;
+    }
+    .nav-link:hover { opacity:1; background:#fff; color:var(--accent); border-color:#ffffff33; text-decoration:none; }
+    .nav-link.active { background:#fff; color:var(--accent); border-color:#ffffff55; }
 
     /* Buttons */
     .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .9rem;
@@ -37,10 +42,6 @@
     .btn-accent:hover{ background:var(--accent-dark); border-color:var(--accent-dark); transform: translateY(-1px); }
     .btn-outline { background:#fff; color:var(--accent); border:1px solid var(--accent); }
     .btn-outline:hover{ background:var(--accent-50); }
-
-    /* Links */
-    a { color:var(--accent); }
-    a:hover { color:var(--accent-dark); }
 
     /* Data containers */
     .datawrap { overflow:auto; background:#fff; border:1px solid var(--border); border-radius:0.75rem; }
@@ -90,18 +91,40 @@
     }
     .datawrap::-webkit-scrollbar-thumb:hover{ filter:brightness(.95); }
 
-    /* Section titles */
+    /* Section titles + badges */
     .section-title { color:#273646; }
+    .badge {
+      display:inline-block; margin-left:.5rem; font-size:.75rem; line-height:1; padding:.25rem .5rem;
+      border-radius:999px; background:var(--accent-50); color:#273646; border:1px solid var(--accent);
+      vertical-align:middle;
+    }
+
+    /* Footer */
+    footer.site-footer {
+      background: var(--accent-50);
+      border-top: 1px solid var(--border);
+      color: #334155;
+    }
+
+    /* Floating back-to-top button */
+    #scrollTopBtn{
+      position:fixed; right:16px; bottom:16px; z-index:50;
+      opacity:0; pointer-events:none; transform: translateY(8px);
+      transition: all .2s ease;
+    }
+    #scrollTopBtn.show{
+      opacity:1; pointer-events:auto; transform: translateY(0);
+    }
   </style>
 </head>
 <body class="bg-gray-50">
-  <header class="site-header sticky top-0 z-10 backdrop-blur">
+  <header id="top" class="site-header sticky top-0 z-10 backdrop-blur">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
       <div class="font-bold text-lg">MPDC Stakeholder CRM</div>
-      <nav class="ml-auto flex items-center gap-3 text-sm">
-        <a href="#contacts" class="px-2 py-1 rounded">Contacts</a>
-        <a href="#organisations" class="px-2 py-1 rounded">Organisations</a>
-        <a href="#interactions" class="px-2 py-1 rounded">Interactions</a>
+      <nav class="ml-auto flex items-center gap-2 text-sm">
+        <a href="#contacts" class="nav-link" id="nav-contacts">Contacts</a>
+        <a href="#organisations" class="nav-link" id="nav-organisations">Organisations</a>
+        <a href="#interactions" class="nav-link" id="nav-interactions">Interactions</a>
       </nav>
     </div>
   </header>
@@ -121,7 +144,9 @@
     <!-- Contacts -->
     <section id="contacts" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="section-title text-xl font-semibold">Contacts</h2>
+        <h2 class="section-title text-xl font-semibold">
+          Contacts <span id="countContacts" class="badge">0</span>
+        </h2>
         <div class="flex items-center gap-2 text-sm">
           <button id="toggleContacts" class="btn btn-outline">Expand list</button>
         </div>
@@ -150,7 +175,9 @@
     <!-- Organisations -->
     <section id="organisations" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="section-title text-xl font-semibold">Organisations</h2>
+        <h2 class="section-title text-xl font-semibold">
+          Organisations <span id="countOrgs" class="badge">0</span>
+        </h2>
         <div class="flex items-center gap-2 text-sm">
           <button id="toggleOrgs" class="btn btn-outline">Expand list</button>
         </div>
@@ -173,7 +200,9 @@
     <!-- Interactions -->
     <section id="interactions" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="section-title text-xl font-semibold">Interactions</h2>
+        <h2 class="section-title text-xl font-semibold">
+          Interactions <span id="countInts" class="badge">0</span>
+        </h2>
         <div class="flex items-center gap-2 text-sm">
           <button id="toggleInts" class="btn btn-outline">Expand list</button>
         </div>
@@ -194,6 +223,16 @@
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="max-w-7xl mx-auto px-4 py-6 text-sm flex items-center justify-between gap-3 flex-wrap">
+      <div>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits.</div>
+      <a class="btn btn-outline" href="#top">Back to top</a>
+    </div>
+  </footer>
+
+  <!-- Floating back-to-top -->
+  <button id="scrollTopBtn" class="btn btn-accent" aria-label="Back to top" title="Back to top">▲</button>
 
   <!-- Fallback sample data (used only if /data/data.json is missing) -->
   <script id="sample-data" type="application/json">{
@@ -224,7 +263,8 @@
     })();
 
     // Helpers
-    const $ = sel => document.querySelector(sel);
+    const $  = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
     const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
     const safe = s => (s??'').toString();
 
@@ -444,9 +484,16 @@
       renderContacts(filtered.contacts || []);
       renderOrgs(filtered.organisations || []);
       renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)) || []);
+
+      // Toggle labels
       const b1 = document.getElementById('toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
       const b2 = document.getElementById('toggleOrgs');     if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
       const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
+
+      // Counts
+      const cc = document.getElementById('countContacts'); if (cc) cc.textContent = (filtered.contacts||[]).length;
+      const co = document.getElementById('countOrgs');     if (co) co.textContent = (filtered.organisations||[]).length;
+      const ci = document.getElementById('countInts');     if (ci) ci.textContent = (filtered.interactions||[]).length;
     }
 
     function exportCSV() {
@@ -508,6 +555,41 @@
         e.preventDefault();
       }
     });
+
+    // Floating Back to Top
+    (function(){
+      const btn = document.getElementById('scrollTopBtn');
+      const onScroll = () => {
+        if (window.scrollY > 500) btn.classList.add('show'); else btn.classList.remove('show');
+      };
+      btn.addEventListener('click', ()=> window.scrollTo({ top:0, behavior:'smooth' }));
+      window.addEventListener('scroll', onScroll, { passive:true });
+      onScroll();
+    })();
+
+    // Active section highlighting in nav
+    (function(){
+      const links = {
+        contacts: document.getElementById('nav-contacts'),
+        organisations: document.getElementById('nav-organisations'),
+        interactions: document.getElementById('nav-interactions')
+      };
+      const observer = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          const id = entry.target.id;
+          if (links[id]) {
+            if (entry.isIntersecting) {
+              Object.values(links).forEach(a=>a.classList.remove('active'));
+              links[id].classList.add('active');
+            }
+          }
+        });
+      }, { root:null, rootMargin:'-40% 0px -55% 0px', threshold:0 });
+      ['contacts','organisations','interactions'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    })();
 
     // Init
     (async function init(){
