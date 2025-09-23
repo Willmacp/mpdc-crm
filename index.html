@@ -50,11 +50,10 @@
       <div class="flex flex-col gap-3">
         <div>
           <h1 class="text-2xl font-semibold">Stakeholder overview</h1>
-          <p class="text-sm text-gray-600">Read-only viewer that loads <code>data/data.json</code> (Netlify) with a safe embedded fallback below.</p>
         </div>
         <div class="flex items-center gap-2">
           <input id="search" class="border rounded px-3 py-2 w-72" placeholder="Search contacts, orgs, subjects…"/>
-          <button id="exportBtn" class="px-3 py-2 rounded bg-gray-900 text-white">Export current JSON</button>
+          <button id="exportBtn" class="px-3 py-2 rounded bg-gray-900 text-white">Export</button>
         </div>
       </div>
       <div id="summary" class="mt-4 grid grid-cols-1 gap-3"></div>
@@ -140,8 +139,8 @@
   <!-- Fallback sample data (used only if /data/data.json is missing) -->
   <script id="sample-data" type="application/json">{
     "organisations": [
-      {"id": "o1", "name": "TasWater", "region": "Hobart"},
-      {"id": "o2", "name": "TasPorts", "region": "Hobart"}
+      {"id": "o1", "name": "TasWater"},
+      {"id": "o2", "name": "TasPorts"}
     ],
     "contacts": [
       {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1", "group":"Utilities"},
@@ -169,13 +168,26 @@
     const $ = sel => document.querySelector(sel);
     const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
     const safe = s => (s??'').toString();
-    const trunc = (s, n = 120) => { const t = safe(s); return t.length > n ? t.slice(0, n-1) + '…' : t; };
+
+    // CSV export util
+    function toCSV(rows, columns) {
+      const esc = v => {
+        const s = (v==null ? '' : String(v));
+        if (/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      };
+      const head = columns.map(c=>esc(c.header)).join(',');
+      const body = rows.map(r=>columns.map(c=>esc(c.get(r))).join(',')).join('\n');
+      // Add UTF-8 BOM for Excel
+      return '\uFEFF' + head + '\n' + body;
+    }
 
     // State
     let state = { organisations: [], contacts: [], interactions: [] };
     let filtered = { contacts: [], organisations: [], interactions: [] };
     let expand = { contacts: false, organisations: false, interactions: false };
-    const LIMIT = { contacts: 50, organisations: 50, interactions: 100 };
+    // Collapsed row caps
+    const LIMIT = { contacts: 5, organisations: 5, interactions: 5 };
 
     async function loadData() {
       try {
@@ -231,7 +243,7 @@
       const totalContacts = (state.contacts||[]).length;
       const totalOrgs = (state.organisations||[]).length;
       const last7 = (state.interactions||[]).filter(i => (Date.now() - new Date(i.occurred_at)) < 7*864e5).length;
-      $('#summary').innerHTML = `
+      document.getElementById('summary').innerHTML = `
         <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Contacts</div><div class="text-2xl font-semibold">${totalContacts}</div></div>
         <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Organisations</div><div class="text-2xl font-semibold">${totalOrgs}</div></div>
         <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
@@ -239,7 +251,7 @@
 
     function renderContacts(rowsSrc) {
       const list = rowsSrc || [];
-      const wrap = $('#contactsWrap'); if (wrap) wrap.style.maxHeight = expand.contacts ? '' : '28rem';
+      const wrap = document.getElementById('contactsWrap'); if (wrap) wrap.style.maxHeight = expand.contacts ? '' : '18rem';
       const visible = expand.contacts ? list : list.slice(0, LIMIT.contacts);
       const rows = visible.map(c=>`
         <tr class="row cursor-pointer" data-id="${safe(c.id)}">
@@ -260,7 +272,7 @@
 
     function renderOrgs(rowsSrc) {
       const list = rowsSrc || [];
-      const wrap = $('#orgsWrap'); if (wrap) wrap.style.maxHeight = expand.organisations ? '' : '28rem';
+      const wrap = document.getElementById('orgsWrap'); if (wrap) wrap.style.maxHeight = expand.organisations ? '' : '18rem';
       const visible = expand.organisations ? list : list.slice(0, LIMIT.organisations);
       const rows = visible.map(o=>`
         <tr class="row">
@@ -275,7 +287,7 @@
 
     function renderInts(rowsSrc) {
       const list = rowsSrc || [];
-      const wrap = $('#intsWrap'); if (wrap) wrap.style.maxHeight = expand.interactions ? '' : '28rem';
+      const wrap = document.getElementById('intsWrap'); if (wrap) wrap.style.maxHeight = expand.interactions ? '' : '18rem';
       const visible = expand.interactions ? list : list.slice(0, LIMIT.interactions);
       const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
       const rows = visible.map(i=>{
@@ -322,14 +334,24 @@
       const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
     }
 
-    function exportJSON() {
-      const blob = new Blob([JSON.stringify({
-        organisations: state.organisations,
-        contacts: state.contacts,
-        interactions: state.interactions
-      }, null, 2)], { type: 'application/json' });
+    function exportCSV() {
+      const cols = [
+        { header: 'Name',          get: r => r.display_name || '' },
+        { header: 'Organisation',  get: r => r.org_name || '' },
+        { header: 'Group',         get: r => r.group || '' },
+        { header: 'Role',          get: r => r.job_title || '' },
+        { header: 'Email',         get: r => r.email || '' },
+        { header: 'Phone',         get: r => r.phone || '' },
+        { header: 'MPDC contact',  get: r => r.mpdc_contact || '' },
+        { header: 'Last contact',  get: r => r.last_contact_at || '' },
+        { header: 'Last subject',  get: r => r.last_subject || '' },
+        { header: 'Notes',         get: r => r.notes || '' }
+      ];
+      const csv = toCSV(filtered.contacts || [], cols);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'data.json'; a.click(); URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'contacts_export.csv'; a.click(); URL.revokeObjectURL(url);
     }
 
     // Sorting (by clicking table headers with a data-sort attr)
@@ -343,8 +365,8 @@
         const arr = accessor() || [];
         arr.sort((a,b)=>{
           if (['last_contact_at','occurred_at'].includes(key)) return (new Date(a[key]) - new Date(b[key])) * dir;
-          const av = safe(a[key] ?? '').toLowerCase();
-          const bv = safe(b[key] ?? '').toLowerCase();
+          const av = (a[key] ?? '').toString().toLowerCase();
+          const bv = (b[key] ?? '').toString().toLowerCase();
           if (av>bv) return dir; if (av<bv) return -dir; return 0;
         });
         if (tableId==='contactsTable') renderContacts(arr);
@@ -365,7 +387,7 @@
 
         // Search & export
         document.getElementById('search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
-        document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
+        document.getElementById('exportBtn')?.addEventListener('click', exportCSV);
 
         // Sorting hooks
         makeSortable('contactsTable', ()=>filtered.contacts);
