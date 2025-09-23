@@ -4,26 +4,68 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>MPDC Stakeholder CRM — Static Viewer</title>
-  <!-- Tailwind CDN for styling -->
+  <!-- Tailwind CDN for utility help -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Clean, uniform tables */
-    .datawrap { overflow:auto; background:#fff; border:1px solid #e5e7eb; border-radius:0.5rem; }
+    :root{
+      --accent:#5f809b;        /* your main blue-grey */
+      --accent-dark:#4a667f;   /* slightly darker */
+      --accent-50:#eef3f6;     /* very light tint for headers */
+      --gray:#6d6e71;          /* your brand grey */
+      --text:#1f2937;          /* neutral dark for body text */
+      --border:#e5e7eb;        /* light borders */
+      --row-alt:#fafbfc;       /* zebra */
+      --row-hover:#f7fafc;     /* subtle hover */
+    }
+
+    body { color: var(--text); }
+
+    /* Header: subtle accent underline */
+    header { border-bottom:3px solid var(--accent) !important; }
+
+    /* Buttons */
+    .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .9rem;
+           border-radius:.55rem; font-weight:600; }
+    .btn-accent { background:var(--accent); color:#fff; border:1px solid var(--accent); }
+    .btn-accent:hover{ background:var(--accent-dark); border-color:var(--accent-dark); }
+    .btn-outline { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+    .btn-outline:hover{ background:var(--accent-50); }
+
+    /* Links */
+    a { color:var(--accent); }
+    a:hover { color:var(--accent-dark); }
+
+    /* Data containers */
+    .datawrap { overflow:auto; background:#fff; border:1px solid var(--border); border-radius:0.75rem; }
+
+    /* Tables */
     .table-ish { width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
     .table-ish thead th {
-      position:sticky; top:0; z-index:10; background:#F9FAFB;
-      border-bottom:1px solid #e5e7eb; padding:0.5rem; text-align:left;
-      white-space:nowrap; font-weight:600; cursor:default;
+      position:sticky; top:0; z-index:10; background:var(--accent-50);
+      border-bottom:1px solid var(--border); padding:0.6rem; text-align:left;
+      white-space:nowrap; font-weight:700; color:#273646; letter-spacing:.01em;
+      user-select:none;
     }
-    .table-ish tbody td { border-bottom:1px solid #e5e7eb; padding:0.5rem; vertical-align:middle; }
+    .table-ish tbody td { border-bottom:1px solid var(--border); padding:0.55rem; vertical-align:middle; }
     .table-ish tbody tr:last-child td { border-bottom:0; }
-    .row:hover { background:#fafafa; }
+    .table-ish tbody tr:nth-child(even) { background:var(--row-alt); }
+
+    .row { transition:background .15s ease, box-shadow .15s ease; }
+    .row:hover { background:var(--row-hover); }
+    /* Slim accent bar on hover/focus */
+    .row:hover td:first-child, .row:focus-within td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
     .cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 
-    /* Column width hints (adjust anytime) */
-    .w-name{ width:180px; }     /* smaller name */
-    .w-org{ width:220px; }      /* keep visible */
-    .w-group{ width:160px; }    /* keep visible */
+    /* Topic chips */
+    .chip { display:inline-block; padding:.2rem .5rem; font-size:.75rem; border-radius:999px;
+            background:#fff; border:1px solid var(--accent); color:#273646; }
+    .chip:hover{ background:var(--accent-50); }
+
+    /* Column width hints */
+    .w-name{ width:180px; }
+    .w-org{ width:220px; }
+    .w-group{ width:160px; }
     .w-role{ width:160px; }
     .w-email{ width:220px; }
     .w-phone{ width:140px; }
@@ -31,40 +73,50 @@
     .w-last{ width:150px; }
     .w-subj{ width:220px; }
     .w-notes{ width:260px; }
+
+    /* Scrollbar theming (WebKit/Chromium/Edge) */
+    .datawrap::-webkit-scrollbar{ height:12px; width:12px; }
+    .datawrap::-webkit-scrollbar-track{ background:#fff; border-radius:10px; }
+    .datawrap::-webkit-scrollbar-thumb{
+      background:linear-gradient(180deg, var(--accent), var(--accent-dark));
+      border:3px solid #fff; border-radius:10px;
+    }
+    .datawrap::-webkit-scrollbar-thumb:hover{ filter:brightness(.95); }
+
+    /* Section titles */
+    .section-title { color:#273646; }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
+<body class="bg-gray-50">
+  <header class="sticky top-0 z-10 bg-white/90 backdrop-blur">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-      <div class="font-bold text-lg">MPDC Stakeholder CRM — Viewer (Static)</div>
+      <div class="font-bold text-lg text-[color:var(--gray)]">MPDC Stakeholder CRM — Viewer (Static)</div>
       <nav class="ml-auto flex items-center gap-2 text-sm">
-        <a href="#contacts" class="px-3 py-1 rounded hover:bg-gray-100">Contacts</a>
-        <a href="#organisations" class="px-3 py-1 rounded hover:bg-gray-100">Organisations</a>
-        <a href="#interactions" class="px-3 py-1 rounded hover:bg-gray-100">Interactions</a>
+        <a href="#contacts" class="px-3 py-1 rounded hover:bg-[color:var(--accent-50)]">Contacts</a>
+        <a href="#organisations" class="px-3 py-1 rounded hover:bg-[color:var(--accent-50)]">Organisations</a>
+        <a href="#interactions" class="px-3 py-1 rounded hover:bg-[color:var(--accent-50)]">Interactions</a>
       </nav>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6">
     <section id="dashboard" class="mb-8">
-      <div class="flex flex-col gap-3">
-        <div>
-          <h1 class="text-2xl font-semibold">Stakeholder overview</h1>
-        </div>
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <h1 class="section-title text-2xl font-semibold">Stakeholder overview</h1>
         <div class="flex items-center gap-2">
           <input id="search" class="border rounded px-3 py-2 w-72" placeholder="Search contacts, orgs, subjects…"/>
-          <button id="exportBtn" class="px-3 py-2 rounded bg-gray-900 text-white">Export Selection</button>
+          <button id="exportBtn" class="btn btn-accent">Export</button>
         </div>
       </div>
-      <div id="summary" class="mt-4 grid grid-cols-1 gap-3"></div>
+      <div id="summary" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
     </section>
 
     <!-- Contacts -->
     <section id="contacts" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-semibold">Contacts</h2>
+        <h2 class="section-title text-xl font-semibold">Contacts</h2>
         <div class="flex items-center gap-2 text-sm">
-          <button id="toggleContacts" class="px-3 py-1 rounded border">Expand list</button>
+          <button id="toggleContacts" class="btn btn-outline">Expand list</button>
         </div>
       </div>
       <div id="contactsWrap" class="datawrap">
@@ -91,9 +143,9 @@
     <!-- Organisations -->
     <section id="organisations" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-semibold">Organisations</h2>
+        <h2 class="section-title text-xl font-semibold">Organisations</h2>
         <div class="flex items-center gap-2 text-sm">
-          <button id="toggleOrgs" class="px-3 py-1 rounded border">Expand list</button>
+          <button id="toggleOrgs" class="btn btn-outline">Expand list</button>
         </div>
       </div>
       <div id="orgsWrap" class="datawrap">
@@ -114,9 +166,9 @@
     <!-- Interactions -->
     <section id="interactions" class="mb-10">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-semibold">Interactions</h2>
+        <h2 class="section-title text-xl font-semibold">Interactions</h2>
         <div class="flex items-center gap-2 text-sm">
-          <button id="toggleInts" class="px-3 py-1 rounded border">Expand list</button>
+          <button id="toggleInts" class="btn btn-outline">Expand list</button>
         </div>
       </div>
       <div id="intsWrap" class="datawrap">
@@ -206,20 +258,17 @@
     function injectDemoIfEmpty(st) {
       if ((st.interactions||[]).length > 0) return;
 
-      // Demo orgs (skip if a name already exists)
       const names = new Set((st.organisations||[]).map(o => (o.name||'').toLowerCase()));
       const addOrg = (id, name) => { if (!names.has(name.toLowerCase())) st.organisations.push({id, name}); };
       addOrg('o_demo_1', 'Department of State Growth');
       addOrg('o_demo_2', 'Aurora Energy');
 
-      // Demo contacts
       const have = new Set((st.contacts||[]).map(c => c.email?.toLowerCase()).filter(Boolean));
       const addContact = c => { if (!have.has((c.email||'').toLowerCase())) st.contacts.push(c); };
       addContact({ id: 'c_demo_1', first_name: 'Kara',  last_name: 'Ng',   email: 'kara.ng@stategrowth.tas.gov.au', organisation_id: 'o_demo_1', group: 'Government',  job_title: 'Project Liaison', phone: '03 7000 1234', mpdc_contact: 'communications@macpoint.com', notes: 'Focus on approvals & comms.' });
       addContact({ id: 'c_demo_2', first_name: 'Liam',  last_name: 'Reid', email: 'liam.reid@auroraenergy.com.au',   organisation_id: 'o_demo_2', group: 'Utilities',  job_title: 'Network Planner',  phone: '03 7000 2345', mpdc_contact: 'communications@macpoint.com', notes: 'Interface for substation works.' });
       addContact({ id: 'c_demo_3', first_name: 'Ava',   last_name: 'Hall', email: 'ava.hall@stategrowth.tas.gov.au',   organisation_id: 'o_demo_1', group: 'Government', job_title: 'Stakeholder Lead',  phone: '03 7000 3456', mpdc_contact: 'communications@macpoint.com', notes: 'Community engagement lead.' });
 
-      // Demo interactions (recent dates)
       const pushInt = (id, contact_id, iso, type, subject, summary) =>
         st.interactions.push({ id, contact_id, occurred_at: iso, type, subject, summary });
 
@@ -237,13 +286,12 @@
       const intsByContact = new Map();
       (st.interactions||[]).forEach(i => {
         if (!i || !i.contact_id) return;
-        if (!intsByContact.has(i.contact_id)) intsByContact.set(i.contact_id, []);
-        intsByContact.get(i.contact_id).push(i);
+        (intsByContact.get(i.contact_id) || intsByContact.set(i.contact_id, []).get(i.contact_id)).push(i);
       });
       (st.contacts||[]).forEach(c => {
-        const arr = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        c.last_contact_at = arr[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
-        c.last_subject = arr[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
+        const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
+        c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
         c.org_name = orgMap.get(c.organisation_id)?.name || c.organisation || '';
         c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.name || '';
         c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
@@ -255,14 +303,13 @@
         const contact = contactMap.get(i.contact_id);
         const orgId = contact?.organisation_id;
         if (!orgId) return;
-        if (!intsByOrg.has(orgId)) intsByOrg.set(orgId, []);
-        intsByOrg.get(orgId).push(i);
+        (intsByOrg.get(orgId) || intsByOrg.set(orgId, []).get(orgId)).push(i);
       });
       (st.organisations||[]).forEach(o => {
-        const arr = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        o.last_contact_at = arr[0]?.occurred_at || null;
+        const list = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+        o.last_contact_at = list[0]?.occurred_at || null;
         o.contact_count = (st.contacts||[]).filter(c=>c.organisation_id===o.id).length;
-        const recentSubjects = arr.slice(0,6).map(i=>i.subject||'').join(' ');
+        const recentSubjects = list.slice(0,6).map(i=>i.subject||'').join(' ');
         const tokens = recentSubjects.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x && x.length>3);
         const freq = {}; tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
         o.topics = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
@@ -275,7 +322,6 @@
       const table = document.getElementById(tableId);
       if (!wrap || !table) return;
 
-      // measure header + a typical row (fallbacks if not yet rendered)
       const thead = table.querySelector('thead');
       const headH = thead ? thead.offsetHeight : 40;
       const firstRow = table.querySelector('tbody tr');
@@ -289,17 +335,15 @@
       const totalOrgs = (state.organisations||[]).length;
       const last7 = (state.interactions||[]).filter(i => (Date.now() - new Date(i.occurred_at)) < 7*864e5).length;
       document.getElementById('summary').innerHTML = `
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Contacts</div><div class="text-2xl font-semibold">${totalContacts}</div></div>
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Organisations</div><div class="text-2xl font-semibold">${totalOrgs}</div></div>
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-gray-600">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Contacts</div><div class="text-2xl font-semibold">${totalContacts}</div></div>
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Organisations</div><div class="text-2xl font-semibold">${totalOrgs}</div></div>
+        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
     }
 
     function renderContacts(rowsSrc) {
       const list = rowsSrc || [];
       const wrap = document.getElementById('contactsWrap');
-
-      // collapsed: only first 5 rows; expanded: render all rows, constrain height to ~20 rows
-      const visible = expand.contacts ? list : list.slice(0, ROWS_WHEN_COLLAPSED);
+      const visible = expand.contacts ? list : list.slice(0, 5);
 
       const rows = visible.map(c=>`
         <tr class="row cursor-pointer" data-id="${safe(c.id)}">
@@ -307,7 +351,7 @@
           <td class="cell w-org"   title="${safe(c.org_name)}">${safe(c.org_name)}</td>
           <td class="cell w-group" title="${safe(c.group)}">${safe(c.group)}</td>
           <td class="cell w-role"  title="${safe(c.job_title)}">${safe(c.job_title)}</td>
-          <td class="cell w-email" title="${safe(c.email)}"><a class="text-blue-600 hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
+          <td class="cell w-email" title="${safe(c.email)}"><a class="hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
           <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
           <td class="cell w-mpdc"  title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
           <td class="cell w-last"  title="${c.last_contact_at ? fmtDate(c.last_contact_at) : ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
@@ -318,42 +362,36 @@
       if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
 
       if (wrap) {
-        if (expand.contacts) {
-          adjustWrapHeight('contactsWrap', 'contactsTable', ROWS_VISIBLE_EXPANDED);
-        } else {
-          wrap.style.maxHeight = '12rem'; // compact for 5 rows
-        }
+        if (expand.contacts) { adjustWrapHeight('contactsWrap', 'contactsTable', 20); }
+        else { wrap.style.maxHeight = '12rem'; }
       }
     }
 
     function renderOrgs(rowsSrc) {
       const list = rowsSrc || [];
       const wrap = document.getElementById('orgsWrap');
-      const visible = expand.organisations ? list : list.slice(0, ROWS_WHEN_COLLAPSED);
+      const visible = expand.organisations ? list : list.slice(0, 5);
 
       const rows = visible.map(o=>`
         <tr class="row">
           <td class="cell" title="${safe(o.name)}">${safe(o.name)}</td>
           <td class="cell" title="${o.contact_count||0}">${o.contact_count||0}</td>
           <td class="cell" title="${o.last_contact_at ? fmtDate(o.last_contact_at) : ''}">${o.last_contact_at ? fmtDate(o.last_contact_at) : '—'}</td>
-          <td class="cell">${(o.topics||[]).map(t=>`<span class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100">${t}</span>`).join(' ')}</td>
+          <td class="cell">${(o.topics||[]).map(t=>`<span class="chip">${t}</span>`).join(' ')}</td>
         </tr>`).join('');
       const body = document.getElementById('orgsBody');
       if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
 
       if (wrap) {
-        if (expand.organisations) {
-          adjustWrapHeight('orgsWrap', 'orgsTable', ROWS_VISIBLE_EXPANDED);
-        } else {
-          wrap.style.maxHeight = '12rem';
-        }
+        if (expand.organisations) { adjustWrapHeight('orgsWrap', 'orgsTable', 20); }
+        else { wrap.style.maxHeight = '12rem'; }
       }
     }
 
     function renderInts(rowsSrc) {
       const list = rowsSrc || [];
       const wrap = document.getElementById('intsWrap');
-      const visible = expand.interactions ? list : list.slice(0, ROWS_WHEN_COLLAPSED);
+      const visible = expand.interactions ? list : list.slice(0, 5);
 
       const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
       const rows = visible.map(i=>{
@@ -372,11 +410,8 @@
       if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
 
       if (wrap) {
-        if (expand.interactions) {
-          adjustWrapHeight('intsWrap', 'intsTable', ROWS_VISIBLE_EXPANDED);
-        } else {
-          wrap.style.maxHeight = '12rem';
-        }
+        if (expand.interactions) { adjustWrapHeight('intsWrap', 'intsTable', 20); }
+        else { wrap.style.maxHeight = '12rem'; }
       }
     }
 
@@ -402,7 +437,6 @@
       renderContacts(filtered.contacts || []);
       renderOrgs(filtered.organisations || []);
       renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)) || []);
-      // toggle labels
       const b1 = document.getElementById('toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
       const b2 = document.getElementById('toggleOrgs');     if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
       const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
@@ -456,8 +490,7 @@
                              : expand.organisations ? 'orgsWrap'
                              : expand.interactions ? 'intsWrap'
                              : null;
-        if (!targetWrapId) return; // nothing expanded
-        // don't hijack when typing in inputs
+        if (!targetWrapId) return;
         const tag = (document.activeElement?.tagName || '').toLowerCase();
         if (['input','textarea','select'].includes(tag)) return;
 
