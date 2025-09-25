@@ -60,7 +60,6 @@
 
     .row { transition:background .15s ease, box-shadow .15s ease; }
     .row:hover { background:var(--row-hover); }
-    /* Slim accent bar on hover/focus */
     .row:hover td:first-child, .row:focus-within td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 
     .cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -82,7 +81,7 @@
     .w-subj{ width:220px; }
     .w-notes{ width:260px; }
 
-    /* Scrollbar theming (WebKit/Chromium/Edge) */
+    /* Scrollbar theming */
     .datawrap::-webkit-scrollbar{ height:12px; width:12px; }
     .datawrap::-webkit-scrollbar-track{ background:#fff; border-radius:10px; }
     .datawrap::-webkit-scrollbar-thumb{
@@ -236,18 +235,9 @@
 
   <!-- Fallback sample data (used only if /data/data.json is missing) -->
   <script id="sample-data" type="application/json">{
-    "organisations": [
-      {"id": "o1", "name": "TasWater"},
-      {"id": "o2", "name": "TasPorts"}
-    ],
-    "contacts": [
-      {"id": "c1", "first_name": "Jane", "last_name": "Smith", "email": "jane.smith@taswater.com", "organisation_id": "o1", "group": "Utilities", "job_title": "Stakeholder Lead"},
-      {"id": "c2", "first_name": "Mark", "last_name": "Brown", "email": "mark.brown@tasports.com", "organisation_id": "o2", "group": "Ports", "job_title": "Harbour Master"}
-    ],
-    "interactions": [
-      {"id": "i1", "contact_id": "c1", "occurred_at": "2025-09-10T01:00:00Z", "type": "email_in", "subject": "District Infrastructure Scheme – coordination", "summary": "Discussed staging and utilities interfaces."},
-      {"id": "i2", "contact_id": "c2", "occurred_at": "2025-09-14T03:30:00Z", "type": "meeting",  "subject": "Northern Access Road – traffic management", "summary": "Detours and comms timeline."}
-    ]
+    "organisations": [],
+    "contacts": [],
+    "interactions": []
   }</script>
 
   <script>
@@ -282,7 +272,7 @@
 
     // Collapsed & expanded behavior
     const ROWS_WHEN_COLLAPSED = 5;
-    const ROWS_VISIBLE_EXPANDED = 20; // visible height target when expanded
+    const ROWS_VISIBLE_EXPANDED = 20;
 
     // State
     let state = { organisations: [], contacts: [], interactions: [] };
@@ -301,35 +291,10 @@
       catch { return {organisations:[],contacts:[],interactions:[]}; }
     }
 
-    // If there are no interactions, inject demo orgs/contacts/interactions so the UX is obvious
-    function injectDemoIfEmpty(st) {
-      if ((st.interactions||[]).length > 0) return;
-
-      const names = new Set((st.organisations||[]).map(o => (o.name||'').toLowerCase()));
-      const addOrg = (id, name) => { if (!names.has(name.toLowerCase())) st.organisations.push({id, name}); };
-      addOrg('o_demo_1', 'Department of State Growth');
-      addOrg('o_demo_2', 'Aurora Energy');
-
-      const have = new Set((st.contacts||[]).map(c => c.email?.toLowerCase()).filter(Boolean));
-      const addContact = c => { if (!have.has((c.email||'').toLowerCase())) st.contacts.push(c); };
-      addContact({ id: 'c_demo_1', first_name: 'Kara',  last_name: 'Ng',   email: 'kara.ng@stategrowth.tas.gov.au', organisation_id: 'o_demo_1', group: 'Government',  job_title: 'Project Liaison', phone: '03 7000 1234', mpdc_contact: 'communications@macpoint.com', notes: 'Focus on approvals & comms.' });
-      addContact({ id: 'c_demo_2', first_name: 'Liam',  last_name: 'Reid', email: 'liam.reid@auroraenergy.com.au',   organisation_id: 'o_demo_2', group: 'Utilities',  job_title: 'Network Planner',  phone: '03 7000 2345', mpdc_contact: 'communications@macpoint.com', notes: 'Interface for substation works.' });
-      addContact({ id: 'c_demo_3', first_name: 'Ava',   last_name: 'Hall', email: 'ava.hall@stategrowth.tas.gov.au',   organisation_id: 'o_demo_1', group: 'Government', job_title: 'Stakeholder Lead',  phone: '03 7000 3456', mpdc_contact: 'communications@macpoint.com', notes: 'Community engagement lead.' });
-
-      const pushInt = (id, contact_id, iso, type, subject, summary) =>
-        st.interactions.push({ id, contact_id, occurred_at: iso, type, subject, summary });
-
-      pushInt('i_demo_1', 'c_demo_1', '2025-09-18T01:15:00Z', 'meeting',  'Approvals & staging workshop', 'Agreed to weekly cadence and draft comms plan.');
-      pushInt('i_demo_2', 'c_demo_2', '2025-09-20T04:30:00Z', 'email_in', 'Load shedding windows',       'Shared preliminary window constraints; awaiting design inputs.');
-      pushInt('i_demo_3', 'c_demo_3', '2025-09-21T00:45:00Z', 'call',     'Community briefing invite',    'Confirmed attendance; requested agenda.');
-      pushInt('i_demo_4', 'c_demo_2', '2025-09-22T02:00:00Z', 'email_out','Follow-up actions',            'Sent notes and next steps re: network tie-in.');
-    }
-
     function derive(st) {
       const orgMap = new Map((st.organisations||[]).map(o => [o.id, o]));
       const contactMap = new Map((st.contacts||[]).map(c => [c.id, c]));
 
-      // Last contact per contact from interactions
       const intsByContact = new Map();
       (st.interactions||[]).forEach(i => {
         if (!i || !i.contact_id) return;
@@ -344,7 +309,6 @@
         c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
       });
 
-      // Per-organisation aggregates
       const intsByOrg = new Map();
       (st.interactions||[]).forEach(i => {
         const contact = contactMap.get(i.contact_id);
@@ -363,7 +327,6 @@
       });
     }
 
-    // Helper: fix wrap height to show about N rows (plus header)
     function adjustWrapHeight(wrapId, tableId, rowsToShow) {
       const wrap  = document.getElementById(wrapId);
       const table = document.getElementById(tableId);
@@ -485,12 +448,10 @@
       renderOrgs(filtered.organisations || []);
       renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)) || []);
 
-      // Toggle labels
       const b1 = document.getElementById('toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
       const b2 = document.getElementById('toggleOrgs');     if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
       const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
 
-      // Counts
       const cc = document.getElementById('countContacts'); if (cc) cc.textContent = (filtered.contacts||[]).length;
       const co = document.getElementById('countOrgs');     if (co) co.textContent = (filtered.organisations||[]).length;
       const ci = document.getElementById('countInts');     if (ci) ci.textContent = (filtered.interactions||[]).length;
@@ -516,7 +477,6 @@
       a.href = url; a.download = 'contacts_export.csv'; a.click(); URL.revokeObjectURL(url);
     }
 
-    // Sorting (by clicking table headers with a data-sort attr)
     function makeSortable(tableId, accessor) {
       const thead = document.querySelector(`#${tableId} thead`);
       if (!thead) return;
@@ -550,7 +510,7 @@
 
         const wrap = document.getElementById(targetWrapId);
         if (!wrap) return;
-        const delta = wrap.clientHeight - 40; // almost a page
+        const delta = wrap.clientHeight - 40;
         wrap.scrollBy({ top: e.key === 'PageDown' ? delta : -delta, behavior: 'smooth' });
         e.preventDefault();
       }
@@ -591,28 +551,24 @@
       });
     })();
 
-    // Init
+    // Init (demo filler disabled)
     (async function init(){
       try {
         state = await loadData();
-// injectDemoIfEmpty(state);   // disable demo filler
-derive(state);
-
+        // injectDemoIfEmpty(state); // disabled so the UI reflects your SharePoint JSON exactly
+        derive(state);
         filtered.contacts = [...(state.contacts||[])];
         filtered.organisations = [...(state.organisations||[])];
         filtered.interactions = [...(state.interactions||[])];
         renderAll();
 
-        // Search & export
         document.getElementById('search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
         document.getElementById('exportBtn')?.addEventListener('click', exportCSV);
 
-        // Sorting hooks
         makeSortable('contactsTable', ()=>filtered.contacts);
         makeSortable('orgsTable',     ()=>filtered.organisations);
         makeSortable('intsTable',     ()=>filtered.interactions);
 
-        // Expand/Collapse toggles
         document.getElementById('toggleContacts')?.addEventListener('click', ()=>{ expand.contacts=!expand.contacts; renderAll(); });
         document.getElementById('toggleOrgs')?.addEventListener('click',     ()=>{ expand.organisations=!expand.organisations; renderAll(); });
         document.getElementById('toggleInts')?.addEventListener('click',     ()=>{ expand.interactions=!expand.interactions; renderAll(); });
