@@ -281,7 +281,7 @@
 
     async function loadData() {
       try {
-        const resp = await fetch('data/data.json', { cache: 'no-store' });
+const resp = await fetch('data/data.json?v=' + Date.now(), { cache: 'no-store' });
         if (resp.ok) {
           const json = await resp.json();
           if (json && (Array.isArray(json.contacts) || Array.isArray(json.organisations))) return json;
