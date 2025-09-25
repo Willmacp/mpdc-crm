@@ -4,116 +4,43 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>MPDC Stakeholder CRM</title>
-  <!-- Tailwind CDN for utility help -->
+  <meta name="x-build" content="r14-sp"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --accent:#5f809b;        /* main blue-grey */
-      --accent-dark:#4a667f;   /* slightly darker */
-      --accent-50:#eef3f6;     /* very light tint for headers */
-      --gray:#6d6e71;          /* brand grey */
-      --text:#1f2937;          /* neutral dark for body text */
-      --border:#e5e7eb;        /* light borders */
-      --row-alt:#fafbfc;       /* zebra */
-      --row-hover:#f7fafc;     /* subtle hover */
-      --white:#ffffff;
-    }
-
-    html { scroll-behavior:smooth; }
-    body { color: var(--text); }
-
-    /* Header: full accent background, white text */
-    header.site-header {
-      background: linear-gradient(180deg, var(--accent), var(--accent-dark));
-      color: var(--white);
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-    .nav-link {
-      color:#fff; opacity:.95; padding:.35rem .6rem; border-radius:999px; transition:all .15s ease;
-      border:1px solid transparent;
-    }
-    .nav-link:hover { opacity:1; background:#fff; color:var(--accent); border-color:#ffffff33; text-decoration:none; }
-    .nav-link.active { background:#fff; color:var(--accent); border-color:#ffffff55; }
-
-    /* Buttons */
-    .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .9rem;
-           border-radius:.55rem; font-weight:600; transition: all .15s ease; }
-    .btn-accent { background:var(--accent); color:#fff; border:1px solid var(--accent); }
-    .btn-accent:hover{ background:var(--accent-dark); border-color:var(--accent-dark); transform: translateY(-1px); }
-    .btn-outline { background:#fff; color:var(--accent); border:1px solid var(--accent); }
-    .btn-outline:hover{ background:var(--accent-50); }
-
-    /* Data containers */
-    .datawrap { overflow:auto; background:#fff; border:1px solid var(--border); border-radius:0.75rem; }
-
-    /* Tables */
-    .table-ish { width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
-    .table-ish thead th {
-      position:sticky; top:0; z-index:10; background:var(--accent-50);
-      border-bottom:1px solid var(--border); padding:0.6rem; text-align:left;
-      white-space:nowrap; font-weight:700; color:#273646; letter-spacing:.01em;
-      user-select:none;
-    }
-    .table-ish tbody td { border-bottom:1px solid var(--border); padding:0.55rem; vertical-align:middle; }
-    .table-ish tbody tr:last-child td { border-bottom:0; }
-    .table-ish tbody tr:nth-child(even) { background:var(--row-alt); }
-
-    .row { transition:background .15s ease, box-shadow .15s ease; }
-    .row:hover { background:var(--row-hover); }
-    .row:hover td:first-child, .row:focus-within td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-
-    .cell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-
-    /* Topic chips */
-    .chip { display:inline-block; padding:.2rem .5rem; font-size:.75rem; border-radius:999px;
-            background:#fff; border:1px solid var(--accent); color:#273646; }
-    .chip:hover{ background:var(--accent-50); }
-
-    /* Column width hints */
-    .w-name{ width:180px; }
-    .w-org{ width:220px; }
-    .w-group{ width:160px; }
-    .w-role{ width:160px; }
-    .w-email{ width:220px; }
-    .w-phone{ width:140px; }
-    .w-mpdc{ width:160px; }
-    .w-last{ width:150px; }
-    .w-subj{ width:220px; }
-    .w-notes{ width:260px; }
-
-    /* Scrollbar theming */
-    .datawrap::-webkit-scrollbar{ height:12px; width:12px; }
-    .datawrap::-webkit-scrollbar-track{ background:#fff; border-radius:10px; }
-    .datawrap::-webkit-scrollbar-thumb{
-      background:linear-gradient(180deg, var(--accent), var(--accent-dark));
-      border:3px solid #fff; border-radius:10px;
-    }
-    .datawrap::-webkit-scrollbar-thumb:hover{ filter:brightness(.95); }
-
-    /* Section titles + badges */
-    .section-title { color:#273646; }
-    .badge {
-      display:inline-block; margin-left:.5rem; font-size:.75rem; line-height:1; padding:.25rem .5rem;
-      border-radius:999px; background:var(--accent-50); color:#273646; border:1px solid var(--accent);
-      vertical-align:middle;
-    }
-
-    /* Footer */
-    footer.site-footer {
-      background: var(--accent-50);
-      border-top: 1px solid var(--border);
-      color: #334155;
-    }
-
-    /* Floating back-to-top button */
-    #scrollTopBtn{
-      position:fixed; right:16px; bottom:16px; z-index:50;
-      opacity:0; pointer-events:none; transform: translateY(8px);
-      transition: all .2s ease;
-    }
-    #scrollTopBtn.show{
-      opacity:1; pointer-events:auto; transform: translateY(0);
-    }
+    :root{ --accent:#5f809b; --accent-dark:#4a667f; --accent-50:#eef3f6; --gray:#6d6e71; --text:#1f2937; --border:#e5e7eb; --row-alt:#fafbfc; --row-hover:#f7fafc; }
+    html{scroll-behavior:smooth;} body{color:var(--text);}
+    header.site-header{background:linear-gradient(180deg,var(--accent),var(--accent-dark));color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    .nav-link{color:#fff;opacity:.95;padding:.35rem .6rem;border-radius:999px;transition:all .15s;border:1px solid transparent;}
+    .nav-link:hover{opacity:1;background:#fff;color:var(--accent);border-color:#ffffff33;text-decoration:none;}
+    .nav-link.active{background:#fff;color:var(--accent);border-color:#ffffff55;}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .9rem;border-radius:.55rem;font-weight:600;transition:all .15s;}
+    .btn-accent{background:var(--accent);color:#fff;border:1px solid var(--accent);}
+    .btn-accent:hover{background:var(--accent-dark);border-color:var(--accent-dark);transform:translateY(-1px);}
+    .btn-outline{background:#fff;color:var(--accent);border:1px solid var(--accent);}
+    .btn-outline:hover{background:var(--accent-50);}
+    .datawrap{overflow:auto;background:#fff;border:1px solid var(--border);border-radius:.75rem;}
+    .table-ish{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;}
+    .table-ish thead th{position:sticky;top:0;z-index:10;background:var(--accent-50);border-bottom:1px solid var(--border);padding:.6rem;text-align:left;white-space:nowrap;font-weight:700;color:#273646;letter-spacing:.01em;user-select:none;}
+    .table-ish tbody td{border-bottom:1px solid var(--border);padding:.55rem;vertical-align:middle;}
+    .table-ish tbody tr:last-child td{border-bottom:0;}
+    .table-ish tbody tr:nth-child(even){background:var(--row-alt);}
+    .row{transition:background .15s,box-shadow .15s;}
+    .row:hover{background:var(--row-hover);}
+    .row:hover td:first-child{box-shadow: inset 3px 0 0 var(--accent);}
+    .cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+    .chip{display:inline-block;padding:.2rem .5rem;font-size:.75rem;border-radius:999px;background:#fff;border:1px solid var(--accent);color:#273646;}
+    .chip:hover{background:var(--accent-50);}
+    .w-name{width:180px}.w-org{width:220px}.w-group{width:160px}.w-role{width:160px}.w-email{width:220px}.w-phone{width:140px}.w-mpdc{width:160px}.w-last{width:150px}.w-subj{width:220px}.w-notes{width:260px}
+    .datawrap::-webkit-scrollbar{height:12px;width:12px}.datawrap::-webkit-scrollbar-track{background:#fff;border-radius:10px}
+    .datawrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--accent),var(--accent-dark));border:3px solid #fff;border-radius:10px}
+    .datawrap::-webkit-scrollbar-thumb:hover{filter:brightness(.95)}
+    .section-title{color:#273646;}
+    .badge{display:inline-block;margin-left:.5rem;font-size:.75rem;line-height:1;padding:.25rem .5rem;border-radius:999px;background:var(--accent-50);color:#273646;border:1px solid var(--accent);vertical-align:middle;}
+    footer.site-footer{background:var(--accent-50);border-top:1px solid var(--border);color:#334155;}
+    #scrollTopBtn{position:fixed;right:16px;bottom:16px;z-index:50;opacity:0;pointer-events:none;transform:translateY(8px);transition:all .2s;}
+    #scrollTopBtn.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+    #errbox{position:fixed;bottom:12px;right:12px;max-width:560px;background:#111;color:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);font:12px ui-sans-serif,system-ui;display:none;z-index:9999;white-space:pre-wrap}
+    .muted{opacity:.7}
   </style>
 </head>
 <body class="bg-gray-50">
@@ -154,14 +81,14 @@
         <table id="contactsTable" class="table-ish">
           <thead>
             <tr>
-              <th class="cell w-name"  data-sort="display_name">Name</th>
-              <th class="cell w-org"   data-sort="org_name">Organisation</th>
-              <th class="cell w-group" data-sort="group">Group</th>
-              <th class="cell w-role"  data-sort="job_title">Role</th>
-              <th class="cell w-email" data-sort="email">Email</th>
-              <th class="cell w-phone" data-sort="phone">Phone</th>
-              <th class="cell w-mpdc"  data-sort="mpdc_contact">MPDC contact</th>
-              <th class="cell w-last"  data-sort="last_contact_at">Last contact</th>
+              <th class="cell w-name">Name</th>
+              <th class="cell w-org">Organisation</th>
+              <th class="cell w-group">Group</th>
+              <th class="cell w-role">Role</th>
+              <th class="cell w-email">Email</th>
+              <th class="cell w-phone">Phone</th>
+              <th class="cell w-mpdc">MPDC contact</th>
+              <th class="cell w-last">Last contact</th>
               <th class="cell w-subj">Last subject</th>
               <th class="cell w-notes">Notes</th>
             </tr>
@@ -185,9 +112,9 @@
         <table id="orgsTable" class="table-ish">
           <thead>
             <tr>
-              <th class="cell" data-sort="name">Organisation</th>
-              <th class="cell" data-sort="contact_count">Contacts</th>
-              <th class="cell" data-sort="last_contact_at">Last contact</th>
+              <th class="cell">Organisation</th>
+              <th class="cell">Contacts</th>
+              <th class="cell">Last contact</th>
               <th class="cell">Recent topics</th>
             </tr>
           </thead>
@@ -210,11 +137,11 @@
         <table id="intsTable" class="table-ish">
           <thead>
             <tr>
-              <th class="cell" data-sort="occurred_at">Date</th>
+              <th class="cell">Date</th>
               <th class="cell">Contact</th>
               <th class="cell">Subject</th>
               <th class="cell">Summary</th>
-              <th class="cell" data-sort="type">Type</th>
+              <th class="cell">Type</th>
             </tr>
           </thead>
           <tbody id="intsBody"></tbody>
@@ -225,358 +152,182 @@
 
   <footer class="site-footer">
     <div class="max-w-7xl mx-auto px-4 py-6 text-sm flex items-center justify-between gap-3 flex-wrap">
-      <div>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits.</div>
+      <div>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits. <span class="muted">Build r14 (SP)</span></div>
       <a class="btn btn-outline" href="#top">Back to top</a>
     </div>
   </footer>
 
-  <!-- Floating back-to-top -->
   <button id="scrollTopBtn" class="btn btn-accent" aria-label="Back to top" title="Back to top">▲</button>
-
-  <!-- Fallback sample data (used only if /data/data.json is missing) -->
-  <script id="sample-data" type="application/json">{
-    "organisations": [],
-    "contacts": [],
-    "interactions": []
-  }</script>
+  <div id="errbox"></div>
+  <script id="sample-data" type="application/json">{"organisations":[],"contacts":[],"interactions":[]}</script>
 
   <script>
-    'use strict';
-    // Tiny error box so blank pages never hide errors
-    (function(){
-      const box = document.createElement('div');
-      box.id = 'errbox';
-      box.style.cssText = 'position:fixed;bottom:12px;right:12px;max-width:520px;background:#111;color:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);font:12px ui-sans-serif,system-ui;display:none;z-index:9999;white-space:pre-wrap;';
-      document.addEventListener('DOMContentLoaded', ()=>document.body.appendChild(box));
-      function show(msg){ box.style.display='block'; box.textContent = msg; }
-      window.addEventListener('error', e=> show('JS error: '+ (e.message||'') ));
-    })();
+  'use strict';
 
-    // Helpers
-    const $  = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-    const fmtDate = iso => iso ? new Date(iso).toLocaleString() : '';
-    const safe = s => (s??'').toString();
+  const Err=(()=>{const b=document.getElementById('errbox');return{show:m=>{b.style.display='block';b.textContent=String(m);console.error(m)},log:(...a)=>console.log(...a)}})();
 
-    // CSV export util
-    function toCSV(rows, columns) {
-      const esc = v => {
-        const s = (v==null ? '' : String(v));
-        if (/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
-        return s;
-      };
-      const head = columns.map(c=>esc(c.header)).join(',');
-      const body = rows.map(r=>columns.map(c=>esc(c.get(r))).join(',')).join('\n');
-      return '\uFEFF' + head + '\n' + body; // BOM for Excel
-    }
+  // Robust array getter (handles SharePoint shapes like {body:[...]} or {value:[...]})
+  const toArr=v=>Array.isArray(v)?v:(Array.isArray(v?.body)?v.body:(Array.isArray(v?.value)?v.value:[]));
+  const safe=s=>(s??'').toString();
+  const fmtDate=iso=>iso?new Date(iso).toLocaleString():'';
+  const ROWS_WHEN_COLLAPSED=5;
 
-    // Collapsed & expanded behavior
-    const ROWS_WHEN_COLLAPSED = 5;
-    const ROWS_VISIBLE_EXPANDED = 20;
+  // 🔗 SharePoint edition: only fetch from same folder
+  const SOURCE="./data.json";
 
-    // State
-    let state = { organisations: [], contacts: [], interactions: [] };
-    let filtered = { contacts: [], organisations: [], interactions: [] };
-    let expand = { contacts: false, organisations: false, interactions: false };
+  let state={organisations:[],contacts:[],interactions:[]};
+  let filtered={organisations:[],contacts:[],interactions:[]};
+  let expand={organisations:false,contacts:false,interactions:false};
 
-    async function loadData() {
-      try {
-const resp = await fetch('data/data.json?v=' + Date.now(), { cache: 'no-store' });
-        if (resp.ok) {
-          const json = await resp.json();
-          if (json && (Array.isArray(json.contacts) || Array.isArray(json.organisations))) return json;
-        }
-      } catch (e) { /* fall back below */ }
-      try { return JSON.parse(document.getElementById('sample-data').textContent); }
-      catch { return {organisations:[],contacts:[],interactions:[]}; }
-    }
+  function trimWeirdKeys(o){Object.keys(o||{}).forEach(k=>{const tk=k.trim();if(tk!==k && !(tk in o)){o[tk]=o[k];delete o[k];}});return o;}
+  function normalizeGroup(v){if(Array.isArray(v)){return v.map(x=>(x?.Value||x?.value||x?.Title||x?.title||'')).filter(Boolean).join(', ')}return (v??'').toString()}
+  function fallbackName(c){const email=(c.email||'').split(';')[0].trim();const em=email.includes('@')?email.split('@')[0]:'';return (c.display_name||c.name||c.Title||em||c.organisation||'').trim();}
 
-    function derive(st) {
-      const orgMap = new Map((st.organisations||[]).map(o => [o.id, o]));
-      const contactMap = new Map((st.contacts||[]).map(c => [c.id, c]));
+  function coerceData(raw){
+    if(Array.isArray(raw)) return {organisations:[],contacts:raw,interactions:[]};
+    if(!raw||typeof raw!=='object') return {organisations:[],contacts:[],interactions:[]};
+    const contacts = toArr(raw.contacts||raw.Contacts||raw.items||raw.value||raw);
+    const organisations = toArr(raw.organisations||raw.Organisations||[]);
+    const interactions = toArr(raw.interactions||raw.Interactions||[]);
+    return {organisations,contacts,interactions};
+  }
 
-      const intsByContact = new Map();
-      (st.interactions||[]).forEach(i => {
-        if (!i || !i.contact_id) return;
-        (intsByContact.get(i.contact_id) || intsByContact.set(i.contact_id, []).get(i.contact_id)).push(i);
-      });
-      (st.contacts||[]).forEach(c => {
-        const list = (intsByContact.get(c.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        c.last_contact_at = list[0]?.occurred_at || c.latest_interaction_at || c.latest_interaction_date || null;
-        c.last_subject = list[0]?.subject || c.latest_interaction_subject || c.latest_interaction_summary || '';
-        c.org_name = orgMap.get(c.organisation_id)?.name || c.organisation || '';
-        c.display_name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.name || '';
-        c.group = c.group || c.group_name || c.category || c.segment || c.department || c.team || '';
-      });
-
-      const intsByOrg = new Map();
-      (st.interactions||[]).forEach(i => {
-        const contact = contactMap.get(i.contact_id);
-        const orgId = contact?.organisation_id;
-        if (!orgId) return;
-        (intsByOrg.get(orgId) || intsByOrg.set(orgId, []).get(orgId)).push(i);
-      });
-      (st.organisations||[]).forEach(o => {
-        const list = (intsByOrg.get(o.id) || []).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-        o.last_contact_at = list[0]?.occurred_at || null;
-        o.contact_count = (st.contacts||[]).filter(c=>c.organisation_id===o.id).length;
-        const recentSubjects = list.slice(0,6).map(i=>i.subject||'').join(' ');
-        const tokens = recentSubjects.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x && x.length>3);
-        const freq = {}; tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
-        o.topics = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
-      });
-    }
-
-    function adjustWrapHeight(wrapId, tableId, rowsToShow) {
-      const wrap  = document.getElementById(wrapId);
-      const table = document.getElementById(tableId);
-      if (!wrap || !table) return;
-
-      const thead = table.querySelector('thead');
-      const headH = thead ? thead.offsetHeight : 40;
-      const firstRow = table.querySelector('tbody tr');
-      const rowH = firstRow ? firstRow.offsetHeight : 40;
-
-      wrap.style.maxHeight = (headH + rowH * rowsToShow) + 'px';
-    }
-
-    function renderSummary() {
-      const totalContacts = (state.contacts||[]).length;
-      const totalOrgs = (state.organisations||[]).length;
-      const last7 = (state.interactions||[]).filter(i => (Date.now() - new Date(i.occurred_at)) < 7*864e5).length;
-      document.getElementById('summary').innerHTML = `
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Contacts</div><div class="text-2xl font-semibold">${totalContacts}</div></div>
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Organisations</div><div class="text-2xl font-semibold">${totalOrgs}</div></div>
-        <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Interactions (7 days)</div><div class="text-2xl font-semibold">${last7}</div></div>`;
-    }
-
-    function renderContacts(rowsSrc) {
-      const list = rowsSrc || [];
-      const wrap = document.getElementById('contactsWrap');
-      const visible = expand.contacts ? list : list.slice(0, 5);
-
-      const rows = visible.map(c=>`
-        <tr class="row cursor-pointer" data-id="${safe(c.id)}">
-          <td class="cell w-name"  title="${safe(c.display_name)}">${safe(c.display_name)}</td>
-          <td class="cell w-org"   title="${safe(c.org_name)}">${safe(c.org_name)}</td>
-          <td class="cell w-group" title="${safe(c.group)}">${safe(c.group)}</td>
-          <td class="cell w-role"  title="${safe(c.job_title)}">${safe(c.job_title)}</td>
-          <td class="cell w-email" title="${safe(c.email)}"><a class="hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a></td>
-          <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
-          <td class="cell w-mpdc"  title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
-          <td class="cell w-last"  title="${c.last_contact_at ? fmtDate(c.last_contact_at) : ''}">${c.last_contact_at ? fmtDate(c.last_contact_at) : '—'}</td>
-          <td class="cell w-subj"  title="${safe(c.last_subject)}">${safe(c.last_subject)}</td>
-          <td class="cell w-notes" title="${safe(c.notes)}">${safe(c.notes)}</td>
-        </tr>`).join('');
-      const body = document.getElementById('contactsBody');
-      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
-
-      if (wrap) {
-        if (expand.contacts) { adjustWrapHeight('contactsWrap', 'contactsTable', 20); }
-        else { wrap.style.maxHeight = '12rem'; }
-      }
-    }
-
-    function renderOrgs(rowsSrc) {
-      const list = rowsSrc || [];
-      const wrap = document.getElementById('orgsWrap');
-      const visible = expand.organisations ? list : list.slice(0, 5);
-
-      const rows = visible.map(o=>`
-        <tr class="row">
-          <td class="cell" title="${safe(o.name)}">${safe(o.name)}</td>
-          <td class="cell" title="${o.contact_count||0}">${o.contact_count||0}</td>
-          <td class="cell" title="${o.last_contact_at ? fmtDate(o.last_contact_at) : ''}">${o.last_contact_at ? fmtDate(o.last_contact_at) : '—'}</td>
-          <td class="cell">${(o.topics||[]).map(t=>`<span class="chip">${t}</span>`).join(' ')}</td>
-        </tr>`).join('');
-      const body = document.getElementById('orgsBody');
-      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
-
-      if (wrap) {
-        if (expand.organisations) { adjustWrapHeight('orgsWrap', 'orgsTable', 20); }
-        else { wrap.style.maxHeight = '12rem'; }
-      }
-    }
-
-    function renderInts(rowsSrc) {
-      const list = rowsSrc || [];
-      const wrap = document.getElementById('intsWrap');
-      const visible = expand.interactions ? list : list.slice(0, 5);
-
-      const contactMap = new Map((state.contacts||[]).map(c => [c.id, c]));
-      const rows = visible.map(i=>{
-        const c = contactMap.get(i.contact_id);
-        const who = c ? safe(c.display_name) : '';
-        return `
-        <tr class="row">
-          <td class="cell" title="${i.occurred_at ? fmtDate(i.occurred_at) : ''}">${fmtDate(i.occurred_at)}</td>
-          <td class="cell" title="${who}">${who}</td>
-          <td class="cell" title="${safe(i.subject)}">${safe(i.subject)}</td>
-          <td class="cell" title="${safe(i.summary)}">${safe(i.summary)}</td>
-          <td class="cell" title="${safe(i.type)}">${safe(i.type)}</td>
-        </tr>`;
-      }).join('');
-      const body = document.getElementById('intsBody');
-      if (body) body.innerHTML = rows || `<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
-
-      if (wrap) {
-        if (expand.interactions) { adjustWrapHeight('intsWrap', 'intsTable', 20); }
-        else { wrap.style.maxHeight = '12rem'; }
-      }
-    }
-
-    function applySearch(q) {
-      const needle = (q||'').trim().toLowerCase();
-      if (!needle) {
-        filtered.contacts = [...(state.contacts||[])];
-        filtered.organisations = [...(state.organisations||[])];
-        filtered.interactions = [...(state.interactions||[])];
-        return;
-      }
-      const inContact = c => [c.display_name, c.email, c.org_name, c.group, c.job_title, c.mpdc_contact, c.notes].some(v=>safe(v).toLowerCase().includes(needle));
-      filtered.contacts = (state.contacts||[]).filter(inContact);
-      filtered.organisations = (state.organisations||[]).filter(o=> safe(o.name).toLowerCase().includes(needle));
-      filtered.interactions = (state.interactions||[]).filter(i=>{
-        const c = (state.contacts||[]).find(x=>x.id===i.contact_id);
-        return [i.subject, i.summary, c?.display_name, c?.email].some(v=>safe(v).toLowerCase().includes(needle));
-      });
-    }
-
-    function renderAll() {
-      renderSummary();
-      renderContacts(filtered.contacts || []);
-      renderOrgs(filtered.organisations || []);
-      renderInts(filtered.interactions.sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)) || []);
-
-      const b1 = document.getElementById('toggleContacts'); if (b1) b1.textContent = expand.contacts ? 'Collapse list' : 'Expand list';
-      const b2 = document.getElementById('toggleOrgs');     if (b2) b2.textContent = expand.organisations ? 'Collapse list' : 'Expand list';
-      const b3 = document.getElementById('toggleInts');     if (b3) b3.textContent = expand.interactions ? 'Collapse list' : 'Expand list';
-
-      const cc = document.getElementById('countContacts'); if (cc) cc.textContent = (filtered.contacts||[]).length;
-      const co = document.getElementById('countOrgs');     if (co) co.textContent = (filtered.organisations||[]).length;
-      const ci = document.getElementById('countInts');     if (ci) ci.textContent = (filtered.interactions||[]).length;
-    }
-
-    function exportCSV() {
-      const cols = [
-        { header: 'Name',          get: r => r.display_name || '' },
-        { header: 'Organisation',  get: r => r.org_name || '' },
-        { header: 'Group',         get: r => r.group || '' },
-        { header: 'Role',          get: r => r.job_title || '' },
-        { header: 'Email',         get: r => r.email || '' },
-        { header: 'Phone',         get: r => r.phone || '' },
-        { header: 'MPDC contact',  get: r => r.mpdc_contact || '' },
-        { header: 'Last contact',  get: r => r.last_contact_at || '' },
-        { header: 'Last subject',  get: r => r.last_subject || '' },
-        { header: 'Notes',         get: r => r.notes || '' }
-      ];
-      const csv = toCSV(filtered.contacts || [], cols);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'contacts_export.csv'; a.click(); URL.revokeObjectURL(url);
-    }
-
-    function makeSortable(tableId, accessor) {
-      const thead = document.querySelector(`#${tableId} thead`);
-      if (!thead) return;
-      let dir = 1; let key = null;
-      thead.addEventListener('click', e => {
-        const th = e.target.closest('th'); if (!th || !th.dataset.sort) return;
-        const newKey = th.dataset.sort; dir = key === newKey ? -dir : 1; key = newKey;
-        const arr = accessor() || [];
-        arr.sort((a,b)=>{
-          if (['last_contact_at','occurred_at'].includes(key)) return (new Date(a[key]) - new Date(b[key])) * dir;
-          const av = (a[key] ?? '').toString().toLowerCase();
-          const bv = (b[key] ?? '').toString().toLowerCase();
-          if (av>bv) return dir; if (av<bv) return -dir; return 0;
-        });
-        if (tableId==='contactsTable') renderContacts(arr);
-        if (tableId==='orgsTable')     renderOrgs(arr);
-        if (tableId==='intsTable')     renderInts(arr);
-      });
-    }
-
-    // Keyboard: PageUp/PageDown scroll inside expanded section
-    document.addEventListener('keydown', (e) => {
-      if (['PageDown','PageUp'].includes(e.key)) {
-        const targetWrapId = expand.contacts ? 'contactsWrap'
-                             : expand.organisations ? 'orgsWrap'
-                             : expand.interactions ? 'intsWrap'
-                             : null;
-        if (!targetWrapId) return;
-        const tag = (document.activeElement?.tagName || '').toLowerCase();
-        if (['input','textarea','select'].includes(tag)) return;
-
-        const wrap = document.getElementById(targetWrapId);
-        if (!wrap) return;
-        const delta = wrap.clientHeight - 40;
-        wrap.scrollBy({ top: e.key === 'PageDown' ? delta : -delta, behavior: 'smooth' });
-        e.preventDefault();
-      }
+  function normalizeData(raw){
+    const c=coerceData(raw);
+    const contacts=toArr(c.contacts).map(it=>{const x=trimWeirdKeys({...it});
+      x.group=normalizeGroup(x.group); x.display_name=fallbackName(x);
+      x.job_title=x.job_title??x.role??x.position??''; x.mpdc_contact=x.mpdc_contact??x.owner??'';
+      x.email=(x.email||'').toString(); x.phone=(x.phone||'').toString();
+      x.org_name=x.org_name||x.organisation||'';
+      x.last_subject=x.last_subject||x['last_subject']||x['last_subject     ']||x.latest_interaction_subject||x.latest_interaction_summary||'';
+      x.latest_interaction_at=x.latest_interaction_at||x.latest_interaction_date||null;
+      return x;
     });
+    const orgs=toArr(c.organisations).map(o=>({id:o.id||o.name||o.title||'',name:o.name||o.title||''}));
+    const ints=toArr(c.interactions).map(i=>trimWeirdKeys({...i}));
+    return {organisations:orgs,contacts,interactions:ints};
+  }
 
-    // Floating Back to Top
-    (function(){
-      const btn = document.getElementById('scrollTopBtn');
-      const onScroll = () => {
-        if (window.scrollY > 500) btn.classList.add('show'); else btn.classList.remove('show');
-      };
-      btn.addEventListener('click', ()=> window.scrollTo({ top:0, behavior:'smooth' }));
-      window.addEventListener('scroll', onScroll, { passive:true });
-      onScroll();
-    })();
+  function derive(st){
+    const orgs=toArr(st.organisations), contacts=toArr(st.contacts), ints=toArr(st.interactions);
+    const orgMap=new Map(orgs.map(o=>[o.id,o])); const contactMap=new Map(contacts.map(c=>[c.id,c]));
+    const byC=new Map(); ints.forEach(i=>{if(!i?.contact_id) return;(byC.get(i.contact_id)||byC.set(i.contact_id,[]).get(i.contact_id)).push(i);});
+    contacts.forEach(c=>{const list=(byC.get(c.id)||[]).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+      c.last_contact_at=list[0]?.occurred_at||c.latest_interaction_at||null;
+      c.last_subject=c.last_subject||list[0]?.subject||'';
+      c.org_name=c.org_name||orgMap.get(c.organisation_id)?.name||c.organisation||'';
+    });
+    const byO=new Map(); ints.forEach(i=>{const ct=contactMap.get(i.contact_id);const oid=ct?.organisation_id;if(!oid)return;(byO.get(oid)||byO.set(oid,[]).get(oid)).push(i);});
+    orgs.forEach(o=>{const list=(byO.get(o.id)||[]).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
+      o.last_contact_at=list[0]?.occurred_at||null;
+      o.contact_count=contacts.filter(c=>c.organisation_id===o.id).length;
+      const subjects=list.slice(0,6).map(i=>i.subject||'').join(' ');
+      const tokens=subjects.toLowerCase().split(/[^a-z0-9]+/).filter(t=>t&&t.length>3);
+      const freq={}; tokens.forEach(t=>freq[t]=(freq[t]||0)+1);
+      o.topics=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w])=>w);
+    });
+    st.organisations=orgs; st.contacts=contacts; st.interactions=ints;
+  }
 
-    // Active section highlighting in nav
-    (function(){
-      const links = {
-        contacts: document.getElementById('nav-contacts'),
-        organisations: document.getElementById('nav-organisations'),
-        interactions: document.getElementById('nav-interactions')
-      };
-      const observer = new IntersectionObserver((entries)=>{
-        entries.forEach(entry=>{
-          const id = entry.target.id;
-          if (links[id]) {
-            if (entry.isIntersecting) {
-              Object.values(links).forEach(a=>a.classList.remove('active'));
-              links[id].classList.add('active');
-            }
-          }
-        });
-      }, { root:null, rootMargin:'-40% 0px -55% 0px', threshold:0 });
-      ['contacts','organisations','interactions'].forEach(id=>{
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      });
-    })();
+  function adjustWrapHeight(wrapId,tableId,rows){const w=document.getElementById(wrapId),t=document.getElementById(tableId);if(!w||!t)return;const h=t.querySelector('thead')?.offsetHeight||40;const r=t.querySelector('tbody tr')?.offsetHeight||40;w.style.maxHeight=(h+r*rows)+'px'}
 
-    // Init (demo filler disabled)
-    (async function init(){
-      try {
-        state = await loadData();
-        // injectDemoIfEmpty(state); // disabled so the UI reflects your SharePoint JSON exactly
-        derive(state);
-        filtered.contacts = [...(state.contacts||[])];
-        filtered.organisations = [...(state.organisations||[])];
-        filtered.interactions = [...(state.interactions||[])];
-        renderAll();
+  function renderContacts(list){
+    list=toArr(list); const w=document.getElementById('contactsWrap'); const vis=expand.contacts?list:list.slice(0,5);
+    const rows=vis.map(c=>`<tr class="row">
+      <td class="cell w-name"  title="${safe(c.display_name)}">${safe(c.display_name)}</td>
+      <td class="cell w-org"   title="${safe(c.org_name)}">${safe(c.org_name)}</td>
+      <td class="cell w-group" title="${safe(c.group)}">${safe(c.group)}</td>
+      <td class="cell w-role"  title="${safe(c.job_title)}">${safe(c.job_title)}</td>
+      <td class="cell w-email" title="${safe(c.email)}">${c.email?`<a class="hover:underline" href="mailto:${safe(c.email)}">${safe(c.email)}</a>`:''}</td>
+      <td class="cell w-phone" title="${safe(c.phone)}">${safe(c.phone)}</td>
+      <td class="cell w-mpdc"  title="${safe(c.mpdc_contact)}">${safe(c.mpdc_contact)}</td>
+      <td class="cell w-last"  title="${c.last_contact_at?fmtDate(c.last_contact_at):''}">${c.last_contact_at?fmtDate(c.last_contact_at):'—'}</td>
+      <td class="cell w-subj"  title="${safe(c.last_subject)}">${safe(c.last_subject)}</td>
+      <td class="cell w-notes" title="${safe(c.notes)}">${safe(c.notes)}</td>
+    </tr>`).join('');
+    document.getElementById('contactsBody').innerHTML=rows||`<tr><td class="p-3 text-center text-gray-500" colspan="10">No contacts</td></tr>`;
+    if(w){adjustWrapHeight('contactsWrap','contactsTable',expand.contacts?20:5)}
+  }
 
-        document.getElementById('search')?.addEventListener('input', (e)=>{ applySearch(e.target.value); renderAll(); });
-        document.getElementById('exportBtn')?.addEventListener('click', exportCSV);
+  function renderOrgs(list){
+    list=toArr(list); const w=document.getElementById('orgsWrap'); const vis=expand.organisations?list:list.slice(0,5);
+    const rows=vis.map(o=>`<tr class="row">
+      <td class="cell" title="${safe(o.name)}">${safe(o.name)}</td>
+      <td class="cell" title="${o.contact_count||0}">${o.contact_count||0}</td>
+      <td class="cell" title="${o.last_contact_at?fmtDate(o.last_contact_at):''}">${o.last_contact_at?fmtDate(o.last_contact_at):'—'}</td>
+      <td class="cell">${(o.topics||[]).map(t=>`<span class="chip">${t}</span>`).join(' ')}</td>
+    </tr>`).join('');
+    document.getElementById('orgsBody').innerHTML=rows||`<tr><td class="p-3 text-center text-gray-500" colspan="4">No organisations</td></tr>`;
+    if(w){adjustWrapHeight('orgsWrap','orgsTable',expand.organisations?20:5)}
+  }
 
-        makeSortable('contactsTable', ()=>filtered.contacts);
-        makeSortable('orgsTable',     ()=>filtered.organisations);
-        makeSortable('intsTable',     ()=>filtered.interactions);
+  function renderInts(list){
+    list=toArr(list); const w=document.getElementById('intsWrap'); const vis=expand.interactions?list:list.slice(0,5);
+    const cmap=new Map(toArr(state.contacts).map(c=>[c.id,c]));
+    const rows=vis.map(i=>{const c=cmap.get(i.contact_id); const who=c?safe(c.display_name):'';return `<tr class="row">
+      <td class="cell" title="${i.occurred_at?fmtDate(i.occurred_at):''}">${fmtDate(i.occurred_at)}</td>
+      <td class="cell" title="${who}">${who}</td>
+      <td class="cell" title="${safe(i.subject)}">${safe(i.subject)}</td>
+      <td class="cell" title="${safe(i.summary)}">${safe(i.summary)}</td>
+      <td class="cell" title="${safe(i.type)}">${safe(i.type)}</td>
+    </tr>`}).join('');
+    document.getElementById('intsBody').innerHTML=rows||`<tr><td class="p-3 text-center text-gray-500" colspan="5">No interactions</td></tr>`;
+    if(w){adjustWrapHeight('intsWrap','intsTable',expand.interactions?20:5)}
+  }
 
-        document.getElementById('toggleContacts')?.addEventListener('click', ()=>{ expand.contacts=!expand.contacts; renderAll(); });
-        document.getElementById('toggleOrgs')?.addEventListener('click',     ()=>{ expand.organisations=!expand.organisations; renderAll(); });
-        document.getElementById('toggleInts')?.addEventListener('click',     ()=>{ expand.interactions=!expand.interactions; renderAll(); });
-      } catch (e) {
-        const box = document.getElementById('errbox'); if (box) { box.style.display='block'; box.textContent = 'Init error: '+ (e.message||e); }
-        console.error(e);
-      }
-    })();
+  function renderSummary(){
+    const c=toArr(state.contacts).length, o=toArr(state.organisations).length, l7=toArr(state.interactions).filter(i=>i.occurred_at&&(Date.now()-new Date(i.occurred_at))<7*864e5).length;
+    document.getElementById('summary').innerHTML=`<div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Contacts</div><div class="text-2xl font-semibold">${c}</div></div>
+    <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Organisations</div><div class="text-2xl font-semibold">${o}</div></div>
+    <div class="p-4 bg-white border rounded-lg"><div class="text-sm text-[color:var(--gray)]">Interactions (7 days)</div><div class="text-2xl font-semibold">${l7}</div></div>`;
+  }
+
+  function applySearch(q){
+    const n=(q||'').trim().toLowerCase(), s=x=>(x??'').toString();
+    if(!n){ filtered.contacts=[...toArr(state.contacts)]; filtered.organisations=[...toArr(state.organisations)]; filtered.interactions=[...toArr(state.interactions)]; return;}
+    filtered.contacts=toArr(state.contacts).filter(c=>[c.display_name,c.email,c.org_name,c.group,c.job_title,c.mpdc_contact,c.notes].some(v=>s(v).toLowerCase().includes(n)));
+    filtered.organisations=toArr(state.organisations).filter(o=>s(o.name).toLowerCase().includes(n));
+    filtered.interactions=toArr(state.interactions).filter(i=>{const c=toArr(state.contacts).find(x=>x.id===i.contact_id);return [i.subject,i.summary,c?.display_name,c?.email].some(v=>s(v).toLowerCase().includes(n))});
+  }
+
+  function renderAll(){
+    renderSummary(); renderContacts(filtered.contacts||[]); renderOrgs(filtered.organisations||[]); renderInts((filtered.interactions||[]).sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at)));
+    document.getElementById('toggleContacts').textContent=expand.contacts?'Collapse list':'Expand list';
+    document.getElementById('toggleOrgs').textContent=expand.organisations?'Collapse list':'Expand list';
+    document.getElementById('toggleInts').textContent=expand.interactions?'Collapse list':'Expand list';
+    document.getElementById('countContacts').textContent=toArr(filtered.contacts).length;
+    document.getElementById('countOrgs').textContent=toArr(filtered.organisations).length;
+    document.getElementById('countInts').textContent=toArr(filtered.interactions).length;
+  }
+
+  (function(){const b=document.getElementById('scrollTopBtn');const onS=()=>{if(window.scrollY>500)b.classList.add('show');else b.classList.remove('show')};b.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));window.addEventListener('scroll',onS,{passive:true});onS()})();
+
+  (async function init(){
+    try{
+      const resp=await fetch(SOURCE+'?v='+Date.now(),{cache:'no-store'});
+      if(!resp.ok) throw new Error('HTTP '+resp.status+' fetching '+SOURCE);
+      const text=await resp.text();
+      const raw=JSON.parse(text);
+      state=normalizeData(raw); derive(state);
+      filtered.contacts=[...toArr(state.contacts)];
+      filtered.organisations=[...toArr(state.organisations)];
+      filtered.interactions=[...toArr(state.interactions)];
+      renderAll();
+    }catch(e){
+      Err.show('Init error (r14-sp): '+(e.message||e));
+      try{const fb=JSON.parse(document.getElementById('sample-data').textContent);state=fb;filtered=fb;renderAll()}catch{}
+    }
+    document.getElementById('search')?.addEventListener('input',e=>{applySearch(e.target.value);renderAll()});
+    document.getElementById('exportBtn')?.addEventListener('click',()=>{
+      const cols=[{header:'Name',get:r=>r.display_name||''},{header:'Organisation',get:r=>r.org_name||''},{header:'Group',get:r=>r.group||''},{header:'Role',get:r=>r.job_title||''},{header:'Email',get:r=>r.email||''},{header:'Phone',get:r=>r.phone||''},{header:'MPDC contact',get:r=>r.mpdc_contact||''},{header:'Last contact',get:r=>r.last_contact_at||''},{header:'Last subject',get:r=>r.last_subject||''},{header:'Notes',get:r=>r.notes||''}];
+      const esc=v=>{const s=(v==null?'':String(v));return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+      const head=cols.map(c=>esc(c.header)).join(','); const body=toArr(filtered.contacts).map(r=>cols.map(c=>esc(c.get(r))).join(',')).join('\n');
+      const csv='\uFEFF'+head+'\n'+body; const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='contacts_export.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('toggleContacts')?.addEventListener('click',()=>{expand.contacts=!expand.contacts;renderAll()});
+    document.getElementById('toggleOrgs')?.addEventListener('click',()=>{expand.organisations=!expand.organisations;renderAll()});
+    document.getElementById('toggleInts')?.addEventListener('click',()=>{expand.interactions=!expand.interactions;renderAll()});
+  })();
   </script>
 </body>
 </html>
