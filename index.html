@@ -256,7 +256,9 @@
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
+  // store selected groups by normalised key (lowercase)
   let selectedGroups = new Set();
+  // [{key, name, count}] sorted alphabetically
   let allGroups = [];
 
   const DEFAULT_COLUMNS = [
@@ -286,6 +288,7 @@
     return isNaN(d) ? null : d.toISOString();
   };
   const norm = v => clean(v).toLowerCase();
+
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
@@ -296,37 +299,88 @@
     }
   }
 
-  // === GROUP NORMALISATION ===
+  // === GROUP NORMALISATION (robust) ===
   function normalizeGroups(val){
     if(val == null) return [];
+
+    // Arrays (strings or SharePoint objects)
     if(Array.isArray(val)){
-      const arr = val.map(x=>{
-        if(x && typeof x==='object' && 'Value' in x) return clean(x.Value);
-        return clean(String(x));
-      }).filter(Boolean);
-      return dedupe(arr);
+      let arr = [];
+      for(const x of val){
+        if(x && typeof x==='object'){
+          // SharePoint multi-lookup like { Value: 'Group' } or { results: [...] }
+          if(Array.isArray(x.results)){ arr.push(...x.results.map(s=>clean(String(s)))); continue; }
+          if('Value' in x){ arr.push(clean(String(x.Value))); continue; }
+        }
+        arr.push(clean(String(x)));
+      }
+      return dedupeCI(arr).sort(ciCmp);
     }
+
+    // Objects with results array
+    if(typeof val === 'object' && Array.isArray(val.results)){
+      return dedupeCI(val.results.map(s=>clean(String(s)))).sort(ciCmp);
+    }
+
+    // Strings (lots of messy cases)
     let s = String(val).trim();
     if(!s) return [];
-    if((s.startsWith('[') && s.endsWith(']')) || (s.startsWith('["') && s.endsWith('"]'))){
+
+    // Replace smart quotes
+    s = s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
+
+    // If entire field is quoted, unquote it
+    if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))){
+      s = s.slice(1,-1).trim();
+    }
+
+    // JSON-like array: try strict parse
+    if(/^\[.*\]$/.test(s)){
       try{
-        const arr = JSON.parse(s).map(x=> clean(String(x))).filter(Boolean);
-        return dedupe(arr);
-      }catch{}
+        const parsed = JSON.parse(s);
+        if(Array.isArray(parsed)){
+          return dedupeCI(parsed.map(x=>clean(String(x)))).sort(ciCmp);
+        }
+      }catch(e){
+        // Retry by converting single quotes to double quotes
+        try{
+          const parsed2 = JSON.parse(s.replace(/'/g,'"'));
+          if(Array.isArray(parsed2)){
+            return dedupeCI(parsed2.map(x=>clean(String(x)))).sort(ciCmp);
+          }
+        }catch(_){}
+        // Bracketed but not valid JSON → strip brackets and split
+        s = s.replace(/^\[/,'').replace(/\]$/,'');
+      }
     }
-    if(s.includes(';') || s.includes(',')){
-      const arr = s.split(/[;,]/).map(x=>clean(x)).filter(Boolean);
-      return dedupe(arr);
+
+    // Now split on common separators
+    const parts = s.split(/[;,|]/).map(x=>clean(x)).filter(Boolean);
+    if(parts.length>0){
+      return dedupeCI(parts).sort(ciCmp);
     }
+
+    // Fallback single token
     return [s];
   }
-  function dedupe(arr){
-    const set = new Set();
-    for(const a of arr){ if(a) set.add(a); }
-    return Array.from(set);
-  }
 
-  // Derive organisations (skip blank orgs). Now also compute preview text.
+  function dedupeCI(arr){
+    const out = [];
+    const seen = new Set();
+    for(let v of arr){
+      v = clean(v);
+      if(!v) continue;
+      const key = v.toLowerCase();
+      if(!seen.has(key)){
+        seen.add(key);
+        out.push(v);
+      }
+    }
+    return out;
+  }
+  function ciCmp(a,b){ return a.localeCompare(b, undefined, {sensitivity:'base'}); }
+
+  // Derive organisations (skip blank orgs). Also compute preview text.
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
@@ -347,15 +401,13 @@
     return Array.from(m.values()).map(o=>{
       const full = o.contact_names.join(', ');
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
+      const previewArr = o.contact_names.slice(0, 3);
       let preview = previewArr.join(', ');
-      if(n > ORG_CONTACTS_PREVIEW){
-        preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`;
-      }
+      if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
         organisation: o.organisation,
-        contacts: full,                 // full list (for tooltip/search)
-        contacts_preview: preview,      // short display
+        contacts: full,
+        contacts_preview: preview,
         contacts_count: n,
         last_contact_at: o.last_contact_at,
         recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
@@ -363,37 +415,44 @@
     });
   }
 
-  // Build group index and chips
+  // Build group index and chips (alphabetical, case-insensitive; unique)
   function rebuildGroupIndex(){
-    const counts = new Map();
+    const counts = new Map();   // key (lower) -> count
+    const display = new Map();  // key (lower) -> first-seen display text
     for(const c of st.contacts){
       const gs = normalizeGroups(c.group);
-      c.group = gs; // persist normalised
+      c.group = gs; // persist normalised array
       for(const g of gs){
-        counts.set(g, (counts.get(g)||0)+1);
+        const key = g.toLowerCase();
+        counts.set(key, (counts.get(key)||0)+1);
+        if(!display.has(key)) display.set(key, g);
       }
     }
-    allGroups = Array.from(counts.entries()).map(([name,count])=>({name,count})).sort((a,b)=> b.count - a.count || a.name.localeCompare(b.name));
+    allGroups = Array.from(counts.entries())
+      .map(([key,count])=>({ key, name: display.get(key), count }))
+      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
     renderGroupChips();
   }
+
   function renderGroupChips(){
     while(groupFilters.children.length>2) groupFilters.removeChild(groupFilters.lastChild);
-    allGroups.forEach(({name,count})=>{
+    allGroups.forEach(({key,name,count})=>{
       const b = document.createElement('button');
       b.type='button';
       b.className='tag';
-      b.dataset.group=name;
+      b.dataset.groupKey=key; // use normalised key
       b.innerHTML = `<span>${name}</span><span class="count">(${count})</span>`;
-      if(selectedGroups.has(name)) b.classList.add('selected');
+      if(selectedGroups.has(key)) b.classList.add('selected');
       b.addEventListener('click', ()=>{
-        if(selectedGroups.has(name)) selectedGroups.delete(name);
-        else selectedGroups.add(name);
+        if(selectedGroups.has(key)) selectedGroups.delete(key);
+        else selectedGroups.add(key);
         renderGroupChips();
         render();
       });
       groupFilters.appendChild(b);
     });
   }
+
   clearGroups.addEventListener('click', (e)=>{
     e.preventDefault();
     selectedGroups.clear();
@@ -409,8 +468,9 @@
 
     return st.contacts.filter(c=>{
       if(hasGroupFilter){
-        const gs = Array.isArray(c.group)? c.group : normalizeGroups(c.group);
-        const ok = gs.some(g => selectedGroups.has(g));
+        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group))
+          .map(g=>g.toLowerCase());
+        const ok = keys.some(k => selectedGroups.has(k));
         if(!ok) return false;
       }
       if(!hasSearch) return true;
@@ -442,7 +502,7 @@
     const tb = document.getElementById('tb-contacts');
     const rows = [...list].sort(by('display_name')).slice(0, limits.contacts);
     tb.innerHTML = rows.map(c=>{
-      const groups = Array.isArray(c.group) ? c.group : normalizeGroups(c.group);
+      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort(ciCmp);
       const groupsHtml = groups.map(g=> `<span class="tag" title="${g}">${g}</span>`).join(' ');
       return `
       <tr>
