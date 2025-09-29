@@ -283,10 +283,13 @@
   }
 
   // Build organisations from contacts
+  // CHANGE: skip contacts with blank organisation (don’t show individuals in Organisations section)
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
-      const org = clean(c.organisation)||'—';
+      const orgRaw = clean(c.organisation);
+      if(!orgRaw) continue;                // <-- skip empty orgs entirely
+      const org = orgRaw;
       if(!m.has(org)) m.set(org,{ organisation: org, contact_names: [], last_contact_at: null, recent_topics: [] });
       const o = m.get(org);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
