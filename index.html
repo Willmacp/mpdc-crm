@@ -256,10 +256,8 @@
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
-  // store selected groups by normalised key (lowercase)
-  let selectedGroups = new Set();
-  // [{key, name, count}] sorted alphabetically
-  let allGroups = [];
+  let selectedGroups = new Set(); // normalised keys (lowercase)
+  let allGroups = [];             // [{key,name,count}] sorted A→Z
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -299,86 +297,104 @@
     }
   }
 
-  // === GROUP NORMALISATION (robust) ===
+  // === GROUP NORMALISATION (extra robust) ===
   function normalizeGroups(val){
     if(val == null) return [];
 
-    // Arrays (strings or SharePoint objects)
+    // Already an array (strings or SharePoint objects)
     if(Array.isArray(val)){
-      let arr = [];
-      for(const x of val){
-        if(x && typeof x==='object'){
-          // SharePoint multi-lookup like { Value: 'Group' } or { results: [...] }
-          if(Array.isArray(x.results)){ arr.push(...x.results.map(s=>clean(String(s)))); continue; }
-          if('Value' in x){ arr.push(clean(String(x.Value))); continue; }
-        }
-        arr.push(clean(String(x)));
-      }
-      return dedupeCI(arr).sort(ciCmp);
+      return finaliseGroups(flattenArray(val));
     }
 
-    // Objects with results array
-    if(typeof val === 'object' && Array.isArray(val.results)){
-      return dedupeCI(val.results.map(s=>clean(String(s)))).sort(ciCmp);
+    // Single object with results or Value
+    if(typeof val === 'object'){
+      if(Array.isArray(val.results)) return finaliseGroups(flattenArray(val.results));
+      if('Value' in val) return finaliseGroups([clean(String(val.Value))]);
+      // fallback: stringify and keep going
+      return fromString(String(val));
     }
 
-    // Strings (lots of messy cases)
-    let s = String(val).trim();
+    // String representations
+    return fromString(String(val));
+  }
+
+  function fromString(s){
+    s = s.trim();
     if(!s) return [];
 
-    // Replace smart quotes
+    // normalise quotes
     s = s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
 
-    // If entire field is quoted, unquote it
+    // strip outer quotes once
     if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))){
       s = s.slice(1,-1).trim();
     }
 
-    // JSON-like array: try strict parse
-    if(/^\[.*\]$/.test(s)){
-      try{
-        const parsed = JSON.parse(s);
-        if(Array.isArray(parsed)){
-          return dedupeCI(parsed.map(x=>clean(String(x)))).sort(ciCmp);
-        }
-      }catch(e){
-        // Retry by converting single quotes to double quotes
-        try{
-          const parsed2 = JSON.parse(s.replace(/'/g,'"'));
-          if(Array.isArray(parsed2)){
-            return dedupeCI(parsed2.map(x=>clean(String(x)))).sort(ciCmp);
-          }
-        }catch(_){}
-        // Bracketed but not valid JSON → strip brackets and split
-        s = s.replace(/^\[/,'').replace(/\]$/,'');
-      }
+    // Try strict JSON parse first (arrays or arrays of objects)
+    if(/^\s*\[.*\]\s*$/.test(s)){
+      const parsed = tryParseJsonArray(s);
+      if(parsed) return finaliseGroups(flattenArray(parsed));
+      // If still not parseable, fall through to manual stripping
     }
 
-    // Now split on common separators
+    // Manual cleanup: remove brackets and quotes, then split
+    s = s.replace(/[\[\]]/g,'');  // remove [ ]
+    s = s.replace(/["']/g,'');    // remove quotes
     const parts = s.split(/[;,|]/).map(x=>clean(x)).filter(Boolean);
-    if(parts.length>0){
-      return dedupeCI(parts).sort(ciCmp);
-    }
-
-    // Fallback single token
-    return [s];
+    return finaliseGroups(parts);
   }
 
-  function dedupeCI(arr){
-    const out = [];
-    const seen = new Set();
-    for(let v of arr){
-      v = clean(v);
-      if(!v) continue;
-      const key = v.toLowerCase();
-      if(!seen.has(key)){
-        seen.add(key);
-        out.push(v);
+  function tryParseJsonArray(s){
+    try{
+      const p = JSON.parse(s);
+      return Array.isArray(p) ? p : null;
+    }catch(_){
+      // retry with single-quotes turned to double-quotes
+      try{
+        const p2 = JSON.parse(s.replace(/'/g,'"'));
+        return Array.isArray(p2) ? p2 : null;
+      }catch(__){
+        // CSV double-quoted content sometimes contains doubled quotes
+        try{
+          const p3 = JSON.parse(s.replace(/""/g,'"'));
+          return Array.isArray(p3) ? p3 : null;
+        }catch(___){ return null; }
       }
+    }
+  }
+
+  function flattenArray(arr){
+    const out = [];
+    for(const x of arr){
+      if(x == null) continue;
+      if(typeof x === 'string'){ out.push(clean(x)); continue; }
+      if(typeof x === 'object'){
+        if('Value' in x){ out.push(clean(String(x.Value))); continue; }
+        if('value' in x){ out.push(clean(String(x.value))); continue; }
+        if('Title' in x){ out.push(clean(String(x.Title))); continue; }
+        if(Array.isArray(x.results)){ out.push(...x.results.map(v=>clean(String(v)))); continue; }
+        // last resort stringify then strip
+        const s = String(x);
+        out.push(clean(s.replace(/[\[\]"']/g,'')));
+        continue;
+      }
+      out.push(clean(String(x)));
     }
     return out;
   }
-  function ciCmp(a,b){ return a.localeCompare(b, undefined, {sensitivity:'base'}); }
+
+  function finaliseGroups(parts){
+    // dedupe case-insensitively, drop empties, sort alpha (case-insensitive)
+    const seen = new Set();
+    const kept = [];
+    for(let v of parts){
+      v = clean(v);
+      if(!v) continue;
+      const key = v.toLowerCase();
+      if(!seen.has(key)){ seen.add(key); kept.push(v); }
+    }
+    return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
+  }
 
   // Derive organisations (skip blank orgs). Also compute preview text.
   function deriveOrgs(contacts){
@@ -415,7 +431,7 @@
     });
   }
 
-  // Build group index and chips (alphabetical, case-insensitive; unique)
+  // Build group index and chips (alphabetical, unique)
   function rebuildGroupIndex(){
     const counts = new Map();   // key (lower) -> count
     const display = new Map();  // key (lower) -> first-seen display text
@@ -440,7 +456,7 @@
       const b = document.createElement('button');
       b.type='button';
       b.className='tag';
-      b.dataset.groupKey=key; // use normalised key
+      b.dataset.groupKey=key; // normalised key
       b.innerHTML = `<span>${name}</span><span class="count">(${count})</span>`;
       if(selectedGroups.has(key)) b.classList.add('selected');
       b.addEventListener('click', ()=>{
@@ -502,7 +518,7 @@
     const tb = document.getElementById('tb-contacts');
     const rows = [...list].sort(by('display_name')).slice(0, limits.contacts);
     tb.innerHTML = rows.map(c=>{
-      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort(ciCmp);
+      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> `<span class="tag" title="${g}">${g}</span>`).join(' ');
       return `
       <tr>
