@@ -40,7 +40,7 @@
     .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none}
     .tag .count{color:var(--muted)}
     .tag.selected{background:var(--accent);color:#fff;border-color:transparent}
-    .filters .clear{font-size:12px;color:var(--accent);text-decoration:none;margin-left:4px}
+    .filters .clear{font-size:12px;color:#5f809b;text-decoration:none;margin-left:4px}
 
     main{display:flex;flex-direction:column;gap:16px}
     section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
@@ -228,6 +228,7 @@
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
+  const ORG_CONTACTS_PREVIEW = 3; // show first 3 contacts, then “…(+N)”
 
   const chip = document.getElementById('chip');
   const lastStamp = document.getElementById('lastStamp');
@@ -240,7 +241,7 @@
   const countOrgs = document.getElementById('countOrgs');
   const countInts = document.getElementById('countInts');
 
-  // Export panel bits
+  // Export panel
   const exportPanel = document.getElementById('exportPanel');
   const btnExportCsv = document.getElementById('btnExportCsv');
   const btnCancelExport = document.getElementById('btnCancelExport');
@@ -256,7 +257,7 @@
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
   let selectedGroups = new Set();
-  let allGroups = []; // [{name, count}]
+  let allGroups = [];
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -285,7 +286,6 @@
     return isNaN(d) ? null : d.toISOString();
   };
   const norm = v => clean(v).toLowerCase();
-
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
@@ -299,31 +299,25 @@
   // === GROUP NORMALISATION ===
   function normalizeGroups(val){
     if(val == null) return [];
-    // Already array?
     if(Array.isArray(val)){
-      // Handle SharePoint objects like { Value: 'GroupName' }
       const arr = val.map(x=>{
         if(x && typeof x==='object' && 'Value' in x) return clean(x.Value);
         return clean(String(x));
       }).filter(Boolean);
       return dedupe(arr);
     }
-    // String
     let s = String(val).trim();
     if(!s) return [];
-    // If JSON-like array string: ["A","B"]
     if((s.startsWith('[') && s.endsWith(']')) || (s.startsWith('["') && s.endsWith('"]'))){
       try{
         const arr = JSON.parse(s).map(x=> clean(String(x))).filter(Boolean);
         return dedupe(arr);
       }catch{}
     }
-    // Split on ; or , if present
     if(s.includes(';') || s.includes(',')){
       const arr = s.split(/[;,]/).map(x=>clean(x)).filter(Boolean);
       return dedupe(arr);
     }
-    // Single token
     return [s];
   }
   function dedupe(arr){
@@ -332,7 +326,7 @@
     return Array.from(set);
   }
 
-  // Derive organisations (skip blank orgs)
+  // Derive organisations (skip blank orgs). Now also compute preview text.
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
@@ -349,12 +343,24 @@
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
     }
-    return Array.from(m.values()).map(o=>({
-      organisation: o.organisation,
-      contacts: o.contact_names.join(', '),
-      last_contact_at: o.last_contact_at,
-      recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
-    }));
+
+    return Array.from(m.values()).map(o=>{
+      const full = o.contact_names.join(', ');
+      const n = o.contact_names.length;
+      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
+      let preview = previewArr.join(', ');
+      if(n > ORG_CONTACTS_PREVIEW){
+        preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`;
+      }
+      return {
+        organisation: o.organisation,
+        contacts: full,                 // full list (for tooltip/search)
+        contacts_preview: preview,      // short display
+        contacts_count: n,
+        last_contact_at: o.last_contact_at,
+        recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
+      };
+    });
   }
 
   // Build group index and chips
@@ -371,7 +377,6 @@
     renderGroupChips();
   }
   function renderGroupChips(){
-    // remove old chips (keep label + clear link: first 2 children)
     while(groupFilters.children.length>2) groupFilters.removeChild(groupFilters.lastChild);
     allGroups.forEach(({name,count})=>{
       const b = document.createElement('button');
@@ -403,7 +408,6 @@
     const hasGroupFilter = selectedGroups.size>0;
 
     return st.contacts.filter(c=>{
-      // group match
       if(hasGroupFilter){
         const gs = Array.isArray(c.group)? c.group : normalizeGroups(c.group);
         const ok = gs.some(g => selectedGroups.has(g));
@@ -462,7 +466,7 @@
     tb.innerHTML = rows.map(o=>`
       <tr>
         <td class="w-org" title="${clean(o.organisation)}">${clean(o.organisation)}</td>
-        <td title="${clean(o.contacts)}">${clean(o.contacts)}</td>
+        <td title="${clean(o.contacts)}">${clean(o.contacts_preview || o.contacts)}</td>
         <td class="w-date">${fmtDate(o.last_contact_at)}</td>
         <td class="w-subj" title="${clean(o.recent_topics)}">${clean(o.recent_topics)}</td>
       </tr>
@@ -498,7 +502,7 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV header finder (case/space tolerant)
+  // CSV header finder
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
@@ -626,7 +630,7 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // Export CSV action
+  // Export CSV actions
   btnExportCsv.addEventListener('click', ()=> exportPanel.classList.toggle('open'));
   btnCancelExport.addEventListener('click', ()=> exportPanel.classList.remove('open'));
   document.addEventListener('click', (e)=>{
@@ -673,7 +677,7 @@
   // Reload remote JSON
   btnReload.addEventListener('click', ()=> init(true));
 
-  // Search
+  // Search (debounced)
   let tSearch;
   function setSearch(val){ search = val; render(); }
   searchBox.addEventListener('input', ()=>{
