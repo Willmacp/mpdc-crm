@@ -13,10 +13,11 @@
       --text:#1f2937;
       --muted:#9aa3af;
       --border:#e5e7eb;
+      --head:#f3f5f8;
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
-    header{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:18px}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
     h1{font-size:22px;margin:0}
@@ -32,15 +33,16 @@
     .card-head h2{margin:0;font-size:18px}
     .card-body{padding:0}
     .table-wrap{overflow:auto;max-height:420px}
-    table{border-collapse:separate;border-spacing:0;width:100%;min-width:900px}
-    thead th{position:sticky;top:0;background:#f3f5f8;z-index:1;font-weight:600}
+    table{border-collapse:separate;border-spacing:0;width:100%;min-width:1000px}
+    thead th{position:sticky;top:0;background:var(--head);z-index:1;font-weight:600}
     th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     tr:nth-child(even) td{background:#fafbfc}
     .muted{color:var(--muted)}
     .expand{margin:12px 16px 16px}
     footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
     a.top{color:var(--accent);text-decoration:none}
-    /* widths (tune as needed) */
+
+    /* column widths (neat + uniform) */
     .w-name{max-width:220px}
     .w-org{max-width:220px}
     .w-group{max-width:180px}
@@ -51,6 +53,15 @@
     .w-date{max-width:140px}
     .w-subj{max-width:260px}
     .w-notes{max-width:320px}
+
+    /* subtle section accents */
+    .card-head h2::before{
+      content:"";
+      display:inline-block;
+      width:8px;height:8px;border-radius:50%;
+      background:var(--accent);
+      margin-right:10px;vertical-align:middle;
+    }
   </style>
   <!-- Robust CSV parser -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -64,30 +75,367 @@
         <span id="chip" class="chip">Data: loading…</span>
       </div>
       <div class="toolbar">
+        <button class="btn" id="btnReload">Reload data</button>
         <button class="btn" id="btnLoadCsv">Load CSV</button>
         <button class="btn" id="btnLoadJson">Load JSON</button>
-        <button class="btn" id="btnDlJson">Download JSON</button>
-        <button class="btn" id="btnDlCsv">Download CSV</button>
+        <button class="btn" id="btnDlCsv">Export CSV</button>
+        <button class="btn" id="btnDlJson">Export JSON</button>
       </div>
       <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
       <input type="file" id="fileJson" accept=".json,application/json" hidden />
     </header>
 
-    <!-- CONTACTS -->
-    <section class="card" id="sec-contacts">
-      <div class="card-head">
-        <h2>Contacts</h2>
-        <button class="btn" id="expContacts">Expand list</button>
-      </div>
-      <div class="card-body">
-        <div class="table-wrap" id="tw-contacts">
-          <table>
-            <thead>
-              <tr>
-                <th class="w-name">Name</th>
-                <th class="w-org">Organisation</th>
-                <th class="w-group">Group</th>
-                <th class="w-role">Role</th>
-                <th class="w-email">Email</th>
-                <th class="w-phone">Phone</th>
-                <th class="w-mpdc
+    <main>
+      <!-- CONTACTS (classic: stacked sections) -->
+      <section class="card" id="sec-contacts">
+        <div class="card-head">
+          <h2>Contacts</h2>
+          <button class="btn" id="expContacts">Expand list</button>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap" id="tw-contacts">
+            <table>
+              <thead>
+                <tr>
+                  <th class="w-name">Name</th>
+                  <th class="w-org">Organisation</th>
+                  <th class="w-group">Group</th>
+                  <th class="w-role">Role</th>
+                  <th class="w-email">Email</th>
+                  <th class="w-phone">Phone</th>
+                  <th class="w-mpdc">MPDC contact</th>
+                  <th class="w-date">Last contact</th>
+                  <th class="w-subj">Last subject</th>
+                  <th class="w-notes">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="tb-contacts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ORGANISATIONS -->
+      <section class="card" id="sec-orgs">
+        <div class="card-head">
+          <h2>Organisations</h2>
+          <button class="btn" id="expOrgs">Expand list</button>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap" id="tw-orgs">
+            <table>
+              <thead>
+                <tr>
+                  <th class="w-org">Organisation</th>
+                  <th>Contacts</th>
+                  <th class="w-date">Last contact</th>
+                  <th class="w-subj">Recent topics</th>
+                </tr>
+              </thead>
+              <tbody id="tb-orgs"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERACTIONS (placeholder for future) -->
+      <section class="card" id="sec-ints">
+        <div class="card-head">
+          <h2>Interactions</h2>
+          <button class="btn" id="expInts">Expand list</button>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap" id="tw-ints">
+            <table>
+              <thead>
+                <tr>
+                  <th class="w-date">Date</th>
+                  <th class="w-name">Contact</th>
+                  <th class="w-subj">Subject</th>
+                  <th>Summary</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="tb-ints"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
+      <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
+    </footer>
+  </div>
+
+<script>
+(function(){
+  // Default live JSON path (Netlify → /data/data.json in your repo)
+  const DATA_URL = '/data/data.json';
+
+  const chip = document.getElementById('chip');
+  const btnReload = document.getElementById('btnReload');
+
+  // State
+  let st = { organisations: [], contacts: [], interactions: [] };
+  let limits = { contacts: 5, orgs: 5, ints: 5 }; // collapsed shows 5 rows
+  const PAGE_SIZE = 20; // expanded viewport shows ~20 rows (via scroll height)
+
+  // Helpers
+  const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
+  const fmtDate = s => {
+    if(!s) return '';
+    const d = new Date(s);
+    return isNaN(d) ? (''+s) : d.toLocaleDateString();
+  };
+  const clean = v => (v??'').toString().trim();
+  const toISOorBlank = v => {
+    if(!v) return null;
+    const d = new Date(v);
+    return isNaN(d) ? null : d.toISOString();
+  };
+
+  // CSV header finder (case/space tolerant)
+  function finder(headers){
+    const norm = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+    const map = {}; headers.forEach(h=> map[norm(h)] = h);
+    return (...cands)=> {
+      for(const c of cands){
+        const hit = map[norm(c)];
+        if(hit) return hit;
+      }
+      return null;
+    };
+  }
+
+  // Build organisations from contacts
+  function deriveOrgs(contacts){
+    const m = new Map();
+    for(const c of contacts){
+      const org = clean(c.organisation)||'—';
+      if(!m.has(org)) m.set(org,{ organisation: org, contact_names: [], last_contact_at: null, recent_topics: [] });
+      const o = m.get(org);
+      if(clean(c.display_name)) o.contact_names.push(c.display_name);
+      if(c.last_contact_at){
+        if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){
+          o.last_contact_at = c.last_contact_at;
+        }
+      }
+      if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
+    }
+    return Array.from(m.values()).map(o=>({
+      organisation: o.organisation,
+      contacts: o.contact_names.join(', '),
+      last_contact_at: o.last_contact_at,
+      recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
+    }));
+  }
+
+  // Renderers
+  function render(){
+    renderContacts();
+    renderOrgs();
+    renderInts();
+  }
+
+  function renderContacts(){
+    const tb = document.getElementById('tb-contacts');
+    const rows = [...st.contacts].sort(by('display_name')).slice(0, limits.contacts);
+    tb.innerHTML = rows.map(c=>`
+      <tr>
+        <td class="w-name" title="${clean(c.display_name)}">${clean(c.display_name)}</td>
+        <td class="w-org" title="${clean(c.organisation)}">${clean(c.organisation)}</td>
+        <td class="w-group" title="${Array.isArray(c.group)?c.group.join(', '):clean(c.group)}">
+          ${Array.isArray(c.group)?c.group.join(', '):clean(c.group)}
+        </td>
+        <td class="w-role" title="${clean(c.job_title)}">${clean(c.job_title)}</td>
+        <td class="w-email" title="${clean(c.email)}">${clean(c.email)}</td>
+        <td class="w-phone" title="${clean(c.phone)}">${clean(c.phone)}</td>
+        <td class="w-mpdc" title="${clean(c.mpdc_contact)}">${clean(c.mpdc_contact)}</td>
+        <td class="w-date">${fmtDate(c.last_contact_at)}</td>
+        <td class="w-subj" title="${clean(c.last_subject)}">${clean(c.last_subject)}</td>
+        <td class="w-notes" title="${clean(c.notes)}">${clean(c.notes)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderOrgs(){
+    const tb = document.getElementById('tb-orgs');
+    const rows = [...st.organisations].sort(by('organisation')).slice(0, limits.orgs);
+    tb.innerHTML = rows.map(o=>`
+      <tr>
+        <td class="w-org" title="${clean(o.organisation)}">${clean(o.organisation)}</td>
+        <td title="${clean(o.contacts)}">${clean(o.contacts)}</td>
+        <td class="w-date">${fmtDate(o.last_contact_at)}</td>
+        <td class="w-subj" title="${clean(o.recent_topics)}">${clean(o.recent_topics)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderInts(){
+    const tb = document.getElementById('tb-ints');
+    const rows = [...st.interactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0, limits.ints);
+    tb.innerHTML = rows.map(i=>`
+      <tr>
+        <td class="w-date">${fmtDate(i.date)}</td>
+        <td class="w-name">${clean(i.contact)}</td>
+        <td class="w-subj" title="${clean(i.subject)}">${clean(i.subject)}</td>
+        <td title="${clean(i.summary)}">${clean(i.summary)}</td>
+        <td>${clean(i.type)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Expand buttons (toggle 5 ↔ scrolled list ~20 rows viewport)
+  function hookExpand(id, key){
+    document.getElementById(id).addEventListener('click', ()=>{
+      const isCollapsed = limits[key]===5;
+      limits[key] = isCollapsed ? 99999 : 5; // show all when expanded; viewport height ~20 rows
+      const tw = document.getElementById('tw-'+key);
+      if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
+      document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
+      render();
+    });
+  }
+  hookExpand('expContacts','contacts');
+  hookExpand('expOrgs','orgs');
+  hookExpand('expInts','ints');
+
+  // CSV → state
+  function csvToState(csvText){
+    return new Promise((resolve)=>{
+      Papa.parse(csvText,{
+        header:true,
+        skipEmptyLines:true,
+        transformHeader: h=>h.trim(),
+        complete: res=>{
+          const headers = res.meta.fields||[];
+          const find = finder(headers);
+          const H = {
+            name: find('Name','Title','Full Name','display_name'),
+            organisation: find('Organisation','Organization'),
+            group: find('Group','Groups','Stakeholder Group'),
+            role: find('Role','Job Title','Position','job_title'),
+            email: find('Email','E-mail'),
+            phone: find('Phone','Phone number','Mobile'),
+            mpdc: find('MPDC contact','MPDC Contact','MPDC_contact','mpdc_contact'),
+            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact'),
+            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject'),
+            notes: find('Notes','Comment','Comments','notes')
+          };
+          let id = 1;
+          const contacts = res.data.map(r=>{
+            const groupRaw = r[H.group];
+            const groupVal = Array.isArray(groupRaw) ? groupRaw
+                             : (groupRaw && groupRaw.includes(';')) ? groupRaw.split(';').map(s=>s.trim()).filter(Boolean)
+                             : (groupRaw && groupRaw.includes(',')) ? groupRaw.split(',').map(s=>s.trim()).filter(Boolean)
+                             : (groupRaw ? [String(groupRaw).trim()] : []);
+            return {
+              id: id++,
+              display_name: clean(r[H.name]),
+              email: clean(r[H.email]),
+              organisation: clean(r[H.organisation]),
+              group: groupVal,
+              job_title: clean(r[H.role]),
+              phone: clean(r[H.phone]),
+              mpdc_contact: clean(r[H.mpdc]) || 'communications@macpoint.com',
+              last_contact_at: toISOorBlank(clean(r[H.lastDate])),
+              last_subject: clean(r[H.lastSubj]),
+              notes: clean(r[H.notes])
+            };
+          }).filter(c=> Object.values(c).some(v=> String(v||'').length)); // drop fully empty lines
+          const organisations = deriveOrgs(contacts);
+          resolve({organisations, contacts, interactions: []});
+        }
+      });
+    });
+  }
+
+  // UI wiring: buttons & file inputs
+  document.getElementById('btnLoadCsv').addEventListener('click', ()=> document.getElementById('fileCsv').click());
+  document.getElementById('btnLoadJson').addEventListener('click', ()=> document.getElementById('fileJson').click());
+  document.getElementById('btnDlJson').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(st,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'data.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('btnDlCsv').addEventListener('click', ()=>{
+    const rows = st.contacts.map(c=>({
+      Name: c.display_name||'',
+      Organisation: c.organisation||'',
+      Group: Array.isArray(c.group)? c.group.join(', ') : (c.group||''),
+      Role: c.job_title||'',
+      Email: c.email||'',
+      Phone: c.phone||'',
+      'MPDC contact': c.mpdc_contact||'',
+      'Last contact': c.last_contact_at? fmtDate(c.last_contact_at):'',
+      'Last subject': c.last_subject||'',
+      Notes: c.notes||''
+    }));
+    const csv = Papa.unparse(rows);
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'contacts.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('fileCsv').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const text = await file.text();
+    st = await csvToState(text);
+    st.organisations = deriveOrgs(st.contacts);
+    chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
+    limits = {contacts:5,orgs:5,ints:5};
+    render();
+  });
+
+  document.getElementById('fileJson').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      st = {organisations: data.organisations||[], contacts: data.contacts||[], interactions: data.interactions||[]};
+      if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
+        st.organisations = deriveOrgs(st.contacts);
+      }
+      chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
+      limits = {contacts:5,orgs:5,ints:5};
+      render();
+    }catch(err){
+      alert('Invalid JSON file');
+    }
+  });
+
+  btnReload.addEventListener('click', ()=> init(true));
+
+  // Initial load from GitHub JSON (so everyone sees data by default)
+  async function init(forceNoCache=false){
+    try{
+       const r = await fetch(DATA_URL, {cache: forceNoCache?'no-store':'default'});
+       if(!r.ok) throw new Error('HTTP '+r.status);
+       const data = await r.json();
+       st = {organisations: data.organisations||[], contacts: data.contacts||[], interactions: data.interactions||[]};
+       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
+         st.organisations = deriveOrgs(st.contacts);
+       }
+       chip.className='chip ok'; chip.textContent='Data: Connected ✓';
+       limits = {contacts:5,orgs:5,ints:5};
+       render();
+    }catch(err){
+       chip.className='chip'; chip.textContent='Data: local only (no remote)';
+       render();
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
