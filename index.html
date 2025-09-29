@@ -11,7 +11,7 @@
       --bg:#f7f8fa;
       --card:#ffffff;
       --text:#1f2937;
-      --muted:#9aa3af;
+      --muted:#6b7280;
       --border:#e5e7eb;
       --head:#f3f5f8;
       --shadow:0 1px 2px rgba(0,0,0,.05);
@@ -19,11 +19,13 @@
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
     header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .brand{display:flex;gap:12px;align-items:center}
+    .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
     h1{font-size:22px;margin:0}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef2f7;border:1px solid var(--border);color:#334155;font-size:12px}
     .chip.ok{background:#e9f8ef;color:#155e2e;border-color:#b7ebc2}
+    .stamp{font-size:12px;color:var(--muted)}
     .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
     .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;cursor:pointer;font-size:14px;box-shadow:var(--shadow)}
     .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
@@ -61,17 +63,14 @@
 
     .card-head h2::before{
       content:"";
-      display:inline-block;
-      width:8px;height:8px;border-radius:50%;
-      background:var(--accent);
-      margin-right:10px;vertical-align:middle;
+      display:inline-block;width:8px;height:8px;border-radius:50%;
+      background:var(--accent);margin-right:10px;vertical-align:middle;
     }
 
     /* Export panel */
     .panel{position:relative;display:inline-block}
     .panel .pop{
-      position:absolute;right:0;top:44px;min-width:280px;
-      background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);
+      position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);
       padding:12px 12px;z-index:10;display:none;
     }
     .panel.open .pop{display:block}
@@ -91,8 +90,12 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <h1>MPDC Stakeholder CRM</h1>
-        <span id="chip" class="chip">Data: loading…</span>
+        <div class="meta">
+          <span id="chip" class="chip">Data: loading…</span>
+          <span id="lastStamp" class="stamp">Last updated: —</span>
+        </div>
       </div>
+
       <div class="toolbar">
         <div class="search" title="Type to filter contacts/organisations">
           <span>🔎</span>
@@ -115,9 +118,7 @@
               <label><input type="radio" name="exportScope" value="all" /> All contacts</label>
             </div>
             <div class="row"><small>Select columns:</small></div>
-            <div class="cols" id="colChecks">
-              <!-- checkboxes injected -->
-            </div>
+            <div class="cols" id="colChecks"></div>
             <div class="actions">
               <button class="btn" id="btnCancelExport">Cancel</button>
               <button class="btn primary" id="btnDoExport">Export</button>
@@ -126,7 +127,6 @@
         </div>
 
         <button class="btn" id="btnDlJson">Export JSON</button>
-
       </div>
 
       <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
@@ -222,6 +222,7 @@
   const DATA_URL = '/data/data.json';
 
   const chip = document.getElementById('chip');
+  const lastStamp = document.getElementById('lastStamp');
   const btnReload = document.getElementById('btnReload');
 
   const searchBox = document.getElementById('searchBox');
@@ -241,7 +242,7 @@
   // State
   let st = { organisations: [], contacts: [], interactions: [] };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
-  let search = ''; // current search text
+  let search = ''; // search text
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -270,6 +271,16 @@
     return isNaN(d) ? null : d.toISOString();
   };
   const norm = v => clean(v).toLowerCase();
+  function setLastUpdated(dt){
+    if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
+    const d = new Date(dt);
+    try{
+      const str = new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d);
+      lastStamp.textContent = 'Last updated: ' + str;
+    }catch(e){
+      lastStamp.textContent = 'Last updated: ' + d.toLocaleString();
+    }
+  }
 
   // Build organisations from contacts
   function deriveOrgs(contacts){
@@ -457,8 +468,9 @@
     if(!file) return;
     const text = await file.text();
     st = await csvToState(text);
-    chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     limits = {contacts:5,orgs:5,ints:5};
+    chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
+    setLastUpdated(new Date());
     render();
   });
 
@@ -472,17 +484,28 @@
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
         st.organisations = deriveOrgs(st.contacts);
       }
-      chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       limits = {contacts:5,orgs:5,ints:5};
+      chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
+      setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       render();
     }catch(err){
       alert('Invalid JSON file');
     }
   });
 
-  // JSON download
+  // JSON download (includes _meta.updated_at)
   document.getElementById('btnDlJson').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(st,null,2)], {type:'application/json'});
+    const out = {
+      organisations: st.organisations||[],
+      contacts: st.contacts||[],
+      interactions: st.interactions||[],
+      _meta: {
+        updated_at: new Date().toISOString(),
+        source: 'manual-export',
+        contact_count: st.contacts?.length || 0
+      }
+    };
+    const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'data.json';
@@ -492,8 +515,20 @@
 
   // Export CSV panel
   function buildExportChecks(){
+    const DEFAULT_COLUMNS = [
+      {key:'display_name', label:'Name', checked:true},
+      {key:'organisation', label:'Organisation', checked:true},
+      {key:'group',        label:'Group', checked:true},
+      {key:'job_title',    label:'Role', checked:false},
+      {key:'email',        label:'Email', checked:true},
+      {key:'phone',        label:'Phone', checked:true},
+      {key:'mpdc_contact', label:'MPDC contact', checked:false},
+      {key:'last_contact_at', label:'Last contact', checked:true},
+      {key:'last_subject', label:'Last subject', checked:true},
+      {key:'notes',        label:'Notes', checked:false},
+    ];
     colChecks.innerHTML = '';
-    DEFAULT_COLUMNS.forEach((c,i)=>{
+    DEFAULT_COLUMNS.forEach(c=>{
       const id = 'col_'+c.key;
       const w = document.createElement('label');
       w.innerHTML = `<input type="checkbox" id="${id}" ${c.checked?'checked':''}/> ${c.label}`;
@@ -502,12 +537,8 @@
   }
   buildExportChecks();
 
-  btnExportCsv.addEventListener('click', ()=>{
-    exportPanel.classList.toggle('open');
-  });
-  btnCancelExport.addEventListener('click', ()=>{
-    exportPanel.classList.remove('open');
-  });
+  btnExportCsv.addEventListener('click', ()=> exportPanel.classList.toggle('open'));
+  btnCancelExport.addEventListener('click', ()=> exportPanel.classList.remove('open'));
   document.addEventListener('click', (e)=>{
     if(!exportPanel.contains(e.target) && e.target!==btnExportCsv){
       exportPanel.classList.remove('open');
@@ -515,32 +546,30 @@
   });
 
   btnDoExport.addEventListener('click', ()=>{
-    // scope
     const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
     const list = scope==='all' ? st.contacts : filteredContacts();
 
-    // chosen columns
-    const chosen = DEFAULT_COLUMNS.filter(c=>{
-      const el = document.getElementById('col_'+c.key);
-      return el && el.checked;
-    });
+    const chosen = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
+      .filter(x=>x.checked)
+      .map(x=> x.id.replace('col_',''));
+    if(chosen.length===0){ alert('Select at least one column.'); return; }
 
-    // map to CSV rows
+    const labelMap = {
+      display_name:'Name', organisation:'Organisation', group:'Group', job_title:'Role',
+      email:'Email', phone:'Phone', mpdc_contact:'MPDC contact',
+      last_contact_at:'Last contact', last_subject:'Last subject', notes:'Notes'
+    };
+
     const rows = list.map(c=>{
       const row = {};
-      chosen.forEach(col=>{
-        let v = c[col.key];
-        if(col.key==='group') v = Array.isArray(v) ? v.join(', ') : (v||'');
-        if(col.key==='last_contact_at') v = c.last_contact_at ? fmtDate(c.last_contact_at) : '';
-        row[col.label] = v ?? '';
+      chosen.forEach(k=>{
+        let v = c[k];
+        if(k==='group') v = Array.isArray(v) ? v.join(', ') : (v||'');
+        if(k==='last_contact_at') v = c.last_contact_at ? fmtDate(c.last_contact_at) : '';
+        row[labelMap[k]] = v ?? '';
       });
       return row;
     });
-
-    if(rows.length===0){
-      alert('Nothing to export for the selected options.');
-      return;
-    }
 
     const csv = Papa.unparse(rows);
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
@@ -558,10 +587,7 @@
 
   // Search (debounced)
   let tSearch;
-  function setSearch(val){
-    search = val;
-    render();
-  }
+  function setSearch(val){ search = val; render(); }
   searchBox.addEventListener('input', ()=>{
     clearTimeout(tSearch);
     const v = searchBox.value;
@@ -573,7 +599,7 @@
     searchBox.focus();
   });
 
-  // Initial load from GitHub JSON
+  // Initial load from remote JSON (reads _meta or Last-Modified)
   async function init(forceNoCache=false){
     try{
        const r = await fetch(DATA_URL, {cache: forceNoCache?'no-store':'default'});
@@ -586,11 +612,22 @@
        chip.className='chip ok';
        const total = st.contacts?.length || 0;
        chip.textContent = `Data: Connected ✓ — ${total} contacts`;
+
+       // Determine last updated
+       let updated = null;
+       if(data && data._meta && data._meta.updated_at){ updated = data._meta.updated_at; }
+       else {
+         const lm = r.headers.get('last-modified');
+         if(lm) updated = lm;
+       }
+       setLastUpdated(updated || new Date());
+
        limits = {contacts:5,orgs:5,ints:5};
        render();
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
+       setLastUpdated(null);
        render();
     }
   }
