@@ -110,6 +110,25 @@
     .org-person .role{color:var(--muted)}
     .org-person .sep{color:#cbd5e1}
     .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+
+    /* Contact hover card */
+    .hovercard{
+      position:fixed; z-index:1000; display:none;
+      background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,.12);
+      padding:12px; max-width:420px; width:max-content; min-width:300px;
+    }
+    .hovercard h3{margin:0 24px 6px 0; font-size:16px}
+    .hovercard .close{
+      position:absolute; top:8px; right:8px; border:none; background:transparent; cursor:pointer; font-size:16px; color:#64748b
+    }
+    .hovergrid{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; align-items:center}
+    .hovergrid .lab{color:var(--muted)}
+    .hovergroups{display:flex; flex-wrap:wrap; gap:6px 6px}
+    .row-hoverable{cursor:default}
+    @media (max-width:720px){
+      .hovercard{max-width:95vw; min-width:260px}
+      .org-grid{grid-template-columns:1fr}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -247,6 +266,23 @@
     </footer>
   </div>
 
+  <!-- Floating hover card for Contacts -->
+  <div class="hovercard" id="hoverCard" role="dialog" aria-modal="false">
+    <button class="close" id="hoverClose" aria-label="Close">✕</button>
+    <h3 id="hcName">(Name)</h3>
+    <div class="hovergrid">
+      <div class="lab">Organisation</div><div id="hcOrg">—</div>
+      <div class="lab">Role</div><div id="hcRole">—</div>
+      <div class="lab">Email</div><div id="hcEmail">—</div>
+      <div class="lab">Phone</div><div id="hcPhone">—</div>
+      <div class="lab">MPDC</div><div id="hcMpdc">—</div>
+      <div class="lab">Groups</div><div class="hovergroups" id="hcGroups"></div>
+      <div class="lab">Last contact</div><div id="hcDate">—</div>
+      <div class="lab">Last subject</div><div id="hcSubject">—</div>
+      <div class="lab">Notes</div><div id="hcNotes">—</div>
+    </div>
+  </div>
+
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
@@ -274,13 +310,31 @@
   const groupFilters = document.getElementById('groupFilters');
   const clearGroups = document.getElementById('clearGroups');
 
+  // Hover card elements
+  const hc = document.getElementById('hoverCard');
+  const hcClose = document.getElementById('hoverClose');
+  const HC = {
+    name: document.getElementById('hcName'),
+    org: document.getElementById('hcOrg'),
+    role: document.getElementById('hcRole'),
+    email: document.getElementById('hcEmail'),
+    phone: document.getElementById('hcPhone'),
+    mpdc: document.getElementById('hcMpdc'),
+    groups: document.getElementById('hcGroups'),
+    date: document.getElementById('hcDate'),
+    subj: document.getElementById('hcSubject'),
+    notes: document.getElementById('hcNotes'),
+  };
+
   // State
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
-  let selectedGroups = new Set(); // normalised keys (lowercase)
+  let selectedGroups = new Set();
   let allGroups = [];
-  let expandedOrgs = new Set();   // keep which organisations are expanded (by name)
+  let expandedOrgs = new Set();
+  let contactsById = new Map();
+  let hoverSticky = false; // when user clicks a row to pin the card
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -304,24 +358,17 @@
     return isNaN(d) ? (''+s) : d.toLocaleDateString();
   };
   const clean = v => (v??'').toString().trim();
-  const toISOorBlank = v => {
-    if(!v) return null;
-    const d = new Date(v);
-    return isNaN(d) ? null : d.toISOString();
-  };
+  const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
 
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
-    try{
-      lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d);
-    }catch(e){
-      lastStamp.textContent = 'Last updated: ' + d.toLocaleString();
-    }
+    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d); }
+    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
-  // === GROUP NORMALISATION (robust) ===
+  // GROUP NORMALISATION
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -332,10 +379,8 @@
     }
     return fromString(String(val));
   }
-
   function fromString(s){
-    s = String(s).trim();
-    if(!s) return [];
+    s = String(s).trim(); if(!s) return [];
     s = s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
     if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) s = s.slice(1,-1).trim();
     if(/^\s*\[.*\]\s*$/.test(s)){
@@ -362,8 +407,7 @@
         if('value' in x){ out.push(clean(String(x.value))); continue; }
         if('Title' in x){ out.push(clean(String(x.Title))); continue; }
         if(Array.isArray(x.results)){ out.push(...x.results.map(v=>clean(String(v)))); continue; }
-        out.push(clean(String(x).replace(/[\[\]"']/g,'')));
-        continue;
+        out.push(clean(String(x).replace(/[\[\]"']/g,''))); continue;
       }
       out.push(clean(String(x)));
     }
@@ -372,8 +416,7 @@
   function finaliseGroups(parts){
     const seen = new Set(), kept = [];
     for(let v of parts){
-      v = clean(v);
-      if(!v) continue;
+      v = clean(v); if(!v) continue;
       const k = v.toLowerCase();
       if(!seen.has(k)){ seen.add(k); kept.push(v); }
     }
@@ -427,7 +470,6 @@
       .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
     renderGroupChips();
   }
-
   function renderGroupChips(){
     while(groupFilters.children.length>2) groupFilters.removeChild(groupFilters.lastChild);
     allGroups.forEach(({key,name,count})=>{
@@ -444,13 +486,11 @@
       groupFilters.appendChild(b);
     });
   }
-
   clearGroups.addEventListener('click', (e)=>{
-    e.preventDefault();
-    selectedGroups.clear(); renderGroupChips(); render();
+    e.preventDefault(); selectedGroups.clear(); renderGroupChips(); render();
   });
 
-  // Filtered view (search + group chips)
+  // Filtered view
   function filteredContacts(){
     const q = norm(search);
     const hasSearch = q.length>0;
@@ -489,17 +529,20 @@
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (with mailto links)
+  // CONTACTS (with mailto links + hover card)
+  const contactBody = document.getElementById('tb-contacts');
   function renderContacts(list){
-    const tb = document.getElementById('tb-contacts');
+    const tb = contactBody;
     const rows = [...list].sort(by('display_name')).slice(0, limits.contacts);
+    contactsById.clear();
     tb.innerHTML = rows.map(c=>{
+      contactsById.set(String(c.id), c);
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> `<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
       const email = clean(c.email);
       const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
       return `
-      <tr>
+      <tr class="row-hoverable" data-id="${esc(String(c.id))}">
         <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
         <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
         <td class="w-group">${groupsHtml}</td>
@@ -514,7 +557,82 @@
     }).join('');
   }
 
-  // ORGANISATIONS (click to expand a “tile” row)
+  // Hover card behaviour
+  function fillHover(c){
+    HC.name.textContent = c.display_name || '(No name)';
+    HC.org.textContent = c.organisation || '—';
+    HC.role.textContent = c.job_title || '—';
+    if(c.email){
+      HC.email.innerHTML = `<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`;
+    }else{ HC.email.textContent = '—'; }
+    HC.phone.textContent = c.phone || '—';
+    HC.mpdc.textContent = c.mpdc_contact || '—';
+    const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
+    HC.groups.innerHTML = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
+    HC.date.textContent = fmtDate(c.last_contact_at) || '—';
+    HC.subj.textContent = c.last_subject || '—';
+    HC.notes.textContent = c.notes || '—';
+  }
+  function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+  function positionHover(x, y){
+    hc.style.display = 'block';
+    // after visible, measure
+    const rect = hc.getBoundingClientRect();
+    const nx = clamp(x + 16, 8, window.innerWidth - rect.width - 8);
+    const ny = clamp(y + 16, 8, window.innerHeight - rect.height - 8);
+    hc.style.left = nx + 'px';
+    hc.style.top  = ny + 'px';
+  }
+  function hideHover(){ if(!hoverSticky){ hc.style.display='none'; } }
+  function showHoverForId(id, clientX, clientY){
+    const c = contactsById.get(String(id));
+    if(!c) return;
+    fillHover(c);
+    positionHover(clientX, clientY);
+  }
+
+  // Delegated mouse events for hover
+  let hoverHideT = null;
+  contactBody.addEventListener('mouseover', (e)=>{
+    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
+    if(hoverHideT){ clearTimeout(hoverHideT); hoverHideT=null; }
+    if(!hoverSticky){
+      showHoverForId(tr.dataset.id, e.clientX, e.clientY);
+    }
+  });
+  contactBody.addEventListener('mousemove', (e)=>{
+    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
+    if(!hoverSticky && hc.style.display==='block'){
+      positionHover(e.clientX, e.clientY);
+    }
+  });
+  contactBody.addEventListener('mouseout', (e)=>{
+    const toEl = e.relatedTarget;
+    if(hc.contains(toEl)) return; // moving into card
+    if(hoverSticky) return;
+    hoverHideT = setTimeout(()=>{ hc.style.display='none'; }, 120);
+  });
+
+  // Click to pin/unpin
+  contactBody.addEventListener('click', (e)=>{
+    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
+    const id = tr.dataset.id;
+    if(hc.style.display!=='block'){ showHoverForId(id, e.clientX, e.clientY); }
+    hoverSticky = true;
+  });
+  hc.addEventListener('mouseenter', ()=>{ if(hoverHideT){ clearTimeout(hoverHideT); hoverHideT=null; } });
+  hc.addEventListener('mouseleave', ()=>{ if(!hoverSticky){ hc.style.display='none'; } });
+  hcClose.addEventListener('click', ()=>{ hoverSticky=false; hc.style.display='none'; });
+  document.addEventListener('click', (e)=>{
+    if(hc.style.display==='none') return;
+    const inCard = hc.contains(e.target);
+    const inRow = e.target.closest && e.target.closest('tr[data-id]');
+    if(!inCard && !inRow){ hoverSticky=false; hc.style.display='none'; }
+  });
+  window.addEventListener('scroll', ()=>{ if(!hoverSticky) hc.style.display='none'; });
+  window.addEventListener('resize', ()=>{ if(!hoverSticky) hc.style.display='none'; });
+
+  // ORGANISATIONS (click to expand)
   const orgBody = document.getElementById('tb-orgs');
   orgBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-org]');
@@ -522,7 +640,6 @@
     const org = tr.dataset.org;
     toggleOrgExpander(org, tr);
   });
-
   function renderOrgs(list){
     const tb = orgBody;
     const rows = [...list].sort(by('organisation')).slice(0, limits.orgs);
@@ -536,13 +653,10 @@
       ${expandedOrgs.has(o.organisation) ? buildOrgExpanderRow(o.organisation) : ''}
     `).join('');
   }
-
   function buildOrgExpanderRow(orgName){
-    // Build detail card from *filtered* contacts to respect current view
     const all = filteredContacts().filter(c=> clean(c.organisation).toLowerCase() === clean(orgName).toLowerCase());
     const emails = all.map(c=> clean(c.email)).filter(Boolean);
     const mailAll = emails.length ? `mailto:${encodeURIComponent(emails.join(','))}` : null;
-
     const people = all.map(c=>{
       const gg = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const chip = gg.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
@@ -557,7 +671,6 @@
         </div>
       `;
     }).join('');
-
     return `
       <tr class="org-expander"><td colspan="4">
         <div class="org-card">
@@ -570,12 +683,10 @@
       </td></tr>
     `;
   }
-
   function toggleOrgExpander(org, tr){
     const isOpen = expandedOrgs.has(org);
     if(isOpen){
       expandedOrgs.delete(org);
-      // Remove following expander row if present
       const next = tr.nextElementSibling;
       if(next && next.classList.contains('org-expander')) next.remove();
       tr.setAttribute('aria-expanded','false');
@@ -586,7 +697,6 @@
     }
   }
   function reapplyOrgExpanders(){
-    // After render, ensure any orgs that should be open are open (and still in the view)
     const rows = Array.from(orgBody.querySelectorAll('tr[data-org]'));
     for(const r of rows){
       const org = r.dataset.org;
@@ -602,7 +712,6 @@
         r.setAttribute('aria-expanded','false');
       }
     }
-    // Cull expanded orgs that are no longer in the rendered set
     expandedOrgs.forEach(org=>{
       if(!lastOrgsRendered.includes(org)) expandedOrgs.delete(org);
     });
@@ -642,10 +751,7 @@
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
-    return (...cands)=> {
-      for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; }
-      return null;
-    };
+    return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
 
   // CSV → state
