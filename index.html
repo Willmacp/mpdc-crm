@@ -10,17 +10,17 @@
     --accent:#5f809b;           /* MPDC blue */
     --accent-700:#3f5b6f;
     --accent-100:#eaf3fb;
-    --grey:#6d6e71;             /* MPDC grey */
+    --grey:#6d6e71;
     --text:#163046;
     --muted:#5a6b7a;
 
-    /* Page surfaces */
-    --bg:#f5f9fe;               /* body background – very light blue */
+    /* Page surfaces (brighter, no grey body) */
+    --bg:#ffffff;               /* pure white page background */
     --card:#ffffff;             /* cards/tables */
-    --border:#d6e6f4;           /* lighter, bluer borders */
+    --border:#d6e6f4;           /* light blue borders */
     --head:#f1f7fe;
 
-    /* Support greens (muted) */
+    /* Greens */
     --green:#4b7f6b;
     --green-100:#e9f3ee;
 
@@ -35,15 +35,14 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif
   }
 
-  /* Sectioned header band (slightly darker blue wash than body) */
+  /* Header band (light blue wash) */
   .head-band{
-    background: linear-gradient(180deg, rgba(95,128,155,.20) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(180deg, rgba(95,128,155,.16) 0%, rgba(95,128,155,.08) 55%, rgba(255,255,255,0) 100%);
     border-bottom:1px solid var(--border);
     box-shadow: var(--shadow-sm);
   }
   .wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
 
-  /* Header / branding */
   header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#87a7be);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
@@ -87,7 +86,7 @@
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
 
-  /* Group pills – tinted blues; text auto-contrasts */
+  /* Group pills with soft blues */
   .tag{
     display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;
     box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;
@@ -98,7 +97,6 @@
 
   .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 
-  /* Tips */
   .tips li{margin:6px 0;color:#415d74}
   .tips strong{color:#0f2e47}
 
@@ -108,7 +106,7 @@
   .card-head{
     display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
     border-bottom:1px solid var(--border);
-    background:linear-gradient(90deg, rgba(95,128,155,.16) 0%, rgba(95,128,155,.08) 55%, rgba(255,255,255,1) 100%);
+    background:linear-gradient(90deg, rgba(95,128,155,.14) 0%, rgba(95,128,155,.07) 55%, rgba(255,255,255,1) 100%);
     position:relative;
   }
   .card-head::before{
@@ -176,15 +174,18 @@
   }
   .lab{color:#4a6b86}
 
-  /* Sectioned footer band (again: slightly darker than body for separation) */
+  /* Footer band */
   .foot-band{
     margin-top:22px;
-    background: linear-gradient(0deg, rgba(95,128,155,.18) 0%, rgba(95,128,155,.10) 65%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(0deg, rgba(95,128,155,.16) 0%, rgba(95,128,155,.08) 65%, rgba(255,255,255,0) 100%);
     border-top:1px solid var(--border);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
   }
   footer{padding:16px 0;color:#35546b;display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:#0b65c2;text-decoration:none}
+
+  /* Error bar */
+  .err{display:none;background:#ffeaea;border:1px solid #ffbcbc;color:#7a1e1e;border-radius:10px;padding:10px 12px;margin-top:12px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -203,7 +204,6 @@
         </div>
       </div>
 
-      <!-- Toolbar: Search + Groups (side by side), then Reload / Export / Admin / Tips -->
       <div>
         <div class="toolbar">
           <div class="search" title="Type to filter contacts/organisations">
@@ -253,7 +253,7 @@
             </div>
           </div>
 
-          <!-- Quick tips -->
+          <!-- Tips -->
           <div class="panel" id="helpPanel">
             <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
             <div class="pop" id="helpMenu" style="max-width:520px">
@@ -278,6 +278,9 @@
         <input type="file" id="fileJson" accept=".json,application/json" hidden />
       </div>
     </header>
+
+    <!-- error bar -->
+    <div id="err" class="err"></div>
   </div>
 </div>
 
@@ -294,7 +297,6 @@
         </div>
         <div class="right">
           <button class="btn" id="expContacts">Expand list</button>
-          <!-- Sort menu in Contacts header -->
           <div class="panel" id="sortPanelContacts">
             <button class="btn" id="btnSortContacts">Sort ▾</button>
             <div class="pop" id="sortMenuContacts">
@@ -405,11 +407,12 @@
 
 <script>
 (function(){
-  const DATA_URL = '/data/data.json';
+  const DATA_URL = '/data/data.json';    // Netlify will redirect this to your SharePoint download link
   const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
   const lastStamp = document.getElementById('lastStamp');
+  const errBar = document.getElementById('err');
 
   // Toolbar
   const searchBox = document.getElementById('searchBox');
@@ -421,7 +424,7 @@
   const btnHelp = document.getElementById('btnHelp');
   const helpMenu = document.getElementById('helpMenu');
 
-  // Contacts sort (inside Contacts header)
+  // Contacts sort
   const sortPanelContacts = document.getElementById('sortPanelContacts');
   const btnSortContacts = document.getElementById('btnSortContacts');
   const sortMenuContacts = document.getElementById('sortMenuContacts');
@@ -477,6 +480,14 @@
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
 
+  function showError(msg){
+    errBar.textContent = msg;
+    errBar.style.display = 'block';
+  }
+  function clearError(){
+    errBar.textContent = '';
+    errBar.style.display = 'none';
+  }
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
@@ -484,12 +495,11 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
-  /* --------- Tag colorizer (different soft blues per group) --------- */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
-    const h = 205 + (hashStr(name)%28);                  // 205–233 (blue band)
-    const s = 55 + ((hashStr(name)>>3)%15);              // 55–70 (a bit brighter)
-    const l = 88 - ((hashStr(name)>>5)%12);              // 76–88 (light)
+    const h = 205 + (hashStr(name)%28);
+    const s = 55 + ((hashStr(name)>>3)%15);
+    const l = 88 - ((hashStr(name)>>5)%12);
     const bg = `hsl(${h} ${s}% ${l}%)`;
     const bd = `hsl(${h} ${Math.min(75,s+8)}% ${Math.max(40,l-18)}%)`;
     const fg = l < 75 ? '#ffffff' : '#0b2338';
@@ -500,7 +510,6 @@
     return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
-  /* ---------- GROUP NORMALISATION ---------- */
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -555,7 +564,6 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  /* ---------- ORGS FROM CONTACTS (skip blank orgs) ---------- */
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
@@ -585,7 +593,6 @@
     });
   }
 
-  /* ---------- GROUP INDEX + MENU ---------- */
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -628,7 +635,7 @@
     btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
   }
 
-  /* ---------- POPUP OPEN/CLOSE ---------- */
+  // POPUPS
   btnGroups.addEventListener('click', ()=> toggle(groupsMenu));
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
   document.addEventListener('click', (e)=>{
@@ -641,7 +648,7 @@
   });
   function toggle(el){ el.style.display = (el.style.display==='block'?'none':'block'); }
 
-  /* ---------- FILTERED VIEW ---------- */
+  // FILTERED VIEW
   function filteredContacts(){
     const q = norm(search);
     const hasSearch = q.length>0;
@@ -661,7 +668,7 @@
     });
   }
 
-  /* ---------- CONTACT SORT ---------- */
+  // CONTACT SORT
   btnSortContacts.addEventListener('click', ()=> toggle(sortMenuContacts));
   sortMenuContacts.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
@@ -682,23 +689,20 @@
     return L;
   }
 
-  /* ---------- RENDER ---------- */
+  // RENDER
   function render(){
     const contactsView = applyContactSort( filteredContacts() );
     const orgsView = deriveOrgs(contactsView);
-
     renderContacts(contactsView);
     renderOrgs(orgsView);
     renderInts(st.interactions);
-
     countContacts.textContent = contactsView.length ? `(${contactsView.length})` : '';
     countOrgs.textContent = orgsView.length ? `(${orgsView.length})` : '';
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (inline expanders; single-open)
+  // CONTACTS
   const contactBody = document.getElementById('tb-contacts');
-
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -707,7 +711,6 @@
     });
     expandedContacts.clear();
   }
-
   contactBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-id]');
     if(!tr) return;
@@ -745,7 +748,6 @@
       return row + exp;
     }).join('');
   }
-
   function buildContactExpanderRow(c){
     const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
     const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
@@ -779,9 +781,8 @@
     return (st.contacts||[]).find(c=> String(c.id)===String(id));
   }
 
-  // ORGANISATIONS (single-open)
+  // ORGS
   const orgBody = document.getElementById('tb-orgs');
-
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -790,7 +791,6 @@
     });
     expandedOrgs.clear();
   }
-
   orgBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-org]');
     if(!tr) return;
@@ -847,9 +847,8 @@
     `;
   }
 
-  // INTERACTIONS (inline expanders; single-open)
+  // INTERACTIONS
   const intBody = document.getElementById('tb-ints');
-
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -858,7 +857,6 @@
     });
     expandedInts.clear();
   }
-
   intBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-int]');
     if(!tr) return;
@@ -872,7 +870,6 @@
     tr.insertAdjacentHTML('afterend', buildIntExpanderRow(item));
     tr.setAttribute('aria-expanded','true');
   });
-
   function getInteractionByKey(key, idx){
     const exact = (st.interactions||[]).find(i=> String(i.id ?? '') === key);
     if(exact) return exact;
@@ -882,7 +879,7 @@
     if(!name) return null;
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
-  }
+    }
 
   function renderInts(list){
     const tb = intBody;
@@ -902,7 +899,6 @@
       return base + exp;
     }).join('');
   }
-
   function buildIntExpanderRow(i){
     const c = findContactByName(i.contact);
     const emailBtn = c && c.email ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email ${esc(c.display_name||'contact')}</a>` : '';
@@ -945,14 +941,12 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV header finder
+  // CSV utilities
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
-
-  // CSV → state
   function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
@@ -1038,6 +1032,7 @@
     limits = {contacts:5,orgs:5,ints:5};
     chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
+    clearError();
     rebuildGroupIndex(); render();
     closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     e.target.value='';
@@ -1060,13 +1055,13 @@
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
+      clearError();
       rebuildGroupIndex(); render();
       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
-    }catch(err){ alert('Invalid JSON file'); }
+    }catch(err){ showError('Invalid JSON file'); }
     e.target.value='';
   });
 
-  // Export JSON snapshot
   function downloadJson(){
     const out = {
       organisations: st.organisations||[],
@@ -1118,10 +1113,10 @@
     a.download = `contacts_${nameBit}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
-    exportPanel.querySelector('.pop').style.display='none');
+    exportPanel.querySelector('.pop').style.display='none';  /* ← fixed: removed stray ')' */
   });
 
-  // Reload remote JSON
+  // Reload
   btnReload.addEventListener('click', ()=> init(true));
 
   // Search
@@ -1141,6 +1136,7 @@
   // Initial load
   async function init(forceNoCache=false){
     try{
+       clearError();
        const r = await fetch(DATA_URL, {cache: forceNoCache?'no-store':'default'});
        if(!r.ok) throw new Error('HTTP '+r.status);
        const data = await r.json();
@@ -1164,6 +1160,7 @@
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
+       showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }
