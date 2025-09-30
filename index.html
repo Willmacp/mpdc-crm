@@ -70,58 +70,25 @@
   .w-date{max-width:140px}
   .w-subj{max-width:260px}
   .w-notes{max-width:320px}
-  .w-actions{width:90px}
 
-  /* Export menu */
-  .panel{position:relative;display:inline-block}
-  .panel .pop{position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none}
-  .panel.open .pop{display:block}
-  .pop h4{margin:4px 0 10px;font-size:14px}
-  .row{display:flex;gap:8px;align-items:center;margin:6px 0}
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px}
-  .pop .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-  .pop small{color:var(--muted)}
-  .pop label{font-size:13px}
-
-  /* Organisations expanders */
-  #tb-orgs tr[data-org]{cursor:pointer}
-  #tb-orgs tr[data-org]:hover td{background:#f1f5f9}
-  tr.org-expander td{background:#fbfdff}
-  .org-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:var(--shadow)}
-  .org-card h3{margin:0 0 8px 0;font-size:16px}
-  .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
-  .org-person{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px}
-  .org-person .nm{font-weight:600}
-  .org-person .role{color:var(--muted)}
-  .org-person .sep{color:#cbd5e1}
-  .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-
-  /* Contact row + details chevron */
-  .row-hoverable{cursor:pointer}
-  .details-btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
-  .details-btn:hover{background:#f3f4f6}
-
-  /* Right-docked details panel */
-  .sidecard{
-    position:fixed; top:0; right:0; height:100vh; width:420px; max-width:95vw;
-    background:#fff; border-left:1px solid var(--border); box-shadow:-8px 0 24px rgba(0,0,0,.08);
-    transform:translateX(100%); transition:transform .22s ease; z-index:1000;
-    display:flex; flex-direction:column;
-  }
-  .sidecard.open{transform:none}
-  .sidecard-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
-  .sidecard-body{padding:12px 16px;overflow:auto}
-  .sidegrid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
-  .sidegrid .lab{color:var(--muted)}
-  .hovergroups{display:flex;flex-wrap:wrap;gap:6px 6px}
-  .side-close{border:none;background:transparent;cursor:pointer;font-size:18px;color:#64748b}
+  /* Inline expanders (match orgs style) */
+  #tb-orgs tr[data-org],
+  #tb-contacts tr[data-id]{cursor:pointer}
+  #tb-orgs tr[data-org]:hover td,
+  #tb-contacts tr[data-id]:hover td{background:#f1f5f9}
+  tr.org-expander td,
+  tr.contact-expander td{background:#fbfdff}
+  .org-card,.contact-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:var(--shadow)}
+  .org-card h3,.contact-card h3{margin:0 0 8px 0;font-size:16px}
+  .org-actions,.contact-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+  .org-grid,.contact-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;align-items:center}
+  .lab{color:var(--muted)}
+  .sep{color:#cbd5e1}
+  .mail{color:#0b65c2;text-decoration:none}
+  .mail:hover{text-decoration:underline}
 
   footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:var(--accent);text-decoration:none}
-  a.mail{color:#0b65c2;text-decoration:none}
-  a.mail:hover{text-decoration:underline}
-
-  @media (max-width:720px){ .org-grid{grid-template-columns:1fr} }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -148,15 +115,15 @@
       <button class="btn" id="btnLoadJson">Load JSON</button>
 
       <!-- Export CSV -->
-      <div class="panel" id="exportPanel">
+      <div class="panel" id="exportPanel" style="position:relative;display:inline-block">
         <button class="btn" id="btnExportCsv">Export CSV ▾</button>
-        <div class="pop">
-          <h4>Export CSV</h4>
-          <div class="row"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-          <div class="row"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-          <div class="row"><small>Select columns:</small></div>
-          <div class="cols" id="colChecks"></div>
-          <div class="actions">
+        <div class="pop" style="position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none">
+          <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:var(--muted)">Select columns:</small></div>
+          <div class="cols" id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
+          <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
             <button class="btn" id="btnCancelExport">Cancel</button>
             <button class="btn primary" id="btnDoExport">Export</button>
           </div>
@@ -177,7 +144,7 @@
   </div>
 
   <main>
-    <!-- CONTACTS -->
+    <!-- CONTACTS (rows expandable) -->
     <section class="card" id="sec-contacts">
       <div class="card-head">
         <div class="card-head-left">
@@ -185,15 +152,15 @@
         </div>
         <div class="right">
           <!-- Sort menu adds 'Last added' option -->
-          <div class="panel" id="sortPanel">
+          <div class="panel" id="sortPanel" style="position:relative;display:inline-block">
             <button class="btn" id="btnSort">Sort ▾</button>
-            <div class="pop" id="sortMenu">
-              <h4>Sort contacts</h4>
-              <div class="row"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
-              <div class="row"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
-              <div class="row"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
-              <div class="row"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
-              <div class="row"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
+            <div class="pop" id="sortMenu" style="position:absolute;right:0;top:44px;min-width:230px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none">
+              <h4 style="margin:4px 0 10px;font-size:14px">Sort contacts</h4>
+              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
+              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
+              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
+              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
+              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
             </div>
           </div>
           <button class="btn" id="expContacts">Expand list</button>
@@ -214,7 +181,6 @@
                 <th class="w-date">Last contact</th>
                 <th class="w-subj">Last subject</th>
                 <th class="w-notes">Notes</th>
-                <th class="w-actions"></th>
               </tr>
             </thead>
             <tbody id="tb-contacts"></tbody>
@@ -285,27 +251,6 @@
   </footer>
 </div>
 
-<!-- Right-docked details panel -->
-<aside class="sidecard" id="sideCard" aria-hidden="true">
-  <div class="sidecard-head">
-    <h3 id="scName" style="margin:0;font-size:18px">Contact details</h3>
-    <button class="side-close" id="sideClose" aria-label="Close">✕</button>
-  </div>
-  <div class="sidecard-body">
-    <div class="sidegrid">
-      <div class="lab">Organisation</div><div id="scOrg">—</div>
-      <div class="lab">Role</div><div id="scRole">—</div>
-      <div class="lab">Email</div><div id="scEmail">—</div>
-      <div class="lab">Phone</div><div id="scPhone">—</div>
-      <div class="lab">MPDC</div><div id="scMpdc">—</div>
-      <div class="lab">Groups</div><div class="hovergroups" id="scGroups"></div>
-      <div class="lab">Last contact</div><div id="scDate">—</div>
-      <div class="lab">Last subject</div><div id="scSubject">—</div>
-      <div class="lab">Notes</div><div id="scNotes">—</div>
-    </div>
-  </div>
-</aside>
-
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
@@ -338,24 +283,7 @@
   const groupFilters = document.getElementById('groupFilters');
   const clearGroups = document.getElementById('clearGroups');
 
-  // Side panel elements
-  const sc = document.getElementById('sideCard');
-  const sideClose = document.getElementById('sideClose');
-  const SC = {
-    name: document.getElementById('scName'),
-    org: document.getElementById('scOrg'),
-    role: document.getElementById('scRole'),
-    email: document.getElementById('scEmail'),
-    phone: document.getElementById('scPhone'),
-    mpdc: document.getElementById('scMpdc'),
-    groups: document.getElementById('scGroups'),
-    date: document.getElementById('scDate'),
-    subj: document.getElementById('scSubject'),
-    notes: document.getElementById('scNotes'),
-  };
-
   // Sorting state for Contacts
-  // mode: 'name' | 'org' | 'added', dir: 1=asc, -1=desc
   let contactSort = { mode:'name', dir: 1 };
 
   // State
@@ -365,8 +293,8 @@
   let selectedGroups = new Set();
   let allGroups = [];
   let expandedOrgs = new Set();
-  let contactsById = new Map();
-  let openId = null;
+  let expandedContacts = new Set(); // NEW: tracks which contacts are expanded
+  let lastOrgsRendered = [];
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -388,7 +316,6 @@
   const clean = v => (v??'').toString().trim();
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
-  const clamp = (val,min,max)=> Math.max(min, Math.min(max,val));
 
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
@@ -468,9 +395,9 @@
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
+      const previewArr = o.contact_names.slice(0, 3);
       let preview = previewArr.join(', ');
-      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
+      if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
         organisation: o.organisation,
         contacts: o.contact_names.join(', '),
@@ -545,7 +472,6 @@
 
   function setSort(mode, dir){
     contactSort = { mode, dir };
-    // header UI
     [thName, thOrg].forEach(th=> th.classList.remove('active'));
     if(mode==='name'){ thName.classList.add('active'); thName.querySelector('.dir').textContent = dir===1?'↑':'↓'; thOrg.querySelector('.dir').textContent='⇅'; }
     else if(mode==='org'){ thOrg.classList.add('active'); thOrg.querySelector('.dir').textContent = dir===1?'↑':'↓'; thName.querySelector('.dir').textContent='⇅'; }
@@ -561,10 +487,10 @@
     setSort('org', dir);
   });
 
-  // Sort menu (for "Last added")
-  btnSort.addEventListener('click', ()=> sortPanel.classList.toggle('open'));
+  btnSort.addEventListener('click', ()=> sortPanel.querySelector('.pop').style.display =
+    sortPanel.querySelector('.pop').style.display==='block'?'none':'block');
   document.addEventListener('click', (e)=>{
-    if(!sortPanel.contains(e.target) && e.target!==btnSort){ sortPanel.classList.remove('open'); }
+    if(!sortPanel.contains(e.target) && e.target!==btnSort){ sortPanel.querySelector('.pop').style.display='none'; }
   });
   sortMenu.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
@@ -574,22 +500,19 @@
     if(val==='org-asc') setSort('org', 1);
     if(val==='org-desc') setSort('org', -1);
     if(val==='added-desc') setSort('added', -1);
-    sortPanel.classList.remove('open');
+    sortPanel.querySelector('.pop').style.display='none';
   });
-
   function applyContactSort(list){
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
     else if(contactSort.mode==='org') L.sort(by('organisation', contactSort.dir));
     else if(contactSort.mode==='added'){
-      // "Last added" ≈ highest numeric id first; fallback to original order
       L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) * (contactSort.dir===-1?1:-1) );
     }
     return L;
   }
 
   /* ---------- RENDER ---------- */
-  let lastOrgsRendered = [];
   function render(){
     const contactsView = applyContactSort( filteredContacts() );
     const orgsView = deriveOrgs(contactsView);
@@ -599,81 +522,92 @@
     renderInts(st.interactions);
 
     lastOrgsRendered = orgsView.map(o=>o.organisation);
-    reapplyOrgExpanders();
 
     countContacts.textContent = contactsView.length ? `(${contactsView.length})` : '';
     countOrgs.textContent = orgsView.length ? `(${orgsView.length})` : '';
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (mailto + chevron + side panel)
+  // CONTACTS (inline expanders)
   const contactBody = document.getElementById('tb-contacts');
+  contactBody.addEventListener('click', (e)=>{
+    const tr = e.target.closest('tr[data-id]');
+    if(!tr) return;
+    const id = tr.dataset.id;
+    toggleContactExpander(id, tr);
+  });
+
   function renderContacts(list){
     const tb = contactBody;
     const rows = applyContactSort(list).slice(0, limits.contacts);
-    contactsById.clear();
     tb.innerHTML = rows.map(c=>{
-      contactsById.set(String(c.id), c);
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> `<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
       const email = clean(c.email);
       const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
-      return `
-      <tr class="row-hoverable" data-id="${esc(String(c.id))}">
-        <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
-        <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
-        <td class="w-group">${groupsHtml}</td>
-        <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
-        <td class="w-email">${emailHtml}</td>
-        <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-        <td class="w-mpdc" title="${esc(c.mpdc_contact)}">${esc(c.mpdc_contact)}</td>
-        <td class="w-date">${fmtDate(c.last_contact_at)}</td>
-        <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
-        <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
-        <td class="w-actions"><button class="details-btn" data-id="${esc(String(c.id))}" title="Open details">Details ▸</button></td>
-      </tr>`;
+      const row = `
+        <tr data-id="${esc(String(c.id))}" aria-expanded="${expandedContacts.has(String(c.id))?'true':'false'}">
+          <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
+          <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
+          <td class="w-group">${groupsHtml}</td>
+          <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
+          <td class="w-email">${emailHtml}</td>
+          <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
+          <td class="w-mpdc" title="${esc(c.mpdc_contact)}">${esc(c.mpdc_contact)}</td>
+          <td class="w-date">${fmtDate(c.last_contact_at)}</td>
+          <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
+          <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
+        </tr>`;
+      const exp = expandedContacts.has(String(c.id)) ? buildContactExpanderRow(c) : '';
+      return row + exp;
     }).join('');
   }
 
-  function fillSide(c){
-    SC.name.textContent = c.display_name || '(No name)';
-    SC.org.textContent = c.organisation || '—';
-    SC.role.textContent = c.job_title || '—';
-    if(c.email){ SC.email.innerHTML = `<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`; }
-    else { SC.email.textContent = '—'; }
-    SC.phone.textContent = c.phone || '—';
-    SC.mpdc.textContent = c.mpdc_contact || '—';
+  function buildContactExpanderRow(c){
     const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
-    SC.groups.innerHTML = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
-    SC.date.textContent = fmtDate(c.last_contact_at) || '—';
-    SC.subj.textContent = c.last_subject || '—';
-    SC.notes.textContent = c.notes || '—';
+    const chips = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
+    const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
+    return `
+      <tr class="contact-expander"><td colspan="10">
+        <div class="contact-card">
+          <div class="contact-actions">
+            <h3 style="margin:0">${esc(c.display_name || '(No name)')}</h3>
+            ${emailBtn}
+          </div>
+          <div class="contact-grid">
+            <div class="lab">Organisation</div><div>${esc(c.organisation) || '—'}</div>
+            <div class="lab">Role</div><div>${esc(c.job_title) || '—'}</div>
+            <div class="lab">Email</div><div>${clean(c.email)?`<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:'—'}</div>
+            <div class="lab">Phone</div><div>${esc(c.phone) || '—'}</div>
+            <div class="lab">MPDC</div><div>${esc(c.mpdc_contact) || '—'}</div>
+            <div class="lab">Groups</div><div>${chips}</div>
+            <div class="lab">Last contact</div><div>${fmtDate(c.last_contact_at) || '—'}</div>
+            <div class="lab">Last subject</div><div>${esc(c.last_subject) || '—'}</div>
+            <div class="lab">Notes</div><div>${esc(c.notes) || '—'}</div>
+          </div>
+        </div>
+      </td></tr>
+    `;
   }
-  function closeSide(){ sc.classList.remove('open'); sc.setAttribute('aria-hidden','true'); openId=null; }
-  function openSideForId(id){
-    const c = contactsById.get(String(id)); if(!c) return;
-    openId = String(id);
-    fillSide(c);
-    sc.classList.add('open');
-    sc.setAttribute('aria-hidden','false');
+  function toggleContactExpander(id, tr){
+    const key = String(id);
+    const isOpen = expandedContacts.has(key);
+    if(isOpen){
+      expandedContacts.delete(key);
+      const next = tr.nextElementSibling;
+      if(next && next.classList.contains('contact-expander')) next.remove();
+      tr.setAttribute('aria-expanded','false');
+    }else{
+      expandedContacts.add(key);
+      tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(key)));
+      tr.setAttribute('aria-expanded','true');
+    }
+  }
+  function getContactById(id){
+    return (st.contacts||[]).find(c=> String(c.id)===String(id));
   }
 
-  // Row/cell clicks
-  contactBody.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.details-btn');
-    if(btn){ openSideForId(btn.dataset.id); return; }
-    const tr = e.target.closest('tr[data-id]');
-    if(!tr) return;
-    openSideForId(tr.dataset.id);
-  });
-  sideClose.addEventListener('click', closeSide);
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeSide(); });
-  document.addEventListener('click', (e)=>{
-    if(!sc.classList.contains('open')) return;
-    if(!sc.contains(e.target) && !e.target.closest('#tb-contacts')) closeSide();
-  });
-
-  // ORGANISATIONS
+  // ORGANISATIONS (unchanged)
   const orgBody = document.getElementById('tb-orgs');
   orgBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-org]');
@@ -703,9 +637,9 @@
       const chip = gg.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
       const email = clean(c.email);
       return `
-        <div class="org-person">
-          <span class="nm">${esc(c.display_name || '(No name)')}</span>
-          ${c.job_title ? `<span class="sep">•</span><span class="role">${esc(c.job_title)}</span>`:''}
+        <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px">
+          <span class="nm" style="font-weight:600">${esc(c.display_name || '(No name)')}</span>
+          ${c.job_title ? `<span class="sep">•</span><span class="role" style="color:var(--muted)">${esc(c.job_title)}</span>`:''}
           ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
           ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
           ${chip ? `<span class="sep">•</span>${chip}`:''}
@@ -737,26 +671,6 @@
       tr.setAttribute('aria-expanded','true');
     }
   }
-  function reapplyOrgExpanders(){
-    const rows = Array.from(orgBody.querySelectorAll('tr[data-org]'));
-    for(const r of rows){
-      const org = r.dataset.org;
-      const should = expandedOrgs.has(org) && lastOrgsRendered.includes(org);
-      const next = r.nextElementSibling;
-      const has = next && next.classList.contains('org-expander');
-      if(should && !has){
-        r.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
-        r.setAttribute('aria-expanded','true');
-      }
-      if(!should && has){
-        next.remove();
-        r.setAttribute('aria-expanded','false');
-      }
-    }
-    expandedOrgs.forEach(org=>{
-      if(!lastOrgsRendered.includes(org)) expandedOrgs.delete(org);
-    });
-  }
 
   // INTERACTIONS
   function renderInts(list){
@@ -773,6 +687,25 @@
     `).join('');
   }
 
+  // Rebuild expanders after re-render (keep open ones if still visible)
+  function reapplyContactExpanders(){
+    const rows = Array.from(contactBody.querySelectorAll('tr[data-id]'));
+    for(const r of rows){
+      const id = r.dataset.id;
+      const next = r.nextElementSibling;
+      const should = expandedContacts.has(id);
+      const has = next && next.classList.contains('contact-expander');
+      if(should && !has){
+        r.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
+        r.setAttribute('aria-expanded','true');
+      }
+      if(!should && has){
+        next.remove();
+        r.setAttribute('aria-expanded','false');
+      }
+    }
+  }
+
   // Expand buttons
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
@@ -782,7 +715,7 @@
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
       render();
-      closeSide();
+      reapplyContactExpanders();
     });
   }
   hookExpand('expContacts','contacts');
@@ -865,7 +798,7 @@
     limits = {contacts:5,orgs:5,ints:5};
     chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
-    rebuildGroupIndex(); render();
+    rebuildGroupIndex(); render(); reapplyContactExpanders();
   });
 
   document.getElementById('fileJson').addEventListener('change', async (e)=>{
@@ -885,7 +818,7 @@
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
-      rebuildGroupIndex(); render();
+      rebuildGroupIndex(); render(); reapplyContactExpanders();
     }catch(err){ alert('Invalid JSON file'); }
   });
 
@@ -906,11 +839,12 @@
   });
 
   // Export CSV
-  btnExportCsv.addEventListener('click', ()=> exportPanel.classList.toggle('open'));
-  btnCancelExport.addEventListener('click', ()=> exportPanel.classList.remove('open'));
+  btnExportCsv.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display =
+    exportPanel.querySelector('.pop').style.display==='block'?'none':'block');
+  btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
   document.addEventListener('click', (e)=>{
     if(!exportPanel.contains(e.target) && e.target!==btnExportCsv){
-      exportPanel.classList.remove('open');
+      exportPanel.querySelector('.pop').style.display='none';
     }
   });
   btnDoExport.addEventListener('click', ()=>{
@@ -946,7 +880,7 @@
     a.download = `contacts_${nameBit}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
-    exportPanel.classList.remove('open');
+    exportPanel.querySelector('.pop').style.display='none';
   });
 
   // Reload remote JSON
@@ -954,7 +888,7 @@
 
   // Search
   let tSearch;
-  function setSearch(val){ search = val; render(); closeSide(); }
+  function setSearch(val){ search = val; render(); }
   searchBox.addEventListener('input', ()=>{
     clearTimeout(tSearch);
     const v = searchBox.value;
@@ -986,9 +920,7 @@
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
        setLastUpdated(updated || new Date());
        limits = {contacts:5,orgs:5,ints:5};
-       rebuildGroupIndex();
-       // default sort marker
-       setSort(contactSort.mode, contactSort.dir);
+       rebuildGroupIndex(); render();
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
