@@ -111,7 +111,7 @@
     .org-person .sep{color:#cbd5e1}
     .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 
-    /* Contact hover card */
+    /* Contact click-to-open card */
     .hovercard{
       position:fixed; z-index:1000; display:none;
       background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,.12);
@@ -124,7 +124,7 @@
     .hovergrid{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; align-items:center}
     .hovergrid .lab{color:var(--muted)}
     .hovergroups{display:flex; flex-wrap:wrap; gap:6px 6px}
-    .row-hoverable{cursor:default}
+    .row-hoverable{cursor:pointer}
     @media (max-width:720px){
       .hovercard{max-width:95vw; min-width:260px}
       .org-grid{grid-template-columns:1fr}
@@ -266,7 +266,7 @@
     </footer>
   </div>
 
-  <!-- Floating hover card for Contacts -->
+  <!-- Click-to-open details card for Contacts -->
   <div class="hovercard" id="hoverCard" role="dialog" aria-modal="false">
     <button class="close" id="hoverClose" aria-label="Close">✕</button>
     <h3 id="hcName">(Name)</h3>
@@ -310,7 +310,7 @@
   const groupFilters = document.getElementById('groupFilters');
   const clearGroups = document.getElementById('clearGroups');
 
-  // Hover card elements
+  // Details card elements
   const hc = document.getElementById('hoverCard');
   const hcClose = document.getElementById('hoverClose');
   const HC = {
@@ -334,7 +334,7 @@
   let allGroups = [];
   let expandedOrgs = new Set();
   let contactsById = new Map();
-  let hoverSticky = false; // when user clicks a row to pin the card
+  let openId = null; // which contact is currently shown in the card
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -352,14 +352,11 @@
   // Helpers
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
-  const fmtDate = s => {
-    if(!s) return '';
-    const d = new Date(s);
-    return isNaN(d) ? (''+s) : d.toLocaleDateString();
-  };
+  const fmtDate = s => { if(!s) return ''; const d = new Date(s); return isNaN(d) ? (''+s) : d.toLocaleDateString(); };
   const clean = v => (v??'').toString().trim();
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
+  const clamp = (val,min,max)=> Math.max(min, Math.min(max,val));
 
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
@@ -439,9 +436,9 @@
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
+      const previewArr = o.contact_names.slice(0, 3);
       let preview = previewArr.join(', ');
-      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
+      if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
         organisation: o.organisation,
         contacts: o.contact_names.join(', '),
@@ -529,7 +526,7 @@
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (with mailto links + hover card)
+  // CONTACTS (with mailto links + click-to-open card)
   const contactBody = document.getElementById('tb-contacts');
   function renderContacts(list){
     const tb = contactBody;
@@ -542,7 +539,7 @@
       const email = clean(c.email);
       const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
       return `
-      <tr class="row-hoverable" data-id="${esc(String(c.id))}">
+      <tr class="row-hoverable" data-id="${esc(String(c.id))}" tabindex="0">
         <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
         <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
         <td class="w-group">${groupsHtml}</td>
@@ -557,8 +554,7 @@
     }).join('');
   }
 
-  // Hover card behaviour
-  function fillHover(c){
+  function fillCard(c){
     HC.name.textContent = c.display_name || '(No name)';
     HC.org.textContent = c.organisation || '—';
     HC.role.textContent = c.job_title || '—';
@@ -573,64 +569,64 @@
     HC.subj.textContent = c.last_subject || '—';
     HC.notes.textContent = c.notes || '—';
   }
-  function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
-  function positionHover(x, y){
+  function positionCardNearRow(tr){
     hc.style.display = 'block';
-    // after visible, measure
-    const rect = hc.getBoundingClientRect();
-    const nx = clamp(x + 16, 8, window.innerWidth - rect.width - 8);
-    const ny = clamp(y + 16, 8, window.innerHeight - rect.height - 8);
-    hc.style.left = nx + 'px';
-    hc.style.top  = ny + 'px';
+    // Measure after showing
+    const r = tr.getBoundingClientRect();
+    const cardRect = hc.getBoundingClientRect();
+    // Try to the right of the row; if no room, place to the left; if still tight, overlay below
+    let left = r.right + 12;
+    if(left + cardRect.width + 8 > window.innerWidth){
+      left = Math.max(8, r.left - cardRect.width - 12);
+    }
+    let top = r.top;
+    // Clamp within viewport
+    left = clamp(left, 8, window.innerWidth - cardRect.width - 8);
+    top  = clamp(top, 8, window.innerHeight - cardRect.height - 8);
+    // Position relative to viewport + current scroll offset
+    hc.style.left = (left + window.scrollX) + 'px';
+    hc.style.top  = (top  + window.scrollY) + 'px';
   }
-  function hideHover(){ if(!hoverSticky){ hc.style.display='none'; } }
-  function showHoverForId(id, clientX, clientY){
+  function closeCard(){
+    hc.style.display = 'none';
+    openId = null;
+  }
+  function openCardForId(id, tr){
     const c = contactsById.get(String(id));
     if(!c) return;
-    fillHover(c);
-    positionHover(clientX, clientY);
+    openId = String(id);
+    fillCard(c);
+    positionCardNearRow(tr);
   }
 
-  // Delegated mouse events for hover
-  let hoverHideT = null;
-  contactBody.addEventListener('mouseover', (e)=>{
-    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
-    if(hoverHideT){ clearTimeout(hoverHideT); hoverHideT=null; }
-    if(!hoverSticky){
-      showHoverForId(tr.dataset.id, e.clientX, e.clientY);
-    }
-  });
-  contactBody.addEventListener('mousemove', (e)=>{
-    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
-    if(!hoverSticky && hc.style.display==='block'){
-      positionHover(e.clientX, e.clientY);
-    }
-  });
-  contactBody.addEventListener('mouseout', (e)=>{
-    const toEl = e.relatedTarget;
-    if(hc.contains(toEl)) return; // moving into card
-    if(hoverSticky) return;
-    hoverHideT = setTimeout(()=>{ hc.style.display='none'; }, 120);
-  });
-
-  // Click to pin/unpin
+  // Click row to open/close
   contactBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-id]'); if(!tr) return;
     const id = tr.dataset.id;
-    if(hc.style.display!=='block'){ showHoverForId(id, e.clientX, e.clientY); }
-    hoverSticky = true;
+    if(openId === id){ closeCard(); return; }
+    openCardForId(id, tr);
   });
-  hc.addEventListener('mouseenter', ()=>{ if(hoverHideT){ clearTimeout(hoverHideT); hoverHideT=null; } });
-  hc.addEventListener('mouseleave', ()=>{ if(!hoverSticky){ hc.style.display='none'; } });
-  hcClose.addEventListener('click', ()=>{ hoverSticky=false; hc.style.display='none'; });
+  // Keyboard: Enter/Space
+  contactBody.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
+    e.preventDefault();
+    const id = tr.dataset.id;
+    if(openId === id){ closeCard(); return; }
+    openCardForId(id, tr);
+  });
+
+  // Close interactions
+  hcClose.addEventListener('click', closeCard);
   document.addEventListener('click', (e)=>{
     if(hc.style.display==='none') return;
     const inCard = hc.contains(e.target);
     const inRow = e.target.closest && e.target.closest('tr[data-id]');
-    if(!inCard && !inRow){ hoverSticky=false; hc.style.display='none'; }
+    if(!inCard && !inRow) closeCard();
   });
-  window.addEventListener('scroll', ()=>{ if(!hoverSticky) hc.style.display='none'; });
-  window.addEventListener('resize', ()=>{ if(!hoverSticky) hc.style.display='none'; });
+  window.addEventListener('scroll', closeCard);
+  window.addEventListener('resize', closeCard);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeCard(); });
 
   // ORGANISATIONS (click to expand)
   const orgBody = document.getElementById('tb-orgs');
@@ -741,6 +737,7 @@
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
       render();
+      closeCard(); // close details if list size changes
     });
   }
   hookExpand('expContacts','contacts');
@@ -912,7 +909,7 @@
 
   // Search
   let tSearch;
-  function setSearch(val){ search = val; render(); }
+  function setSearch(val){ search = val; render(); closeCard(); }
   searchBox.addEventListener('input', ()=>{
     clearTimeout(tSearch);
     const v = searchBox.value;
