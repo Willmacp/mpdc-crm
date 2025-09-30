@@ -31,7 +31,7 @@
   /* Filters */
   .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
   .filters .label{font-size:13px;color:#475569}
-  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none}
+  .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none;line-height:1.1}
   .tag .count{color:var(--muted)}
   .tag.selected{background:var(--accent);color:#fff;border-color:transparent}
   .filters .clear{font-size:12px;color:#5f809b;text-decoration:none;margin-left:4px}
@@ -53,12 +53,6 @@
   tr:nth-child(even) td{background:#fafbfc}
   .muted{color:var(--muted)}
 
-  /* sort headers */
-  .sortable{cursor:pointer;user-select:none}
-  .sortable .dir{opacity:.65;margin-left:6px}
-  .sortable.active{color:#0f172a}
-  .sortable.active .dir{opacity:1;color:#0f172a}
-
   /* column widths */
   .w-name{max-width:220px}
   .w-org{max-width:220px}
@@ -71,21 +65,31 @@
   .w-subj{max-width:260px}
   .w-notes{max-width:320px}
 
-  /* Inline expanders (match orgs style) */
+  /* Inline expanders (compact) */
   #tb-orgs tr[data-org],
   #tb-contacts tr[data-id]{cursor:pointer}
   #tb-orgs tr[data-org]:hover td,
   #tb-contacts tr[data-id]:hover td{background:#f1f5f9}
   tr.org-expander td,
   tr.contact-expander td{background:#fbfdff}
-  .org-card,.contact-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:var(--shadow)}
-  .org-card h3,.contact-card h3{margin:0 0 8px 0;font-size:16px}
-  .org-actions,.contact-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
-  .org-grid,.contact-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;align-items:center}
-  .lab{color:var(--muted)}
+  .org-card,.contact-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 10px;               /* tighter */
+    background:#fff;
+    box-shadow:var(--shadow);
+  }
+  .org-card h3,.contact-card h3{margin:0;font-size:15px}
+  .org-actions,.contact-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
+  .nm{font-weight:600}
   .sep{color:#cbd5e1}
   .mail{color:#0b65c2;text-decoration:none}
   .mail:hover{text-decoration:underline}
+  .compact-line{
+    display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
+    font-size:13px; line-height:1.25; margin:2px 0;
+  }
+  .lab{color:var(--muted)}
 
   footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:var(--accent);text-decoration:none}
@@ -114,9 +118,22 @@
       <button class="btn" id="btnLoadCsv">Load CSV</button>
       <button class="btn" id="btnLoadJson">Load JSON</button>
 
+      <!-- Sort menu -->
+      <div class="panel" id="sortPanel" style="position:relative;display:inline-block">
+        <button class="btn" id="btnSort">Sort ▾</button>
+        <div class="pop" id="sortMenu" style="position:absolute;right:0;top:44px;min-width:230px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none">
+          <h4 style="margin:4px 0 10px;font-size:14px">Sort contacts</h4>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
+          <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
+        </div>
+      </div>
+
       <!-- Export CSV -->
       <div class="panel" id="exportPanel" style="position:relative;display:inline-block">
-        <button class="btn" id="btnExportCsv">Export CSV ▾</button>
+        <button class="btn" id="btnExportCsv">Export ▾</button>
         <div class="pop" style="position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none">
           <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
           <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
@@ -144,25 +161,13 @@
   </div>
 
   <main>
-    <!-- CONTACTS (rows expandable) -->
+    <!-- CONTACTS -->
     <section class="card" id="sec-contacts">
       <div class="card-head">
         <div class="card-head-left">
           <h2>Contacts <span class="count" id="countContacts"></span></h2>
         </div>
         <div class="right">
-          <!-- Sort menu adds 'Last added' option -->
-          <div class="panel" id="sortPanel" style="position:relative;display:inline-block">
-            <button class="btn" id="btnSort">Sort ▾</button>
-            <div class="pop" id="sortMenu" style="position:absolute;right:0;top:44px;min-width:230px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none">
-              <h4 style="margin:4px 0 10px;font-size:14px">Sort contacts</h4>
-              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
-              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
-              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
-              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
-              <div class="row" style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
-            </div>
-          </div>
           <button class="btn" id="expContacts">Expand list</button>
         </div>
       </div>
@@ -171,8 +176,8 @@
           <table>
             <thead>
               <tr>
-                <th class="w-name sortable" id="thName">Name <span class="dir">⇅</span></th>
-                <th class="w-org sortable" id="thOrg">Organisation <span class="dir">⇅</span></th>
+                <th class="w-name">Name</th>
+                <th class="w-org">Organisation</th>
                 <th class="w-group">Group</th>
                 <th class="w-role">Role</th>
                 <th class="w-email">Email</th>
@@ -283,7 +288,7 @@
   const groupFilters = document.getElementById('groupFilters');
   const clearGroups = document.getElementById('clearGroups');
 
-  // Sorting state for Contacts
+  // Sorting state (menu-driven)
   let contactSort = { mode:'name', dir: 1 };
 
   // State
@@ -293,8 +298,7 @@
   let selectedGroups = new Set();
   let allGroups = [];
   let expandedOrgs = new Set();
-  let expandedContacts = new Set(); // NEW: tracks which contacts are expanded
-  let lastOrgsRendered = [];
+  let expandedContacts = new Set();
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -466,48 +470,28 @@
     });
   }
 
-  /* ---------- SORT ---------- */
-  const thName = document.getElementById('thName');
-  const thOrg  = document.getElementById('thOrg');
-
-  function setSort(mode, dir){
-    contactSort = { mode, dir };
-    [thName, thOrg].forEach(th=> th.classList.remove('active'));
-    if(mode==='name'){ thName.classList.add('active'); thName.querySelector('.dir').textContent = dir===1?'↑':'↓'; thOrg.querySelector('.dir').textContent='⇅'; }
-    else if(mode==='org'){ thOrg.classList.add('active'); thOrg.querySelector('.dir').textContent = dir===1?'↑':'↓'; thName.querySelector('.dir').textContent='⇅'; }
-    else { thName.querySelector('.dir').textContent='⇅'; thOrg.querySelector('.dir').textContent='⇅'; }
-    render();
-  }
-  thName.addEventListener('click', ()=>{
-    const dir = (contactSort.mode==='name' && contactSort.dir===1) ? -1 : 1;
-    setSort('name', dir);
-  });
-  thOrg.addEventListener('click', ()=>{
-    const dir = (contactSort.mode==='org' && contactSort.dir===1) ? -1 : 1;
-    setSort('org', dir);
-  });
-
-  btnSort.addEventListener('click', ()=> sortPanel.querySelector('.pop').style.display =
-    sortPanel.querySelector('.pop').style.display==='block'?'none':'block');
+  /* ---------- SORT (menu only) ---------- */
+  btnSort.addEventListener('click', ()=> sortMenu.style.display = sortMenu.style.display==='block'?'none':'block');
   document.addEventListener('click', (e)=>{
-    if(!sortPanel.contains(e.target) && e.target!==btnSort){ sortPanel.querySelector('.pop').style.display='none'; }
+    if(!sortPanel.contains(e.target) && e.target!==btnSort){ sortMenu.style.display='none'; }
   });
   sortMenu.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
     const val = btn.dataset.sort;
-    if(val==='name-asc') setSort('name', 1);
-    if(val==='name-desc') setSort('name', -1);
-    if(val==='org-asc') setSort('org', 1);
-    if(val==='org-desc') setSort('org', -1);
-    if(val==='added-desc') setSort('added', -1);
-    sortPanel.querySelector('.pop').style.display='none';
+    if(val==='name-asc') contactSort = {mode:'name', dir:1};
+    if(val==='name-desc') contactSort = {mode:'name', dir:-1};
+    if(val==='org-asc') contactSort = {mode:'org', dir:1};
+    if(val==='org-desc') contactSort = {mode:'org', dir:-1};
+    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
+    sortMenu.style.display='none';
+    render();
   });
   function applyContactSort(list){
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
     else if(contactSort.mode==='org') L.sort(by('organisation', contactSort.dir));
     else if(contactSort.mode==='added'){
-      L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) * (contactSort.dir===-1?1:-1) );
+      L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) ); // newest first
     }
     return L;
   }
@@ -521,20 +505,36 @@
     renderOrgs(orgsView);
     renderInts(st.interactions);
 
-    lastOrgsRendered = orgsView.map(o=>o.organisation);
-
     countContacts.textContent = contactsView.length ? `(${contactsView.length})` : '';
     countOrgs.textContent = orgsView.length ? `(${orgsView.length})` : '';
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (inline expanders)
+  // CONTACTS (inline expanders; single-open)
   const contactBody = document.getElementById('tb-contacts');
+
+  function closeAllContactExpanders(){
+    document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
+      const prev = el.previousElementSibling;
+      if(prev) prev.setAttribute('aria-expanded','false');
+      el.remove();
+    });
+    expandedContacts.clear();
+  }
+
   contactBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-id]');
     if(!tr) return;
     const id = tr.dataset.id;
-    toggleContactExpander(id, tr);
+    const isOpen = expandedContacts.has(String(id));
+    if(isOpen){
+      closeAllContactExpanders();
+      return;
+    }
+    closeAllContactExpanders(); // only one open at a time
+    expandedContacts.add(String(id));
+    tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
+    tr.setAttribute('aria-expanded','true');
   });
 
   function renderContacts(list){
@@ -571,50 +571,58 @@
       <tr class="contact-expander"><td colspan="10">
         <div class="contact-card">
           <div class="contact-actions">
-            <h3 style="margin:0">${esc(c.display_name || '(No name)')}</h3>
+            <h3>${esc(c.display_name || '(No name)')}</h3>
             ${emailBtn}
           </div>
-          <div class="contact-grid">
-            <div class="lab">Organisation</div><div>${esc(c.organisation) || '—'}</div>
-            <div class="lab">Role</div><div>${esc(c.job_title) || '—'}</div>
-            <div class="lab">Email</div><div>${clean(c.email)?`<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:'—'}</div>
-            <div class="lab">Phone</div><div>${esc(c.phone) || '—'}</div>
-            <div class="lab">MPDC</div><div>${esc(c.mpdc_contact) || '—'}</div>
-            <div class="lab">Groups</div><div>${chips}</div>
-            <div class="lab">Last contact</div><div>${fmtDate(c.last_contact_at) || '—'}</div>
-            <div class="lab">Last subject</div><div>${esc(c.last_subject) || '—'}</div>
-            <div class="lab">Notes</div><div>${esc(c.notes) || '—'}</div>
+          <div class="compact-line">
+            <span class="lab">Organisation</span><span>${esc(c.organisation) || '—'}</span>
+            ${c.job_title ? `<span class="sep">•</span><span class="lab">Role</span><span>${esc(c.job_title)}</span>`:''}
+            ${clean(c.email) ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:''}
+            ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
+            ${c.mpdc_contact ? `<span class="sep">•</span><span class="lab">MPDC</span><span>${esc(c.mpdc_contact)}</span>`:''}
           </div>
+          <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
+          <div class="compact-line">
+            <span class="lab">Last</span>
+            <span>${fmtDate(c.last_contact_at) || '—'}</span>
+            ${c.last_subject ? `<span class="sep">•</span><span>${esc(c.last_subject)}</span>`:''}
+          </div>
+          ${c.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(c.notes)}</span></div>`:''}
         </div>
       </td></tr>
     `;
-  }
-  function toggleContactExpander(id, tr){
-    const key = String(id);
-    const isOpen = expandedContacts.has(key);
-    if(isOpen){
-      expandedContacts.delete(key);
-      const next = tr.nextElementSibling;
-      if(next && next.classList.contains('contact-expander')) next.remove();
-      tr.setAttribute('aria-expanded','false');
-    }else{
-      expandedContacts.add(key);
-      tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(key)));
-      tr.setAttribute('aria-expanded','true');
-    }
   }
   function getContactById(id){
     return (st.contacts||[]).find(c=> String(c.id)===String(id));
   }
 
-  // ORGANISATIONS (unchanged)
+  // ORGANISATIONS (single-open)
   const orgBody = document.getElementById('tb-orgs');
+
+  function closeAllOrgExpanders(){
+    document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
+      const prev = el.previousElementSibling;
+      if(prev) prev.setAttribute('aria-expanded','false');
+      el.remove();
+    });
+    expandedOrgs.clear();
+  }
+
   orgBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-org]');
     if(!tr) return;
     const org = tr.dataset.org;
-    toggleOrgExpander(org, tr);
+    const isOpen = expandedOrgs.has(org);
+    if(isOpen){
+      closeAllOrgExpanders();
+      return;
+    }
+    closeAllOrgExpanders(); // only one at a time
+    expandedOrgs.add(org);
+    tr.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
+    tr.setAttribute('aria-expanded','true');
   });
+
   function renderOrgs(list){
     const tb = orgBody;
     const rows = [...list].sort((a,b)=> a.organisation.localeCompare(b.organisation,undefined,{sensitivity:'base'})).slice(0, limits.orgs);
@@ -637,8 +645,8 @@
       const chip = gg.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
       const email = clean(c.email);
       return `
-        <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px">
-          <span class="nm" style="font-weight:600">${esc(c.display_name || '(No name)')}</span>
+        <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25">
+          <span class="nm">${esc(c.display_name || '(No name)')}</span>
           ${c.job_title ? `<span class="sep">•</span><span class="role" style="color:var(--muted)">${esc(c.job_title)}</span>`:''}
           ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
           ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
@@ -650,26 +658,13 @@
       <tr class="org-expander"><td colspan="4">
         <div class="org-card">
           <div class="org-actions">
-            <h3 style="margin:0">${esc(orgName)}</h3>
+            <h3>${esc(orgName)}</h3>
             ${mailAll ? `<a class="btn" href="${mailAll}" title="Email all contacts at ${esc(orgName)}">Email all</a>`:''}
           </div>
           ${people ? `<div class="org-grid">${people}</div>` : `<div class="muted">No contacts (matches current filters)</div>`}
         </div>
       </td></tr>
     `;
-  }
-  function toggleOrgExpander(org, tr){
-    const isOpen = expandedOrgs.has(org);
-    if(isOpen){
-      expandedOrgs.delete(org);
-      const next = tr.nextElementSibling;
-      if(next && next.classList.contains('org-expander')) next.remove();
-      tr.setAttribute('aria-expanded','false');
-    }else{
-      expandedOrgs.add(org);
-      tr.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
-      tr.setAttribute('aria-expanded','true');
-    }
   }
 
   // INTERACTIONS
@@ -687,25 +682,6 @@
     `).join('');
   }
 
-  // Rebuild expanders after re-render (keep open ones if still visible)
-  function reapplyContactExpanders(){
-    const rows = Array.from(contactBody.querySelectorAll('tr[data-id]'));
-    for(const r of rows){
-      const id = r.dataset.id;
-      const next = r.nextElementSibling;
-      const should = expandedContacts.has(id);
-      const has = next && next.classList.contains('contact-expander');
-      if(should && !has){
-        r.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
-        r.setAttribute('aria-expanded','true');
-      }
-      if(!should && has){
-        next.remove();
-        r.setAttribute('aria-expanded','false');
-      }
-    }
-  }
-
   // Expand buttons
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
@@ -715,7 +691,11 @@
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
       render();
-      reapplyContactExpanders();
+      // Close any open expanders when collapsing back
+      if(!isCollapsed){
+        if(key==='contacts') closeAllContactExpanders();
+        if(key==='orgs') closeAllOrgExpanders();
+      }
     });
   }
   hookExpand('expContacts','contacts');
@@ -775,7 +755,7 @@
     });
   }
 
-  // Export checks
+  // Build export checkbox list
   function buildExportChecks(){
     colChecks.innerHTML = '';
     DEFAULT_COLUMNS.forEach(c=>{
@@ -798,7 +778,8 @@
     limits = {contacts:5,orgs:5,ints:5};
     chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
-    rebuildGroupIndex(); render(); reapplyContactExpanders();
+    rebuildGroupIndex(); render();
+    closeAllContactExpanders(); closeAllOrgExpanders();
   });
 
   document.getElementById('fileJson').addEventListener('change', async (e)=>{
@@ -818,11 +799,12 @@
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
-      rebuildGroupIndex(); render(); reapplyContactExpanders();
+      rebuildGroupIndex(); render();
+      closeAllContactExpanders(); closeAllOrgExpanders();
     }catch(err){ alert('Invalid JSON file'); }
   });
 
-  // JSON download
+  // Export JSON
   document.getElementById('btnDlJson').addEventListener('click', ()=>{
     const out = {
       organisations: st.organisations||[],
@@ -921,11 +903,13 @@
        setLastUpdated(updated || new Date());
        limits = {contacts:5,orgs:5,ints:5};
        rebuildGroupIndex(); render();
+       closeAllContactExpanders(); closeAllOrgExpanders();
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
        rebuildGroupIndex(); render();
+       closeAllContactExpanders(); closeAllOrgExpanders();
     }
   }
   init();
