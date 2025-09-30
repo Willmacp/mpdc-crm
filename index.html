@@ -1,287 +1,310 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MPDC Stakeholder CRM</title>
-  <style>
-    :root{
-      --accent:#5f809b; /* MPDC blue accent */
-      --grey:#6d6e71;   /* MPDC grey */
-      --bg:#f7f8fa;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --head:#f3f5f8;
-      --shadow:0 1px 2px rgba(0,0,0,.05);
-      --chip:#eef2f7;
-    }
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-    .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
-    header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
-    h1{font-size:22px;margin:0}
-    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:#334155;font-size:12px}
-    .chip.ok{background:#e9f8ef;color:#155e2e;border-color:#b7ebc2}
-    .stamp{font-size:12px;color:var(--muted)}
-    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-    .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;cursor:pointer;font-size:14px;box-shadow:var(--shadow)}
-    .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px 10px;box-shadow:var(--shadow);min-width:260px}
-    .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
-    .search .clear{border:none;background:transparent;cursor:pointer;color:#64748b}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MPDC Stakeholder CRM</title>
+<style>
+  :root{
+    --accent:#5f809b; --grey:#6d6e71; --bg:#f7f8fa; --card:#ffffff; --text:#1f2937;
+    --muted:#6b7280; --border:#e5e7eb; --head:#f3f5f8; --shadow:0 1px 2px rgba(0,0,0,.05);
+    --chip:#eef2f7;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
+  header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
+  h1{font-size:22px;margin:0}
+  .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:#334155;font-size:12px}
+  .chip.ok{background:#e9f8ef;color:#155e2e;border-color:#b7ebc2}
+  .stamp{font-size:12px;color:var(--muted)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;cursor:pointer;font-size:14px;box-shadow:var(--shadow)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px 10px;box-shadow:var(--shadow);min-width:260px}
+  .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
+  .search .clear{border:none;background:transparent;cursor:pointer;color:#64748b}
 
-    /* Group filter bar */
-    .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
-    .filters .label{font-size:13px;color:#475569}
-    .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none}
-    .tag .count{color:var(--muted)}
-    .tag.selected{background:var(--accent);color:#fff;border-color:transparent}
-    .filters .clear{font-size:12px;color:#5f809b;text-decoration:none;margin-left:4px}
+  /* Filters */
+  .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+  .filters .label{font-size:13px;color:#475569}
+  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none}
+  .tag .count{color:var(--muted)}
+  .tag.selected{background:var(--accent);color:#fff;border-color:transparent}
+  .filters .clear{font-size:12px;color:#5f809b;text-decoration:none;margin-left:4px}
 
-    main{display:flex;flex-direction:column;gap:16px}
-    section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
-    .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
-    .card-head h2{margin:0;font-size:18px}
-    .card-head h2 .count{color:var(--muted);font-weight:500;margin-left:8px}
-    .card-body{padding:0}
-    .table-wrap{overflow:auto;max-height:420px}
-    table{border-collapse:separate;border-spacing:0;width:100%;min-width:1000px}
-    thead th{position:sticky;top:0;background:var(--head);z-index:1;font-weight:600}
-    th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    tr:nth-child(even) td{background:#fafbfc}
-    .muted{color:var(--muted)}
-    footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
-    a.top{color:var(--accent);text-decoration:none}
-    a.mail{color:#0b65c2;text-decoration:none}
-    a.mail:hover{text-decoration:underline}
+  /* Cards & tables */
+  main{display:flex;flex-direction:column;gap:16px}
+  section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .card-head-left{display:flex;align-items:center;gap:10px}
+  .card-head h2{margin:0;font-size:18px}
+  .card-head h2 .count{color:var(--muted);font-weight:500;margin-left:8px}
+  .card-head h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:10px;vertical-align:middle}
+  .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .card-body{padding:0}
+  .table-wrap{overflow:auto;max-height:420px}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px}
+  thead th{position:sticky;top:0;background:var(--head);z-index:1;font-weight:600}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  tr:nth-child(even) td{background:#fafbfc}
+  .muted{color:var(--muted)}
 
-    /* column widths */
-    .w-name{max-width:220px}
-    .w-org{max-width:220px}
-    .w-group{max-width:240px}
-    .w-role{max-width:160px}
-    .w-email{max-width:240px}
-    .w-phone{max-width:140px}
-    .w-mpdc{max-width:200px}
-    .w-date{max-width:140px}
-    .w-subj{max-width:260px}
-    .w-notes{max-width:320px}
+  /* sort headers */
+  .sortable{cursor:pointer;user-select:none}
+  .sortable .dir{opacity:.65;margin-left:6px}
+  .sortable.active{color:#0f172a}
+  .sortable.active .dir{opacity:1;color:#0f172a}
 
-    .card-head h2::before{
-      content:"";
-      display:inline-block;width:8px;height:8px;border-radius:50%;
-      background:var(--accent);margin-right:10px;vertical-align:middle;
-    }
+  /* column widths */
+  .w-name{max-width:220px}
+  .w-org{max-width:220px}
+  .w-group{max-width:240px}
+  .w-role{max-width:160px}
+  .w-email{max-width:240px}
+  .w-phone{max-width:140px}
+  .w-mpdc{max-width:200px}
+  .w-date{max-width:140px}
+  .w-subj{max-width:260px}
+  .w-notes{max-width:320px}
+  .w-actions{width:90px}
 
-    /* Export panel */
-    .panel{position:relative;display:inline-block}
-    .panel .pop{
-      position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);
-      padding:12px 12px;z-index:10;display:none;
-    }
-    .panel.open .pop{display:block}
-    .pop h4{margin:4px 0 10px;font-size:14px}
-    .row{display:flex;gap:8px;align-items:center;margin:6px 0}
-    .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px}
-    .pop .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-    .pop small{color:var(--muted)}
-    .pop label{font-size:13px}
+  /* Export menu */
+  .panel{position:relative;display:inline-block}
+  .panel .pop{position:absolute;right:0;top:44px;min-width:280px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px 12px;z-index:10;display:none}
+  .panel.open .pop{display:block}
+  .pop h4{margin:4px 0 10px;font-size:14px}
+  .row{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px}
+  .pop .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .pop small{color:var(--muted)}
+  .pop label{font-size:13px}
 
-    /* Organisations expandable rows */
-    #tb-orgs tr[data-org]{cursor:pointer}
-    #tb-orgs tr[data-org]:hover td{background:#f1f5f9}
-    tr.org-expander td{background:#fbfdff}
-    .org-card{
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:12px;
-      background:#fff;
-      box-shadow:var(--shadow);
-    }
-    .org-card h3{margin:0 0 8px 0;font-size:16px}
-    .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
-    .org-person{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px}
-    .org-person .nm{font-weight:600}
-    .org-person .role{color:var(--muted)}
-    .org-person .sep{color:#cbd5e1}
-    .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  /* Organisations expanders */
+  #tb-orgs tr[data-org]{cursor:pointer}
+  #tb-orgs tr[data-org]:hover td{background:#f1f5f9}
+  tr.org-expander td{background:#fbfdff}
+  .org-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:var(--shadow)}
+  .org-card h3{margin:0 0 8px 0;font-size:16px}
+  .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  .org-person{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px}
+  .org-person .nm{font-weight:600}
+  .org-person .role{color:var(--muted)}
+  .org-person .sep{color:#cbd5e1}
+  .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 
-    /* Contact click-to-open card */
-    .hovercard{
-      position:fixed; z-index:1000; display:none;
-      background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,.12);
-      padding:12px; max-width:420px; width:max-content; min-width:300px;
-    }
-    .hovercard h3{margin:0 24px 6px 0; font-size:16px}
-    .hovercard .close{
-      position:absolute; top:8px; right:8px; border:none; background:transparent; cursor:pointer; font-size:16px; color:#64748b
-    }
-    .hovergrid{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; align-items:center}
-    .hovergrid .lab{color:var(--muted)}
-    .hovergroups{display:flex; flex-wrap:wrap; gap:6px 6px}
-    .row-hoverable{cursor:pointer}
-    @media (max-width:720px){
-      .hovercard{max-width:95vw; min-width:260px}
-      .org-grid{grid-template-columns:1fr}
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  /* Contact row + details chevron */
+  .row-hoverable{cursor:pointer}
+  .details-btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+  .details-btn:hover{background:#f3f4f6}
+
+  /* Right-docked details panel */
+  .sidecard{
+    position:fixed; top:0; right:0; height:100vh; width:420px; max-width:95vw;
+    background:#fff; border-left:1px solid var(--border); box-shadow:-8px 0 24px rgba(0,0,0,.08);
+    transform:translateX(100%); transition:transform .22s ease; z-index:1000;
+    display:flex; flex-direction:column;
+  }
+  .sidecard.open{transform:none}
+  .sidecard-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .sidecard-body{padding:12px 16px;overflow:auto}
+  .sidegrid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+  .sidegrid .lab{color:var(--muted)}
+  .hovergroups{display:flex;flex-wrap:wrap;gap:6px 6px}
+  .side-close{border:none;background:transparent;cursor:pointer;font-size:18px;color:#64748b}
+
+  footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  a.top{color:var(--accent);text-decoration:none}
+  a.mail{color:#0b65c2;text-decoration:none}
+  a.mail:hover{text-decoration:underline}
+
+  @media (max-width:720px){ .org-grid{grid-template-columns:1fr} }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <h1>MPDC Stakeholder CRM</h1>
-        <div class="meta">
-          <span id="chip" class="chip">Data: loading…</span>
-          <span id="lastStamp" class="stamp">Last updated: —</span>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <h1>MPDC Stakeholder CRM</h1>
+      <div class="meta">
+        <span id="chip" class="chip">Data: loading…</span>
+        <span id="lastStamp" class="stamp">Last updated: —</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search" title="Type to filter contacts/organisations">
+        <span>🔎</span>
+        <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
+        <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
+      </div>
+      <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
+      <button class="btn" id="btnLoadCsv">Load CSV</button>
+      <button class="btn" id="btnLoadJson">Load JSON</button>
+
+      <!-- Export CSV -->
+      <div class="panel" id="exportPanel">
+        <button class="btn" id="btnExportCsv">Export CSV ▾</button>
+        <div class="pop">
+          <h4>Export CSV</h4>
+          <div class="row"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+          <div class="row"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+          <div class="row"><small>Select columns:</small></div>
+          <div class="cols" id="colChecks"></div>
+          <div class="actions">
+            <button class="btn" id="btnCancelExport">Cancel</button>
+            <button class="btn primary" id="btnDoExport">Export</button>
+          </div>
         </div>
       </div>
 
-      <div class="toolbar">
-        <div class="search" title="Type to filter contacts/organisations">
-          <span>🔎</span>
-          <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
-          <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
-        </div>
-        <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
-        <button class="btn" id="btnLoadCsv">Load CSV</button>
-        <button class="btn" id="btnLoadJson">Load JSON</button>
+      <button class="btn" id="btnDlJson">Export JSON</button>
+    </div>
 
-        <div class="panel" id="exportPanel">
-          <button class="btn" id="btnExportCsv">Export CSV ▾</button>
-          <div class="pop">
-            <h4>Export CSV</h4>
-            <div class="row"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-            <div class="row"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-            <div class="row"><small>Select columns:</small></div>
-            <div class="cols" id="colChecks"></div>
-            <div class="actions">
-              <button class="btn" id="btnCancelExport">Cancel</button>
-              <button class="btn primary" id="btnDoExport">Export</button>
+    <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
+    <input type="file" id="fileJson" accept=".json,application/json" hidden />
+  </header>
+
+  <!-- Group filter chips -->
+  <div class="filters" id="groupFilters" aria-label="Filter by group">
+    <span class="label">Groups:</span>
+    <a href="#" class="clear" id="clearGroups">Clear</a>
+  </div>
+
+  <main>
+    <!-- CONTACTS -->
+    <section class="card" id="sec-contacts">
+      <div class="card-head">
+        <div class="card-head-left">
+          <h2>Contacts <span class="count" id="countContacts"></span></h2>
+        </div>
+        <div class="right">
+          <!-- Sort menu adds 'Last added' option -->
+          <div class="panel" id="sortPanel">
+            <button class="btn" id="btnSort">Sort ▾</button>
+            <div class="pop" id="sortMenu">
+              <h4>Sort contacts</h4>
+              <div class="row"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
+              <div class="row"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
+              <div class="row"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
+              <div class="row"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
+              <div class="row"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
             </div>
           </div>
-        </div>
-
-        <button class="btn" id="btnDlJson">Export JSON</button>
-      </div>
-
-      <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
-      <input type="file" id="fileJson" accept=".json,application/json" hidden />
-    </header>
-
-    <!-- Group filter chips -->
-    <div class="filters" id="groupFilters" aria-label="Filter by group">
-      <span class="label">Groups:</span>
-      <a href="#" class="clear" id="clearGroups">Clear</a>
-    </div>
-
-    <main>
-      <!-- CONTACTS -->
-      <section class="card" id="sec-contacts">
-        <div class="card-head">
-          <h2>Contacts <span class="count" id="countContacts"></span></h2>
           <button class="btn" id="expContacts">Expand list</button>
         </div>
-        <div class="card-body">
-          <div class="table-wrap" id="tw-contacts">
-            <table>
-              <thead>
-                <tr>
-                  <th class="w-name">Name</th>
-                  <th class="w-org">Organisation</th>
-                  <th class="w-group">Group</th>
-                  <th class="w-role">Role</th>
-                  <th class="w-email">Email</th>
-                  <th class="w-phone">Phone</th>
-                  <th class="w-mpdc">MPDC contact</th>
-                  <th class="w-date">Last contact</th>
-                  <th class="w-subj">Last subject</th>
-                  <th class="w-notes">Notes</th>
-                </tr>
-              </thead>
-              <tbody id="tb-contacts"></tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap" id="tw-contacts">
+          <table>
+            <thead>
+              <tr>
+                <th class="w-name sortable" id="thName">Name <span class="dir">⇅</span></th>
+                <th class="w-org sortable" id="thOrg">Organisation <span class="dir">⇅</span></th>
+                <th class="w-group">Group</th>
+                <th class="w-role">Role</th>
+                <th class="w-email">Email</th>
+                <th class="w-phone">Phone</th>
+                <th class="w-mpdc">MPDC contact</th>
+                <th class="w-date">Last contact</th>
+                <th class="w-subj">Last subject</th>
+                <th class="w-notes">Notes</th>
+                <th class="w-actions"></th>
+              </tr>
+            </thead>
+            <tbody id="tb-contacts"></tbody>
+          </table>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ORGANISATIONS -->
-      <section class="card" id="sec-orgs">
-        <div class="card-head">
+    <!-- ORGANISATIONS -->
+    <section class="card" id="sec-orgs">
+      <div class="card-head">
+        <div class="card-head-left">
           <h2>Organisations <span class="count" id="countOrgs"></span></h2>
+        </div>
+        <div class="right">
           <button class="btn" id="expOrgs">Expand list</button>
         </div>
-        <div class="card-body">
-          <div class="table-wrap" id="tw-orgs">
-            <table>
-              <thead>
-                <tr>
-                  <th class="w-org">Organisation</th>
-                  <th>Contacts</th>
-                  <th class="w-date">Last contact</th>
-                  <th class="w-subj">Recent topics</th>
-                </tr>
-              </thead>
-              <tbody id="tb-orgs"></tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap" id="tw-orgs">
+          <table>
+            <thead>
+              <tr>
+                <th class="w-org">Organisation</th>
+                <th>Contacts</th>
+                <th class="w-date">Last contact</th>
+                <th class="w-subj">Recent topics</th>
+              </tr>
+            </thead>
+            <tbody id="tb-orgs"></tbody>
+          </table>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- INTERACTIONS -->
-      <section class="card" id="sec-ints">
-        <div class="card-head">
+    <!-- INTERACTIONS -->
+    <section class="card" id="sec-ints">
+      <div class="card-head">
+        <div class="card-head-left">
           <h2>Interactions <span class="count" id="countInts"></span></h2>
+        </div>
+        <div class="right">
           <button class="btn" id="expInts">Expand list</button>
         </div>
-        <div class="card-body">
-          <div class="table-wrap" id="tw-ints">
-            <table>
-              <thead>
-                <tr>
-                  <th class="w-date">Date</th>
-                  <th class="w-name">Contact</th>
-                  <th class="w-subj">Subject</th>
-                  <th>Summary</th>
-                  <th>Type</th>
-                </tr>
-              </thead>
-              <tbody id="tb-ints"></tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap" id="tw-ints">
+          <table>
+            <thead>
+              <tr>
+                <th class="w-date">Date</th>
+                <th class="w-name">Contact</th>
+                <th class="w-subj">Subject</th>
+                <th>Summary</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="tb-ints"></tbody>
+          </table>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
+  </main>
 
-    <footer>
-      <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
-      <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
-    </footer>
+  <footer>
+    <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
+    <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
+  </footer>
+</div>
+
+<!-- Right-docked details panel -->
+<aside class="sidecard" id="sideCard" aria-hidden="true">
+  <div class="sidecard-head">
+    <h3 id="scName" style="margin:0;font-size:18px">Contact details</h3>
+    <button class="side-close" id="sideClose" aria-label="Close">✕</button>
   </div>
-
-  <!-- Click-to-open details card for Contacts -->
-  <div class="hovercard" id="hoverCard" role="dialog" aria-modal="false">
-    <button class="close" id="hoverClose" aria-label="Close">✕</button>
-    <h3 id="hcName">(Name)</h3>
-    <div class="hovergrid">
-      <div class="lab">Organisation</div><div id="hcOrg">—</div>
-      <div class="lab">Role</div><div id="hcRole">—</div>
-      <div class="lab">Email</div><div id="hcEmail">—</div>
-      <div class="lab">Phone</div><div id="hcPhone">—</div>
-      <div class="lab">MPDC</div><div id="hcMpdc">—</div>
-      <div class="lab">Groups</div><div class="hovergroups" id="hcGroups"></div>
-      <div class="lab">Last contact</div><div id="hcDate">—</div>
-      <div class="lab">Last subject</div><div id="hcSubject">—</div>
-      <div class="lab">Notes</div><div id="hcNotes">—</div>
+  <div class="sidecard-body">
+    <div class="sidegrid">
+      <div class="lab">Organisation</div><div id="scOrg">—</div>
+      <div class="lab">Role</div><div id="scRole">—</div>
+      <div class="lab">Email</div><div id="scEmail">—</div>
+      <div class="lab">Phone</div><div id="scPhone">—</div>
+      <div class="lab">MPDC</div><div id="scMpdc">—</div>
+      <div class="lab">Groups</div><div class="hovergroups" id="scGroups"></div>
+      <div class="lab">Last contact</div><div id="scDate">—</div>
+      <div class="lab">Last subject</div><div id="scSubject">—</div>
+      <div class="lab">Notes</div><div id="scNotes">—</div>
     </div>
   </div>
+</aside>
 
 <script>
 (function(){
@@ -306,25 +329,34 @@
   const btnDoExport = document.getElementById('btnDoExport');
   const colChecks = document.getElementById('colChecks');
 
+  // Sort panel
+  const sortPanel = document.getElementById('sortPanel');
+  const btnSort = document.getElementById('btnSort');
+  const sortMenu = document.getElementById('sortMenu');
+
   // Group filters UI
   const groupFilters = document.getElementById('groupFilters');
   const clearGroups = document.getElementById('clearGroups');
 
-  // Details card elements
-  const hc = document.getElementById('hoverCard');
-  const hcClose = document.getElementById('hoverClose');
-  const HC = {
-    name: document.getElementById('hcName'),
-    org: document.getElementById('hcOrg'),
-    role: document.getElementById('hcRole'),
-    email: document.getElementById('hcEmail'),
-    phone: document.getElementById('hcPhone'),
-    mpdc: document.getElementById('hcMpdc'),
-    groups: document.getElementById('hcGroups'),
-    date: document.getElementById('hcDate'),
-    subj: document.getElementById('hcSubject'),
-    notes: document.getElementById('hcNotes'),
+  // Side panel elements
+  const sc = document.getElementById('sideCard');
+  const sideClose = document.getElementById('sideClose');
+  const SC = {
+    name: document.getElementById('scName'),
+    org: document.getElementById('scOrg'),
+    role: document.getElementById('scRole'),
+    email: document.getElementById('scEmail'),
+    phone: document.getElementById('scPhone'),
+    mpdc: document.getElementById('scMpdc'),
+    groups: document.getElementById('scGroups'),
+    date: document.getElementById('scDate'),
+    subj: document.getElementById('scSubject'),
+    notes: document.getElementById('scNotes'),
   };
+
+  // Sorting state for Contacts
+  // mode: 'name' | 'org' | 'added', dir: 1=asc, -1=desc
+  let contactSort = { mode:'name', dir: 1 };
 
   // State
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
@@ -334,7 +366,7 @@
   let allGroups = [];
   let expandedOrgs = new Set();
   let contactsById = new Map();
-  let openId = null; // which contact is currently shown in the card
+  let openId = null;
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -365,7 +397,7 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
-  // GROUP NORMALISATION
+  /* ---------- GROUP NORMALISATION ---------- */
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -420,7 +452,7 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Derive organisations (skip blank orgs)
+  /* ---------- ORGS FROM CONTACTS (skip blank orgs) ---------- */
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
@@ -436,9 +468,9 @@
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, 3);
+      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
       let preview = previewArr.join(', ');
-      if(n > 3){ preview += ` …(+${n - 3})`; }
+      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
       return {
         organisation: o.organisation,
         contacts: o.contact_names.join(', '),
@@ -450,7 +482,7 @@
     });
   }
 
-  // Build group index and chips
+  /* ---------- GROUP CHIPS ---------- */
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -487,7 +519,7 @@
     e.preventDefault(); selectedGroups.clear(); renderGroupChips(); render();
   });
 
-  // Filtered view
+  /* ---------- FILTERED VIEW ---------- */
   function filteredContacts(){
     const q = norm(search);
     const hasSearch = q.length>0;
@@ -507,17 +539,65 @@
     });
   }
 
-  // Render cycle
+  /* ---------- SORT ---------- */
+  const thName = document.getElementById('thName');
+  const thOrg  = document.getElementById('thOrg');
+
+  function setSort(mode, dir){
+    contactSort = { mode, dir };
+    // header UI
+    [thName, thOrg].forEach(th=> th.classList.remove('active'));
+    if(mode==='name'){ thName.classList.add('active'); thName.querySelector('.dir').textContent = dir===1?'↑':'↓'; thOrg.querySelector('.dir').textContent='⇅'; }
+    else if(mode==='org'){ thOrg.classList.add('active'); thOrg.querySelector('.dir').textContent = dir===1?'↑':'↓'; thName.querySelector('.dir').textContent='⇅'; }
+    else { thName.querySelector('.dir').textContent='⇅'; thOrg.querySelector('.dir').textContent='⇅'; }
+    render();
+  }
+  thName.addEventListener('click', ()=>{
+    const dir = (contactSort.mode==='name' && contactSort.dir===1) ? -1 : 1;
+    setSort('name', dir);
+  });
+  thOrg.addEventListener('click', ()=>{
+    const dir = (contactSort.mode==='org' && contactSort.dir===1) ? -1 : 1;
+    setSort('org', dir);
+  });
+
+  // Sort menu (for "Last added")
+  btnSort.addEventListener('click', ()=> sortPanel.classList.toggle('open'));
+  document.addEventListener('click', (e)=>{
+    if(!sortPanel.contains(e.target) && e.target!==btnSort){ sortPanel.classList.remove('open'); }
+  });
+  sortMenu.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-sort]'); if(!btn) return;
+    const val = btn.dataset.sort;
+    if(val==='name-asc') setSort('name', 1);
+    if(val==='name-desc') setSort('name', -1);
+    if(val==='org-asc') setSort('org', 1);
+    if(val==='org-desc') setSort('org', -1);
+    if(val==='added-desc') setSort('added', -1);
+    sortPanel.classList.remove('open');
+  });
+
+  function applyContactSort(list){
+    const L = [...list];
+    if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
+    else if(contactSort.mode==='org') L.sort(by('organisation', contactSort.dir));
+    else if(contactSort.mode==='added'){
+      // "Last added" ≈ highest numeric id first; fallback to original order
+      L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) * (contactSort.dir===-1?1:-1) );
+    }
+    return L;
+  }
+
+  /* ---------- RENDER ---------- */
   let lastOrgsRendered = [];
   function render(){
-    const contactsView = filteredContacts();
+    const contactsView = applyContactSort( filteredContacts() );
     const orgsView = deriveOrgs(contactsView);
 
     renderContacts(contactsView);
     renderOrgs(orgsView);
     renderInts(st.interactions);
 
-    // Re-apply expanded orgs after re-render
     lastOrgsRendered = orgsView.map(o=>o.organisation);
     reapplyOrgExpanders();
 
@@ -526,11 +606,11 @@
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS (with mailto links + click-to-open card)
+  // CONTACTS (mailto + chevron + side panel)
   const contactBody = document.getElementById('tb-contacts');
   function renderContacts(list){
     const tb = contactBody;
-    const rows = [...list].sort(by('display_name')).slice(0, limits.contacts);
+    const rows = applyContactSort(list).slice(0, limits.contacts);
     contactsById.clear();
     tb.innerHTML = rows.map(c=>{
       contactsById.set(String(c.id), c);
@@ -539,7 +619,7 @@
       const email = clean(c.email);
       const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
       return `
-      <tr class="row-hoverable" data-id="${esc(String(c.id))}" tabindex="0">
+      <tr class="row-hoverable" data-id="${esc(String(c.id))}">
         <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
         <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
         <td class="w-group">${groupsHtml}</td>
@@ -550,85 +630,50 @@
         <td class="w-date">${fmtDate(c.last_contact_at)}</td>
         <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
         <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
+        <td class="w-actions"><button class="details-btn" data-id="${esc(String(c.id))}" title="Open details">Details ▸</button></td>
       </tr>`;
     }).join('');
   }
 
-  function fillCard(c){
-    HC.name.textContent = c.display_name || '(No name)';
-    HC.org.textContent = c.organisation || '—';
-    HC.role.textContent = c.job_title || '—';
-    if(c.email){
-      HC.email.innerHTML = `<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`;
-    }else{ HC.email.textContent = '—'; }
-    HC.phone.textContent = c.phone || '—';
-    HC.mpdc.textContent = c.mpdc_contact || '—';
+  function fillSide(c){
+    SC.name.textContent = c.display_name || '(No name)';
+    SC.org.textContent = c.organisation || '—';
+    SC.role.textContent = c.job_title || '—';
+    if(c.email){ SC.email.innerHTML = `<a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`; }
+    else { SC.email.textContent = '—'; }
+    SC.phone.textContent = c.phone || '—';
+    SC.mpdc.textContent = c.mpdc_contact || '—';
     const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
-    HC.groups.innerHTML = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
-    HC.date.textContent = fmtDate(c.last_contact_at) || '—';
-    HC.subj.textContent = c.last_subject || '—';
-    HC.notes.textContent = c.notes || '—';
+    SC.groups.innerHTML = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
+    SC.date.textContent = fmtDate(c.last_contact_at) || '—';
+    SC.subj.textContent = c.last_subject || '—';
+    SC.notes.textContent = c.notes || '—';
   }
-  function positionCardNearRow(tr){
-    hc.style.display = 'block';
-    // Measure after showing
-    const r = tr.getBoundingClientRect();
-    const cardRect = hc.getBoundingClientRect();
-    // Try to the right of the row; if no room, place to the left; if still tight, overlay below
-    let left = r.right + 12;
-    if(left + cardRect.width + 8 > window.innerWidth){
-      left = Math.max(8, r.left - cardRect.width - 12);
-    }
-    let top = r.top;
-    // Clamp within viewport
-    left = clamp(left, 8, window.innerWidth - cardRect.width - 8);
-    top  = clamp(top, 8, window.innerHeight - cardRect.height - 8);
-    // Position relative to viewport + current scroll offset
-    hc.style.left = (left + window.scrollX) + 'px';
-    hc.style.top  = (top  + window.scrollY) + 'px';
-  }
-  function closeCard(){
-    hc.style.display = 'none';
-    openId = null;
-  }
-  function openCardForId(id, tr){
-    const c = contactsById.get(String(id));
-    if(!c) return;
+  function closeSide(){ sc.classList.remove('open'); sc.setAttribute('aria-hidden','true'); openId=null; }
+  function openSideForId(id){
+    const c = contactsById.get(String(id)); if(!c) return;
     openId = String(id);
-    fillCard(c);
-    positionCardNearRow(tr);
+    fillSide(c);
+    sc.classList.add('open');
+    sc.setAttribute('aria-hidden','false');
   }
 
-  // Click row to open/close
+  // Row/cell clicks
   contactBody.addEventListener('click', (e)=>{
-    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
-    const id = tr.dataset.id;
-    if(openId === id){ closeCard(); return; }
-    openCardForId(id, tr);
+    const btn = e.target.closest('.details-btn');
+    if(btn){ openSideForId(btn.dataset.id); return; }
+    const tr = e.target.closest('tr[data-id]');
+    if(!tr) return;
+    openSideForId(tr.dataset.id);
   });
-  // Keyboard: Enter/Space
-  contactBody.addEventListener('keydown', (e)=>{
-    if(e.key !== 'Enter' && e.key !== ' ') return;
-    const tr = e.target.closest('tr[data-id]'); if(!tr) return;
-    e.preventDefault();
-    const id = tr.dataset.id;
-    if(openId === id){ closeCard(); return; }
-    openCardForId(id, tr);
-  });
-
-  // Close interactions
-  hcClose.addEventListener('click', closeCard);
+  sideClose.addEventListener('click', closeSide);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeSide(); });
   document.addEventListener('click', (e)=>{
-    if(hc.style.display==='none') return;
-    const inCard = hc.contains(e.target);
-    const inRow = e.target.closest && e.target.closest('tr[data-id]');
-    if(!inCard && !inRow) closeCard();
+    if(!sc.classList.contains('open')) return;
+    if(!sc.contains(e.target) && !e.target.closest('#tb-contacts')) closeSide();
   });
-  window.addEventListener('scroll', closeCard);
-  window.addEventListener('resize', closeCard);
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeCard(); });
 
-  // ORGANISATIONS (click to expand)
+  // ORGANISATIONS
   const orgBody = document.getElementById('tb-orgs');
   orgBody.addEventListener('click', (e)=>{
     const tr = e.target.closest('tr[data-org]');
@@ -638,9 +683,9 @@
   });
   function renderOrgs(list){
     const tb = orgBody;
-    const rows = [...list].sort(by('organisation')).slice(0, limits.orgs);
+    const rows = [...list].sort((a,b)=> a.organisation.localeCompare(b.organisation,undefined,{sensitivity:'base'})).slice(0, limits.orgs);
     tb.innerHTML = rows.map(o=>`
-      <tr data-org="${esc(o.organisation)}" tabindex="0" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
+      <tr data-org="${esc(o.organisation)}" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
         <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
         <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
         <td class="w-date">${fmtDate(o.last_contact_at)}</td>
@@ -737,7 +782,7 @@
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
       render();
-      closeCard(); // close details if list size changes
+      closeSide();
     });
   }
   hookExpand('expContacts','contacts');
@@ -797,7 +842,7 @@
     });
   }
 
-  // Export checkboxes
+  // Export checks
   function buildExportChecks(){
     colChecks.innerHTML = '';
     DEFAULT_COLUMNS.forEach(c=>{
@@ -909,7 +954,7 @@
 
   // Search
   let tSearch;
-  function setSearch(val){ search = val; render(); closeCard(); }
+  function setSearch(val){ search = val; render(); closeSide(); }
   searchBox.addEventListener('input', ()=>{
     clearTimeout(tSearch);
     const v = searchBox.value;
@@ -937,14 +982,13 @@
          st.organisations = deriveOrgs(st.contacts);
        }
        chip.className='chip ok';
-       const total = st.contacts?.length || 0;
-       chip.textContent = `Data: Connected ✓ — ${total} contacts`;
-
+       chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
        setLastUpdated(updated || new Date());
-
        limits = {contacts:5,orgs:5,ints:5};
-       rebuildGroupIndex(); render();
+       rebuildGroupIndex();
+       // default sort marker
+       setSort(contactSort.mode, contactSort.dir);
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
