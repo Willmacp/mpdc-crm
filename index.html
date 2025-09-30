@@ -67,20 +67,23 @@
 
   /* Inline expanders (compact) */
   #tb-orgs tr[data-org],
-  #tb-contacts tr[data-id]{cursor:pointer}
+  #tb-contacts tr[data-id],
+  #tb-ints tr[data-int]{cursor:pointer}
   #tb-orgs tr[data-org]:hover td,
-  #tb-contacts tr[data-id]:hover td{background:#f1f5f9}
+  #tb-contacts tr[data-id]:hover td,
+  #tb-ints tr[data-int]:hover td{background:#f1f5f9}
   tr.org-expander td,
-  tr.contact-expander td{background:#fbfdff}
-  .org-card,.contact-card{
+  tr.contact-expander td,
+  tr.int-expander td{background:#fbfdff}
+  .org-card,.contact-card,.int-card{
     border:1px solid var(--border);
     border-radius:10px;
-    padding:8px 10px;               /* tighter */
+    padding:8px 10px;   /* compact */
     background:#fff;
     box-shadow:var(--shadow);
   }
-  .org-card h3,.contact-card h3{margin:0;font-size:15px}
-  .org-actions,.contact-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
+  .org-card h3,.contact-card h3,.int-card h3{margin:0;font-size:15px}
+  .org-actions,.contact-actions,.int-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
   .nm{font-weight:600}
   .sep{color:#cbd5e1}
   .mail{color:#0b65c2;text-decoration:none}
@@ -299,6 +302,7 @@
   let allGroups = [];
   let expandedOrgs = new Set();
   let expandedContacts = new Set();
+  let expandedInts = new Set();
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -667,19 +671,90 @@
     `;
   }
 
-  // INTERACTIONS
+  // ---------- INTERACTIONS (inline expanders; single-open) ----------
+  const intBody = document.getElementById('tb-ints');
+
+  function closeAllIntExpanders(){
+    document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
+      const prev = el.previousElementSibling;
+      if(prev) prev.setAttribute('aria-expanded','false');
+      el.remove();
+    });
+    expandedInts.clear();
+  }
+
+  intBody.addEventListener('click', (e)=>{
+    const tr = e.target.closest('tr[data-int]');
+    if(!tr) return;
+    const key = tr.dataset.int;
+    const isOpen = expandedInts.has(key);
+    if(isOpen){
+      closeAllIntExpanders();
+      return;
+    }
+    closeAllIntExpanders(); // only one
+    const idx = Number(tr.getAttribute('data-idx')||0);
+    const item = getInteractionByKey(key, idx);
+    expandedInts.add(key);
+    tr.insertAdjacentHTML('afterend', buildIntExpanderRow(item));
+    tr.setAttribute('aria-expanded','true');
+  });
+
+  function getInteractionByKey(key, idx){
+    // key prefers id/date+contact fallback
+    const exact = (st.interactions||[]).find(i=>{
+      return String(i.id ?? '') === key;
+    });
+    if(exact) return exact;
+    return st.interactions[idx] || null;
+  }
+
+  function findContactByName(name){
+    if(!name) return null;
+    const n = norm(name);
+    return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
+    // (could add fuzzy match later)
+  }
+
   function renderInts(list){
-    const tb = document.getElementById('tb-ints');
-    const rows = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0, limits.ints);
-    tb.innerHTML = rows.map(i=>`
-      <tr>
-        <td class="w-date">${fmtDate(i.date)}</td>
-        <td class="w-name">${esc(i.contact)}</td>
-        <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
-        <td title="${esc(i.summary)}">${esc(i.summary)}</td>
-        <td>${esc(i.type)}</td>
-      </tr>
-    `).join('');
+    const tb = intBody;
+    const sorted = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date));
+    const rows = sorted.slice(0, limits.ints);
+    tb.innerHTML = rows.map((i,idx)=>{
+      const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
+      const base = `
+        <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
+          <td class="w-date">${fmtDate(i.date)}</td>
+          <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
+          <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
+          <td title="${esc(i.summary)}">${esc(i.summary)}</td>
+          <td>${esc(i.type)}</td>
+        </tr>`;
+      const exp = expandedInts.has(key) ? buildIntExpanderRow(i) : '';
+      return base + exp;
+    }).join('');
+  }
+
+  function buildIntExpanderRow(i){
+    const c = findContactByName(i.contact);
+    const emailBtn = c && c.email ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email ${esc(c.display_name||'contact')}</a>` : '';
+    return `
+      <tr class="int-expander"><td colspan="5">
+        <div class="int-card">
+          <div class="int-actions">
+            <h3>${esc(i.subject || 'Interaction')}</h3>
+            ${emailBtn}
+          </div>
+          <div class="compact-line">
+            <span class="lab">Date</span><span>${fmtDate(i.date) || '—'}</span>
+            ${i.type ? `<span class="sep">•</span><span class="lab">Type</span><span>${esc(i.type)}</span>`:''}
+            ${i.contact ? `<span class="sep">•</span><span class="lab">Contact</span><span>${esc(i.contact)}</span>`:''}
+          </div>
+          ${i.summary ? `<div class="compact-line"><span class="lab">Summary</span><span>${esc(i.summary)}</span></div>`:''}
+          ${i.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(i.notes)}</span></div>`:''}
+        </div>
+      </td></tr>
+    `;
   }
 
   // Expand buttons
@@ -691,10 +766,10 @@
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
       render();
-      // Close any open expanders when collapsing back
       if(!isCollapsed){
         if(key==='contacts') closeAllContactExpanders();
         if(key==='orgs') closeAllOrgExpanders();
+        if(key==='ints') closeAllIntExpanders();
       }
     });
   }
@@ -779,7 +854,7 @@
     chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
     rebuildGroupIndex(); render();
-    closeAllContactExpanders(); closeAllOrgExpanders();
+    closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
   });
 
   document.getElementById('fileJson').addEventListener('change', async (e)=>{
@@ -800,7 +875,7 @@
       chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       rebuildGroupIndex(); render();
-      closeAllContactExpanders(); closeAllOrgExpanders();
+      closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){ alert('Invalid JSON file'); }
   });
 
@@ -903,13 +978,13 @@
        setLastUpdated(updated || new Date());
        limits = {contacts:5,orgs:5,ints:5};
        rebuildGroupIndex(); render();
-       closeAllContactExpanders(); closeAllOrgExpanders();
+       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
        rebuildGroupIndex(); render();
-       closeAllContactExpanders(); closeAllOrgExpanders();
+       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }
   }
   init();
