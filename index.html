@@ -6,31 +6,61 @@
 <title>MPDC Stakeholder CRM</title>
 <style>
   :root{
-    --accent:#5f809b; --grey:#6d6e71; --bg:#f7f8fa; --card:#ffffff; --text:#1f2937;
-    --muted:#6b7280; --border:#e5e7eb; --head:#f3f5f8; --shadow:0 1px 2px rgba(0,0,0,.05);
+    /* Brand palette */
+    --accent:#5f809b;           /* MPDC blue */
+    --accent-700:#4c6a82;
+    --accent-100:#e9f1f7;
+    --grey:#6d6e71;             /* MPDC grey */
+    --text:#1f2937;
+    --muted:#6b7280;
+    --bg:#f7f8fa;
+    --card:#ffffff;
+    --border:#e5e7eb;
+    --head:#f3f5f8;
     --chip:#eef2f7;
+
+    /* Support greens (muted) */
+    --green:#4b7f6b;
+    --green-100:#e9f3ee;
+
+    /* Shadows */
+    --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+    --shadow:0 8px 24px rgba(0,0,0,.08);
   }
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+
   .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
+
+  /* Header / branding */
   header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:8px}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
   h1{font-size:22px;margin:0}
   .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:#334155;font-size:12px}
-  .chip.ok{background:#e9f8ef;color:#155e2e;border-color:#b7ebc2}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);
+    border:1px solid var(--border);color:#334155;font-size:12px}
+  .chip.ok{background:var(--green-100);color:var(--green);border-color:#cfe8dc}
   .stamp{font-size:12px;color:var(--muted)}
 
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-  .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;cursor:pointer;font-size:14px;box-shadow:var(--shadow)}
+  /* Top toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
+    cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease}
+  .btn:hover{border-color:var(--accent);box-shadow:0 2px 6px rgba(95,128,155,.15)}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.primary:hover{background:var(--accent-700)}
   .btn:disabled{opacity:.6;cursor:not-allowed}
-  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px 10px;box-shadow:var(--shadow);min-width:260px}
+  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;
+    padding:6px 10px;box-shadow:var(--shadow-sm);min-width:260px}
   .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
   .search .clear{border:none;background:transparent;cursor:pointer;color:#64748b}
 
+  /* Popovers / panels */
   .panel{position:relative;display:inline-block}
-  .pop{position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:12px;z-index:10;display:none}
+  .pop{position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
+    border-radius:12px;box-shadow:var(--shadow);padding:12px;z-index:10;display:none}
 
   /* Group menu grid */
   .groups-grid{
@@ -42,19 +72,27 @@
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
 
-  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:12px;cursor:pointer;user-select:none;line-height:1.1}
+  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;
+    box-shadow:var(--shadow-sm);font-size:12px;cursor:pointer;user-select:none;line-height:1.1}
   .tag .count{color:var(--muted)}
-  .tag.selected{background:var(--accent);color:#fff;border-color:transparent}
+  .tag.selected{background:var(--green);color:#fff;border-color:transparent}
   .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+
+  /* Tips popover */
+  .tips li{margin:6px 0;color:#475569}
+  .tips strong{color:#111827}
 
   /* Cards & tables */
   main{display:flex;flex-direction:column;gap:16px}
-  section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
-  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+    border-bottom:1px solid var(--border);background:linear-gradient(90deg,var(--accent-100),#fff 40%)}
   .card-head-left{display:flex;align-items:center;gap:10px}
   .card-head h2{margin:0;font-size:18px}
   .card-head h2 .count{color:var(--muted);font-weight:500;margin-left:8px}
-  .card-head h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:10px;vertical-align:middle}
+  .card-head h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);
+    margin-right:10px;vertical-align:middle}
+  .subhint{font-size:12px;color:var(--muted)}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .card-body{padding:0}
   .table-wrap{overflow:auto;max-height:420px}
@@ -76,7 +114,7 @@
   .w-subj{max-width:260px}
   .w-notes{max-width:320px}
 
-  /* Inline expanders (compact) */
+  /* Row interactions */
   #tb-orgs tr[data-org],
   #tb-contacts tr[data-id],
   #tb-ints  tr[data-int]{cursor:pointer}
@@ -86,12 +124,13 @@
   tr.org-expander td,
   tr.contact-expander td,
   tr.int-expander td{background:#fbfdff}
+
   .org-card,.contact-card,.int-card{
     border:1px solid var(--border);
     border-radius:10px;
-    padding:8px 10px;   /* compact */
+    padding:8px 10px;
     background:#fff;
-    box-shadow:var(--shadow);
+    box-shadow:var(--shadow-sm);
   }
   .org-card h3,.contact-card h3,.int-card h3{margin:0;font-size:15px}
   .org-actions,.contact-actions,.int-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
@@ -115,13 +154,15 @@
   <header>
     <div class="brand">
       <div class="logo" aria-hidden="true"></div>
-      <h1>MPDC Stakeholder CRM</h1>
-      <div class="meta">
-        <span id="chip" class="chip">Data: loading…</span>
-        <span id="lastStamp" class="stamp">Last updated: —</span>
+      <div>
+        <h1 style="display:flex;align-items:center;gap:8px;margin-bottom:2px">MPDC Stakeholder CRM
+          <span class="chip" title="Environment">Web</span>
+        </h1>
+        <div class="stamp" id="lastStamp">Last updated: —</div>
       </div>
     </div>
 
+    <!-- Toolbar: Search + Groups (now side by side), then Reload / Export / Admin / Tips -->
     <div class="toolbar">
       <div class="search" title="Type to filter contacts/organisations">
         <span>🔎</span>
@@ -129,11 +170,24 @@
         <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
       </div>
 
+      <!-- Groups moved next to Search -->
+      <div class="panel" id="groupsPanel">
+        <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
+        <div class="pop" id="groupsMenu" style="min-width:520px">
+          <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
+          <div class="groups-grid" id="groupsGrid"></div>
+          <div class="groups-actions">
+            <a href="#" id="linkClearGroups" style="color:#5f809b;text-decoration:none">Clear</a>
+            <button class="btn" id="btnCloseGroups">Close</button>
+          </div>
+        </div>
+      </div>
+
       <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
 
       <!-- Export CSV -->
       <div class="panel" id="exportPanel">
-        <button class="btn" id="btnExportCsv">Export ▾</button>
+        <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
         <div class="pop">
           <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
           <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
@@ -147,28 +201,35 @@
         </div>
       </div>
 
-      <!-- Group filters dropdown -->
-      <div class="panel" id="groupsPanel">
-        <button class="btn" id="btnGroups">Groups ▾</button>
-        <div class="pop" id="groupsMenu">
-          <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
-          <div class="groups-grid" id="groupsGrid"></div>
-          <div class="groups-actions">
-            <a href="#" id="linkClearGroups" style="color:#5f809b;text-decoration:none">Clear</a>
-            <button class="btn" id="btnCloseGroups">Close</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Admin tools -->
       <div class="panel" id="adminPanel">
-        <button class="btn" id="btnAdmin">Admin tools ▾</button>
+        <button class="btn" id="btnAdmin" title="Load CSV/JSON or export a JSON snapshot">Admin tools ▾</button>
         <div class="pop" id="adminMenu" style="min-width:220px">
           <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
           <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
           <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
         </div>
       </div>
+
+      <!-- Quick tips -->
+      <div class="panel" id="helpPanel">
+        <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
+        <div class="pop" id="helpMenu" style="max-width:520px">
+          <ul class="tips" style="padding-left:18px;margin:0">
+            <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
+            <li><strong>Groups</strong>: select one or more tags; chosen tags are highlighted in green.</li>
+            <li><strong>Contacts</strong>: click any row to open a compact details card.</li>
+            <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
+            <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
+            <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
+            <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <span id="chip" class="chip">Data: loading…</span>
     </div>
 
     <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
@@ -180,12 +241,14 @@
     <section class="card" id="sec-contacts">
       <div class="card-head">
         <div class="card-head-left">
-          <h2>Contacts <span class="count" id="countContacts"></span></h2>
+          <div>
+            <h2>Contacts <span class="count" id="countContacts"></span></h2>
+            <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
+          </div>
         </div>
         <div class="right">
           <button class="btn" id="expContacts">Expand list</button>
-
-          <!-- Sort (moved back into Contacts header) -->
+          <!-- Sort menu in Contacts header -->
           <div class="panel" id="sortPanelContacts">
             <button class="btn" id="btnSortContacts">Sort ▾</button>
             <div class="pop" id="sortMenuContacts">
@@ -226,7 +289,10 @@
     <section class="card" id="sec-orgs">
       <div class="card-head">
         <div class="card-head-left">
-          <h2>Organisations <span class="count" id="countOrgs"></span></h2>
+          <div>
+            <h2>Organisations <span class="count" id="countOrgs"></span></h2>
+            <div class="subhint">Click a row to see people and email-all</div>
+          </div>
         </div>
         <div class="right">
           <button class="btn" id="expOrgs">Expand list</button>
@@ -253,7 +319,10 @@
     <section class="card" id="sec-ints">
       <div class="card-head">
         <div class="card-head-left">
-          <h2>Interactions <span class="count" id="countInts"></span></h2>
+          <div>
+            <h2>Interactions <span class="count" id="countInts"></span></h2>
+            <div class="subhint">Chronological view; click a row for details</div>
+          </div>
         </div>
         <div class="right">
           <button class="btn" id="expInts">Expand list</button>
@@ -297,6 +366,11 @@
   const btnClearSearch = document.getElementById('btnClearSearch');
   const btnReload = document.getElementById('btnReload');
 
+  // Tips
+  const helpPanel = document.getElementById('helpPanel');
+  const btnHelp = document.getElementById('btnHelp');
+  const helpMenu = document.getElementById('helpMenu');
+
   // Contacts sort (inside Contacts header)
   const sortPanelContacts = document.getElementById('sortPanelContacts');
   const btnSortContacts = document.getElementById('btnSortContacts');
@@ -325,7 +399,7 @@
   const amLoadJson = document.getElementById('amLoadJson');
   const amExportJson = document.getElementById('amExportJson');
 
-  // Inputs
+  // File inputs
   const fileCsv = document.getElementById('fileCsv');
   const fileJson = document.getElementById('fileJson');
 
@@ -344,19 +418,6 @@
   let expandedContacts = new Set();
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
-
-  const DEFAULT_COLUMNS = [
-    {key:'display_name', label:'Name', checked:true},
-    {key:'organisation', label:'Organisation', checked:true},
-    {key:'group',        label:'Group', checked:true},
-    {key:'job_title',    label:'Role', checked:false},
-    {key:'email',        label:'Email', checked:true},
-    {key:'phone',        label:'Phone', checked:true},
-    {key:'mpdc_contact', label:'MPDC contact', checked:false},
-    {key:'last_contact_at', label:'Last contact', checked:true},
-    {key:'last_subject', label:'Last subject', checked:true},
-    {key:'notes',        label:'Notes', checked:false},
-  ];
 
   // Helpers
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -497,23 +558,18 @@
     btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
   }
 
-  // Groups menu toggles
-  btnGroups.addEventListener('click', ()=>{
-    groupsMenu.style.display = groupsMenu.style.display==='block' ? 'none' : 'block';
-  });
-  linkClearGroups.addEventListener('click', (e)=>{
-    e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); render();
-  });
+  /* ---------- POPUP OPEN/CLOSE ---------- */
+  btnGroups.addEventListener('click', ()=> toggle(groupsMenu));
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
-
-  // Close popovers when clicking outside
   document.addEventListener('click', (e)=>{
     const isInside = (p)=> p && p.contains(e.target);
     if(!isInside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!isInside(groupsPanel)) groupsMenu.style.display='none';
     if(!isInside(adminPanel))  adminMenu.style.display='none';
     if(!isInside(sortPanelContacts)) sortMenuContacts.style.display='none';
+    if(!isInside(helpPanel)) helpMenu.style.display='none';
   });
+  function toggle(el){ el.style.display = (el.style.display==='block'?'none':'block'); }
 
   /* ---------- FILTERED VIEW ---------- */
   function filteredContacts(){
@@ -535,10 +591,8 @@
     });
   }
 
-  /* ---------- CONTACT SORT (contacts header) ---------- */
-  btnSortContacts.addEventListener('click', ()=> {
-    sortMenuContacts.style.display = sortMenuContacts.style.display==='block'?'none':'block';
-  });
+  /* ---------- CONTACT SORT ---------- */
+  btnSortContacts.addEventListener('click', ()=> toggle(sortMenuContacts));
   sortMenuContacts.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
     const val = btn.dataset.sort;
@@ -554,9 +608,7 @@
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
     else if(contactSort.mode==='org') L.sort(by('organisation', contactSort.dir));
-    else if(contactSort.mode==='added'){
-      L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) );
-    }
+    else if(contactSort.mode==='added'){ L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) ); }
     return L;
   }
 
@@ -591,10 +643,7 @@
     if(!tr) return;
     const id = tr.dataset.id;
     const isOpen = expandedContacts.has(String(id));
-    if(isOpen){
-      closeAllContactExpanders();
-      return;
-    }
+    if(isOpen){ closeAllContactExpanders(); return; }
     closeAllContactExpanders();
     expandedContacts.add(String(id));
     tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
@@ -677,10 +726,7 @@
     if(!tr) return;
     const org = tr.dataset.org;
     const isOpen = expandedOrgs.has(org);
-    if(isOpen){
-      closeAllOrgExpanders();
-      return;
-    }
+    if(isOpen){ closeAllOrgExpanders(); return; }
     closeAllOrgExpanders();
     expandedOrgs.add(org);
     tr.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
@@ -731,7 +777,7 @@
     `;
   }
 
-  // ---------- INTERACTIONS (inline expanders; single-open) ----------
+  // INTERACTIONS (inline expanders; single-open)
   const intBody = document.getElementById('tb-ints');
 
   function closeAllIntExpanders(){
@@ -748,11 +794,8 @@
     if(!tr) return;
     const key = tr.dataset.int;
     const isOpen = expandedInts.has(key);
-    if(isOpen){
-      closeAllIntExpanders();
-      return;
-    }
-    closeAllIntExpanders(); // only one
+    if(isOpen){ closeAllIntExpanders(); return; }
+    closeAllIntExpanders();
     const idx = Number(tr.getAttribute('data-idx')||0);
     const item = getInteractionByKey(key, idx);
     expandedInts.add(key);
@@ -765,7 +808,6 @@
     if(exact) return exact;
     return st.interactions[idx] || null;
   }
-
   function findContactByName(name){
     if(!name) return null;
     const n = norm(name);
@@ -886,7 +928,7 @@
     });
   }
 
-  // Build export checkbox list
+  // Export column checks
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -909,15 +951,18 @@
   }
   buildExportChecks();
 
-  // Buttons & inputs
+  // Admin menu triggers
   document.getElementById('btnLoadCsv')?.addEventListener('click', ()=> fileCsv.click()); // legacy guard
   document.getElementById('btnLoadJson')?.addEventListener('click', ()=> fileJson.click());
-  // Admin menu triggers
-  btnAdmin.addEventListener('click', ()=> adminMenu.style.display = adminMenu.style.display==='block'?'none':'block');
+  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
   amLoadCsv.addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   amLoadJson.addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   amExportJson.addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
 
+  // Tips
+  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+
+  // File handlers
   fileCsv.addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
@@ -953,6 +998,7 @@
     e.target.value='';
   });
 
+  // Export JSON snapshot
   function downloadJson(){
     const out = {
       organisations: st.organisations||[],
@@ -968,11 +1014,8 @@
     URL.revokeObjectURL(a.href);
   }
 
-  document.getElementById('btnDlJson')?.addEventListener('click', downloadJson); // legacy guard
-
   // Export CSV popover
-  btnExportCsv.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display =
-    exportPanel.querySelector('.pop').style.display==='block'?'none':'block');
+  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
   btnDoExport.addEventListener('click', ()=>{
     const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
