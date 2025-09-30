@@ -6,7 +6,6 @@
 <title>MPDC Stakeholder CRM</title>
 <style>
   :root{
-    /* Brand palette */
     --accent:#5f809b;           /* MPDC blue */
     --accent-700:#3f5b6f;
     --accent-50:#f5f9fe;
@@ -16,17 +15,14 @@
     --text:#163046;
     --muted:#5a6b7a;
 
-    /* Surfaces */
     --bg:#ffffff;
     --card:#ffffff;
-    --border:#cfe0f1;           /* slightly stronger blue border */
+    --border:#cfe0f1;
     --head:#ecf4fe;
 
-    /* Greens */
     --green:#4b7f6b;
     --green-100:#e9f3ee;
 
-    /* Shadows */
     --shadow-sm:0 1px 2px rgba(11,41,64,.06);
     --shadow:0 8px 24px rgba(11,41,64,.08);
     --shadow-md:0 10px 28px rgba(11,41,64,.12);
@@ -37,7 +33,7 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif
   }
 
-  /* Header band (brighter, bluer) */
+  /* Header band */
   .head-band{
     background: linear-gradient(180deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,0) 100%);
     border-bottom:1px solid var(--border);
@@ -45,20 +41,21 @@
   }
   .wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
 
-  header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
+  /* Title row */
+  header{display:block}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8fb0c7);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
   h1{font-size:22px;margin:0}
-  .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .chip{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-    background:var(--accent-100);border:1px solid var(--border);color:#244861;font-size:12px
-  }
-  .chip.ok{background:#dff3e9;color:var(--green);border-color:#cfe8dc}
-  .stamp{font-size:12px;color:#3b5a73}
 
-  /* Top toolbar */
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
+  /* Database icon */
+  .icon-db{width:36px;height:36px;display:block}
+  .icon-db .rim{fill:url(#dbGrad);stroke:#ffffffaa;stroke-width:.5}
+  .icon-db .side{fill:url(#dbGrad);opacity:.9}
+  .icon-db .stroke{stroke:#2b4c62;stroke-opacity:.25}
+  .logo-wrap{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 8px rgba(11,41,64,.12)}
+
+  /* Under-title area */
+  .under-title{margin-top:10px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .btn{
     appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
     cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40
@@ -73,14 +70,21 @@
   .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
   .search .clear{border:none;background:transparent;cursor:pointer;color:#496b85}
 
-  /* Popovers / panels */
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    background:var(--accent-100);border:1px solid var(--border);color:#244861;font-size:12px
+  }
+  .chip.ok{background:#dff3e9;color:var(--green);border-color:#cfe8dc}
+  .stamp{font-size:12px;color:#3b5a73;margin-top:6px}
+
+  /* Popovers */
   .panel{position:relative;display:inline-block}
   .pop{
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:10;display:none
   }
 
-  /* Group menu grid */
+  /* Groups grid */
   .groups-grid{
     display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));
     gap:8px 10px;max-height:360px;overflow:auto;
@@ -88,7 +92,7 @@
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
 
-  /* Group pills — toned way down (soft pastels) */
+  /* Soft group pills */
   .tag{
     display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#f7fbff;
     box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;color:#0e2b40
@@ -98,7 +102,6 @@
   .tag.selected{background:var(--green);color:#fff;border-color:transparent}
 
   .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-
   .tips li{margin:6px 0;color:#385a74}
   .tips strong{color:#0f2e47}
 
@@ -176,7 +179,7 @@
   }
   .lab{color:#3b5a73}
 
-  /* Footer band */
+  /* Footer */
   .foot-band{
     margin-top:22px;
     background: linear-gradient(0deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 65%, rgba(255,255,255,0) 100%);
@@ -196,17 +199,32 @@
 <div class="head-band">
   <div class="wrap">
     <header>
+      <!-- Title row with data icon -->
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1 style="display:flex;align-items:center;gap:8px;margin-bottom:2px">MPDC Stakeholder CRM
-            <span class="chip" title="Environment">Web</span>
-          </h1>
-          <div class="stamp" id="lastStamp">Last updated: —</div>
+        <div class="logo-wrap">
+          <svg class="icon-db" viewBox="0 0 48 48" role="img" aria-label="Data">
+            <defs>
+              <linearGradient id="dbGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#5f809b"/>
+                <stop offset="1" stop-color="#8fb0c7"/>
+              </linearGradient>
+            </defs>
+            <!-- Top rim -->
+            <ellipse class="rim stroke" cx="24" cy="11" rx="14" ry="6"></ellipse>
+            <!-- Side -->
+            <rect class="side stroke" x="10" y="11" width="28" height="22" rx="5"></rect>
+            <!-- Mid lines (disks) -->
+            <ellipse class="rim stroke" cx="24" cy="19" rx="14" ry="6" style="opacity:.65"></ellipse>
+            <ellipse class="rim stroke" cx="24" cy="27" rx="14" ry="6" style="opacity:.5"></ellipse>
+            <!-- Bottom -->
+            <ellipse class="rim stroke" cx="24" cy="33" rx="14" ry="6"></ellipse>
+          </svg>
         </div>
+        <h1>MPDC Stakeholder CRM</h1>
       </div>
 
-      <div>
+      <!-- Everything under the title -->
+      <div class="under-title">
         <div class="toolbar">
           <div class="search" title="Type to filter contacts/organisations">
             <span>🔎</span>
@@ -270,19 +288,22 @@
               </ul>
             </div>
           </div>
-        </div>
 
-        <div class="meta" style="margin-top:10px">
+          <!-- Data chip at the end of the toolbar -->
           <span id="chip" class="chip">Data: loading…</span>
         </div>
 
+        <!-- Last updated, directly under the controls -->
+        <div class="stamp" id="lastStamp">Last updated: —</div>
+
+        <!-- hidden file inputs -->
         <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
         <input type="file" id="fileJson" accept=".json,application/json" hidden />
       </div>
-    </header>
 
-    <!-- error bar -->
-    <div id="err" class="err"></div>
+      <!-- error bar -->
+      <div id="err" class="err"></div>
+    </header>
   </div>
 </div>
 
@@ -416,7 +437,7 @@
   const lastStamp = document.getElementById('lastStamp');
   const errBar = document.getElementById('err');
 
-  // Toolbar
+  // Toolbar refs
   const searchBox = document.getElementById('searchBox');
   const btnClearSearch = document.getElementById('btnClearSearch');
   const btnReload = document.getElementById('btnReload');
@@ -482,14 +503,8 @@
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
 
-  function showError(msg){
-    errBar.textContent = msg;
-    errBar.style.display = 'block';
-  }
-  function clearError(){
-    errBar.textContent = '';
-    errBar.style.display = 'none';
-  }
+  function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
+  function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
@@ -497,14 +512,14 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
-  /* NEW: super-soft pill colours (pastels) */
+  /* Soft pill colours */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
-    const base = 205 + (hashStr(name)%20);            // hue: blue range
-    const s = 18 + ((hashStr(name)>>3)%10);           // very low saturation
-    const l = 95 - ((hashStr(name)>>5)%3);            // very high lightness
+    const base = 205 + (hashStr(name)%20);
+    const s = 18 + ((hashStr(name)>>3)%10);
+    const l = 95 - ((hashStr(name)>>5)%3);
     const bg = `hsl(${base} ${s}% ${l}%)`;
-    const bd = `hsl(${base} ${Math.min(30,s+8)}% ${Math.max(70,l-18)}%)`; /* subtle border */
+    const bd = `hsl(${base} ${Math.min(30,s+8)}% ${Math.max(70,l-18)}%)`;
     const fg = '#0e2b40';
     return {bg, bd, fg};
   }
@@ -638,9 +653,7 @@
     btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
   }
 
-  // POPUPS
-  btnGroups.addEventListener('click', ()=> toggle(groupsMenu));
-  btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
+  // POPUPS close
   document.addEventListener('click', (e)=>{
     const isInside = (p)=> p && p.contains(e.target);
     if(!isInside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
@@ -649,30 +662,19 @@
     if(!isInside(sortPanelContacts)) sortMenuContacts.style.display='none';
     if(!isInside(helpPanel)) helpMenu.style.display='none';
   });
-  function toggle(el){ el.style.display = (el.style.display==='block'?'none':'block'); }
+  const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
+  btnGroups.addEventListener('click', ()=> toggle(groupsMenu));
+  btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
+  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
+  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
+  btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
-  // FILTERED VIEW
-  function filteredContacts(){
-    const q = norm(search);
-    const hasSearch = q.length>0;
-    const hasGroupFilter = selectedGroups.size>0;
-
-    return st.contacts.filter(c=>{
-      if(hasGroupFilter){
-        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).map(g=>g.toLowerCase());
-        if(!keys.some(k => selectedGroups.has(k))) return false;
-      }
-      if(!hasSearch) return true;
-      const fields = [
-        c.display_name, c.organisation, c.job_title, c.email, c.phone, c.mpdc_contact,
-        (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
-      ];
-      return fields.some(v => norm(v).includes(q));
-    });
-  }
-
-  // CONTACT SORT
-  btnSortContacts.addEventListener('click', ()=> toggle(sortMenuContacts));
+  // FILTER + SORT
+  let tSearch;
+  function setSearch(val){ search = val; render(); }
+  document.getElementById('btnReload').addEventListener('click', ()=> init(true));
+  document.getElementById('btnSortContacts').addEventListener('click', ()=> toggle(sortMenuContacts));
   sortMenuContacts.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
     const val = btn.dataset.sort;
@@ -691,8 +693,40 @@
     else if(contactSort.mode==='added'){ L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) ); }
     return L;
   }
+  searchBox.addEventListener('input', ()=>{
+    clearTimeout(tSearch);
+    const v = searchBox.value;
+    tSearch = setTimeout(()=> setSearch(v), 120);
+  });
+  btnClearSearch.addEventListener('click', ()=>{
+    searchBox.value = '';
+    setSearch('');
+    searchBox.focus();
+  });
+
+  function filteredContacts(){
+    const q = norm(search);
+    const hasSearch = q.length>0;
+    const hasGroupFilter = selectedGroups.size>0;
+    return st.contacts.filter(c=>{
+      if(hasGroupFilter){
+        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).map(g=>g.toLowerCase());
+        if(!keys.some(k => selectedGroups.has(k))) return false;
+      }
+      if(!hasSearch) return true;
+      const fields = [
+        c.display_name, c.organisation, c.job_title, c.email, c.phone, c.mpdc_contact,
+        (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
+      ];
+      return fields.some(v => norm(v).includes(q));
+    });
+  }
 
   // RENDER
+  const countContacts = document.getElementById('countContacts');
+  const countOrgs = document.getElementById('countOrgs');
+  const countInts = document.getElementById('countInts');
+
   function render(){
     const contactsView = applyContactSort( filteredContacts() );
     const orgsView = deriveOrgs(contactsView);
@@ -704,8 +738,9 @@
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS
+  // CONTACTS (click-to-expand)
   const contactBody = document.getElementById('tb-contacts');
+  let expandedContacts = new Set();
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -725,6 +760,7 @@
     tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
     tr.setAttribute('aria-expanded','true');
   });
+  function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
 
   function renderContacts(list){
     const tb = contactBody;
@@ -780,12 +816,10 @@
       </td></tr>
     `;
   }
-  function getContactById(id){
-    return (st.contacts||[]).find(c=> String(c.id)===String(id));
-  }
 
   // ORGS
   const orgBody = document.getElementById('tb-orgs');
+  let expandedOrgs = new Set();
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -852,6 +886,7 @@
 
   // INTERACTIONS
   const intBody = document.getElementById('tb-ints');
+  let expandedInts = new Set();
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -924,7 +959,7 @@
     `;
   }
 
-  // Expand buttons
+  // Expand controls
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
       const isCollapsed = limits[key]===5;
@@ -944,7 +979,7 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV utilities
+  // CSV utilities + admin loader/exporter (unchanged)
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
@@ -995,7 +1030,6 @@
     });
   }
 
-  // Export column checks
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -1018,16 +1052,14 @@
   }
   buildExportChecks();
 
-  // Admin menu triggers
-  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
+  // Admin menu file handlers
   amLoadCsv.addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   amLoadJson.addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   amExportJson.addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
 
-  // Tips
-  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  const fileCsv = document.getElementById('fileCsv');
+  const fileJson = document.getElementById('fileJson');
 
-  // File handlers
   fileCsv.addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
@@ -1080,61 +1112,25 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // Export CSV popover
-  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
-  btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
-  btnDoExport.addEventListener('click', ()=>{
-    const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
-    const list = scope==='all' ? st.contacts : filteredContacts();
-
-    const chosen = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
-      .filter(x=>x.checked).map(x=> x.id.replace('col_',''));
-    if(chosen.length===0){ alert('Select at least one column.'); return; }
-
-    const labelMap = {
-      display_name:'Name', organisation:'Organisation', group:'Group', job_title:'Role',
-      email:'Email', phone:'Phone', mpdc_contact:'MPDC contact',
-      last_contact_at:'Last contact', last_subject:'Last subject', notes:'Notes'
-    };
-
-    const rows = list.map(c=>{
-      const row = {};
-      chosen.forEach(k=>{
-        let v = c[k];
-        if(k==='group') v = normalizeGroups(v).join(', ');
-        if(k==='last_contact_at') v = c.last_contact_at ? fmtDate(c.last_contact_at) : '';
-        row[labelMap[k]] = v ?? '';
-      });
-      return row;
+  // Expand toggles
+  function hookExpand(id, key){
+    document.getElementById(id).addEventListener('click', ()=>{
+      const isCollapsed = limits[key]===5;
+      limits[key] = isCollapsed ? 99999 : 5;
+      const tw = document.getElementById('tw-'+key);
+      if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
+      document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
+      render();
+      if(!isCollapsed){
+        if(key==='contacts') closeAllContactExpanders();
+        if(key==='orgs') closeAllOrgExpanders();
+        if(key==='ints') closeAllIntExpanders();
+      }
     });
-
-    const csv = Papa.unparse(rows);
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    const nameBit = scope==='all' ? 'all' : 'filtered';
-    a.download = `contacts_${nameBit}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    exportPanel.querySelector('.pop').style.display='none';
-  });
-
-  // Reload
-  btnReload.addEventListener('click', ()=> init(true));
-
-  // Search
-  let tSearch;
-  function setSearch(val){ search = val; render(); }
-  searchBox.addEventListener('input', ()=>{
-    clearTimeout(tSearch);
-    const v = searchBox.value;
-    tSearch = setTimeout(()=> setSearch(v), 120);
-  });
-  btnClearSearch.addEventListener('click', ()=>{
-    searchBox.value = '';
-    setSearch('');
-    searchBox.focus();
-  });
+  }
+  hookExpand('expContacts','contacts');
+  hookExpand('expOrgs','orgs');
+  hookExpand('expInts','ints');
 
   // Initial load
   async function init(forceNoCache=false){
