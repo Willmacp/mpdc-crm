@@ -6,34 +6,26 @@
 <title>MPDC Stakeholder CRM</title>
 <style>
   :root{
-    --accent:#5f809b;           /* MPDC blue */
+    --accent:#5f809b;
     --accent-700:#3f5b6f;
     --accent-50:#f5f9fe;
     --accent-100:#eaf3fb;
     --accent-200:#d6e6f4;
     --grey:#6d6e71;
     --text:#163046;
-    --muted:#5a6b7a;
 
     --bg:#ffffff;
     --card:#ffffff;
     --border:#cfe0f1;
-    --head:#ecf4fe;
-
-    --green:#4b7f6b;
-    --green-100:#e9f3ee;
 
     --shadow-sm:0 1px 2px rgba(11,41,64,.06);
     --shadow:0 8px 24px rgba(11,41,64,.08);
     --shadow-md:0 10px 28px rgba(11,41,64,.12);
   }
 
-  html,body{
-    margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif
-  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
 
-  /* Header band */
   .head-band{
     background: linear-gradient(180deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,0) 100%);
     border-bottom:1px solid var(--border);
@@ -41,21 +33,19 @@
   }
   .wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
 
-  /* Title row */
-  header{display:block}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   h1{font-size:22px;margin:0}
 
-  /* Database icon */
+  /* DB icon */
   .icon-db{width:36px;height:36px;display:block}
-  .icon-db .rim{fill:url(#dbGrad);stroke:#ffffffaa;stroke-width:.5}
-  .icon-db .side{fill:url(#dbGrad);opacity:.9}
-  .icon-db .stroke{stroke:#2b4c62;stroke-opacity:.25}
   .logo-wrap{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 8px rgba(11,41,64,.12)}
 
-  /* Under-title area */
+  /* Under-title controls */
   .under-title{margin-top:10px}
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .toolbar{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+  .toolbar-left{display:flex;flex-direction:column;gap:8px;min-width:280px;flex:1}
+  .toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
   .btn{
     appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
     cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40
@@ -70,40 +60,24 @@
   .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
   .search .clear{border:none;background:transparent;cursor:pointer;color:#496b85}
 
-  .chip{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-    background:var(--accent-100);border:1px solid var(--border);color:#244861;font-size:12px
-  }
-  .chip.ok{background:#dff3e9;color:var(--green);border-color:#cfe8dc}
-  .stamp{font-size:12px;color:#3b5a73;margin-top:6px}
-
-  /* Popovers */
   .panel{position:relative;display:inline-block}
   .pop{
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:10;display:none
   }
 
-  /* Groups grid */
-  .groups-grid{
-    display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));
-    gap:8px 10px;max-height:360px;overflow:auto;
-  }
+  /* Groups grid + tags (soft blues) */
+  .groups-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:8px 10px;max-height:360px;overflow:auto}
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
-
-  /* Soft group pills */
   .tag{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#f7fbff;
-    box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;color:#0e2b40
+    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);
+    border-radius:999px;background:#f7fbff;box-shadow:var(--shadow-sm);font-size:12px;user-select:none
   }
-  .tag .count{opacity:.85}
-  .tag:hover{filter:saturate(1.02)}
-  .tag.selected{background:var(--green);color:#fff;border-color:transparent}
+  .tag.selected{background:#4b7f6b;color:#fff;border-color:transparent}
 
-  .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-  .tips li{margin:6px 0;color:#385a74}
-  .tips strong{color:#0f2e47}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#dff3e9;color:#2a5546;border:1px solid #cfe8dc}
+  .stamp{font-size:12px;color:#3b5a73}
 
   /* Cards & tables */
   main{display:flex;flex-direction:column;gap:16px;margin:18px 0 0}
@@ -119,35 +93,22 @@
     background: linear-gradient(180deg, #8fb0c7, #5f809b); opacity:.95;
     border-top-left-radius:14px; border-bottom-left-radius:14px;
   }
-  .card-head-left{display:flex;align-items:center;gap:10px}
   .card-head h2{margin:0;font-size:18px}
   .card-head h2 .count{color:#325878;font-weight:600;margin-left:8px}
   .subhint{font-size:12px;color:#3b5a73}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-  .card-body{padding:0}
   .table-wrap{overflow:auto;max-height:420px}
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
-  thead th{
-    position:sticky;top:0;
-    background: linear-gradient(180deg, #eaf3fe, #dcebfb);
-    z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650
-  }
+  thead th{position:sticky;top:0;background: linear-gradient(180deg, #eaf3fe, #dcebfb);z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650}
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   tr:nth-child(even) td{background:#f9fbff}
   .muted{color:#5a6b7a}
 
   /* column widths */
-  .w-name{max-width:220px}
-  .w-org{max-width:220px}
-  .w-group{max-width:240px}
-  .w-role{max-width:160px}
-  .w-email{max-width:240px}
-  .w-phone{max-width:140px}
-  .w-mpdc{max-width:200px}
-  .w-date{max-width:140px}
-  .w-subj{max-width:260px}
-  .w-notes{max-width:320px}
+  .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
+  .w-email{max-width:240px}.w-phone{max-width:140px}.w-mpdc{max-width:200px}.w-date{max-width:140px}
+  .w-subj{max-width:260px}.w-notes{max-width:320px}
 
   /* Row interactions */
   #tb-orgs tr[data-org],
@@ -156,41 +117,20 @@
   #tb-orgs tr[data-org]:hover td,
   #tb-contacts tr[data-id]:hover td,
   #tb-ints  tr[data-int]:hover td{background:#edf6ff}
-  tr.org-expander td,
-  tr.contact-expander td,
-  tr.int-expander td{background:#f6faff}
+  tr.org-expander td, tr.contact-expander td, tr.int-expander td{background:#f6faff}
 
-  .org-card,.contact-card,.int-card{
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:8px 10px;
-    background:#fff;
-    box-shadow:var(--shadow-sm);
-  }
-  .org-card h3,.contact-card h3,.int-card h3{margin:0;font-size:15px}
+  .org-card,.contact-card,.int-card{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;box-shadow:var(--shadow-sm)}
   .org-actions,.contact-actions,.int-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
-  .nm{font-weight:600}
-  .sep{color:#b9d3e7}
-  .mail{color:#0b65c2;text-decoration:none}
-  .mail:hover{text-decoration:underline}
-  .compact-line{
-    display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
-    font-size:13px; line-height:1.25; margin:2px 0;
-  }
-  .lab{color:#3b5a73}
+  .compact-line{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;font-size:13px;line-height:1.25;margin:2px 0}
+  .lab{color:#3b5a73}.sep{color:#b9d3e7}
+  .mail{color:#0b65c2;text-decoration:none}.mail:hover{text-decoration:underline}
+
+  .err{display:none;background:#ffeaea;border:1px solid #ffbcbc;color:#7a1e1e;border-radius:10px;padding:10px 12px;margin-top:12px}
 
   /* Footer */
-  .foot-band{
-    margin-top:22px;
-    background: linear-gradient(0deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 65%, rgba(255,255,255,0) 100%);
-    border-top:1px solid var(--border);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
-  }
+  .foot-band{margin-top:22px;background: linear-gradient(0deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 65%, rgba(255,255,255,0) 100%);border-top:1px solid var(--border);box-shadow: inset 0 1px 0 rgba(255,255,255,.65)}
   footer{padding:16px 0;color:#2d4c63;display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:#0b65c2;text-decoration:none}
-
-  /* Error bar */
-  .err{display:none;background:#ffeaea;border:1px solid #ffbcbc;color:#7a1e1e;border-radius:10px;padding:10px 12px;margin-top:12px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -199,110 +139,99 @@
 <div class="head-band">
   <div class="wrap">
     <header>
-      <!-- Title row with data icon -->
       <div class="brand">
         <div class="logo-wrap">
           <svg class="icon-db" viewBox="0 0 48 48" role="img" aria-label="Data">
-            <defs>
-              <linearGradient id="dbGrad" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stop-color="#5f809b"/>
-                <stop offset="1" stop-color="#8fb0c7"/>
-              </linearGradient>
-            </defs>
-            <!-- Top rim -->
-            <ellipse class="rim stroke" cx="24" cy="11" rx="14" ry="6"></ellipse>
-            <!-- Side -->
-            <rect class="side stroke" x="10" y="11" width="28" height="22" rx="5"></rect>
-            <!-- Mid lines (disks) -->
-            <ellipse class="rim stroke" cx="24" cy="19" rx="14" ry="6" style="opacity:.65"></ellipse>
-            <ellipse class="rim stroke" cx="24" cy="27" rx="14" ry="6" style="opacity:.5"></ellipse>
-            <!-- Bottom -->
-            <ellipse class="rim stroke" cx="24" cy="33" rx="14" ry="6"></ellipse>
+            <defs><linearGradient id="dbGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#5f809b"/><stop offset="1" stop-color="#8fb0c7"/></linearGradient></defs>
+            <ellipse fill="url(#dbGrad)" cx="24" cy="11" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
+            <rect fill="url(#dbGrad)" x="10" y="11" width="28" height="22" rx="5" stroke="#2b4c62" stroke-opacity=".25"></rect>
+            <ellipse fill="url(#dbGrad)" cx="24" cy="19" rx="14" ry="6" style="opacity:.65" stroke="#2b4c62" stroke-opacity=".25"></ellipse>
+            <ellipse fill="url(#dbGrad)" cx="24" cy="27" rx="14" ry="6" style="opacity:.5" stroke="#2b4c62" stroke-opacity=".25"></ellipse>
+            <ellipse fill="url(#dbGrad)" cx="24" cy="33" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
       </div>
 
-      <!-- Everything under the title -->
       <div class="under-title">
         <div class="toolbar">
-          <div class="search" title="Type to filter contacts/organisations">
-            <span>🔎</span>
-            <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
-            <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
-          </div>
-
-          <!-- Groups next to Search -->
-          <div class="panel" id="groupsPanel">
-            <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
-            <div class="pop" id="groupsMenu" style="min-width:520px">
-              <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
-              <div class="groups-grid" id="groupsGrid"></div>
-              <div class="groups-actions">
-                <a href="#" id="linkClearGroups" style="color:#0b65c2;text-decoration:none">Clear</a>
-                <button class="btn" id="btnCloseGroups">Close</button>
+          <!-- LEFT: search + groups, and (below) data chip + last-updated -->
+          <div class="toolbar-left">
+            <div class="toolbar-row">
+              <div class="search" title="Type to filter contacts/organisations">
+                <span>🔎</span>
+                <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
+                <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
+              </div>
+              <div class="panel" id="groupsPanel">
+                <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
+                <div class="pop" id="groupsMenu" style="min-width:520px">
+                  <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
+                  <div class="groups-grid" id="groupsGrid"></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+                    <a href="#" id="linkClearGroups" style="color:#0b65c2;text-decoration:none">Clear</a>
+                    <button class="btn" id="btnCloseGroups">Close</button>
+                  </div>
+                </div>
               </div>
             </div>
+            <div class="toolbar-row" style="gap:12px">
+              <span id="chip" class="chip">Data: loading…</span>
+              <span class="stamp" id="lastStamp">Last updated: —</span>
+            </div>
           </div>
 
-          <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
+          <!-- RIGHT: reload, export, admin, tips -->
+          <div class="toolbar-row">
+            <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
 
-          <!-- Export CSV -->
-          <div class="panel" id="exportPanel">
-            <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
-            <div class="pop">
-              <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
-              <div class="cols" id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
-              <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                <button class="btn" id="btnCancelExport">Cancel</button>
-                <button class="btn primary" id="btnDoExport">Export</button>
+            <div class="panel" id="exportPanel">
+              <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
+              <div class="pop">
+                <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
+                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+                <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
+                <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                  <button class="btn" id="btnCancelExport">Cancel</button>
+                  <button class="btn primary" id="btnDoExport">Export</button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Admin tools -->
-          <div class="panel" id="adminPanel">
-            <button class="btn" id="btnAdmin" title="Load CSV/JSON or export a JSON snapshot">Admin tools ▾</button>
-            <div class="pop" id="adminMenu" style="min-width:220px">
-              <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
-              <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
-              <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
+            <div class="panel" id="adminPanel">
+              <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
+              <div class="pop" id="adminMenu" style="min-width:220px">
+                <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
+                <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
+                <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
+              </div>
             </div>
-          </div>
 
-          <!-- Tips -->
-          <div class="panel" id="helpPanel">
-            <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
-            <div class="pop" id="helpMenu" style="max-width:520px">
-              <ul class="tips" style="padding-left:18px;margin:0">
-                <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-                <li><strong>Groups</strong>: select one or more tags; chosen tags are highlighted in green.</li>
-                <li><strong>Contacts</strong>: click any row to open a compact details card.</li>
-                <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
-                <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
-                <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
-                <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
-              </ul>
+            <div class="panel" id="helpPanel">
+              <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
+              <div class="pop" id="helpMenu" style="max-width:520px">
+                <ul class="tips" style="padding-left:18px;margin:0">
+                  <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
+                  <li><strong>Groups</strong>: select one or more tags; chosen tags are highlighted in green.</li>
+                  <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
+                  <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
+                  <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
+                  <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
+                  <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
+                </ul>
+              </div>
             </div>
-          </div>
 
-          <!-- Data chip at the end of the toolbar -->
-          <span id="chip" class="chip">Data: loading…</span>
+            <!-- Hidden file inputs -->
+            <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
+            <input type="file" id="fileJson" accept=".json,application/json" hidden />
+          </div>
         </div>
 
-        <!-- Last updated, directly under the controls -->
-        <div class="stamp" id="lastStamp">Last updated: —</div>
-
-        <!-- hidden file inputs -->
-        <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
-        <input type="file" id="fileJson" accept=".json,application/json" hidden />
+        <div id="err" class="err"></div>
       </div>
-
-      <!-- error bar -->
-      <div id="err" class="err"></div>
     </header>
   </div>
 </div>
@@ -312,11 +241,9 @@
     <!-- CONTACTS -->
     <section class="card" id="sec-contacts">
       <div class="card-head">
-        <div class="card-head-left">
-          <div>
-            <h2>Contacts <span class="count" id="countContacts"></span></h2>
-            <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
-          </div>
+        <div>
+          <h2>Contacts <span class="count" id="countContacts"></span></h2>
+          <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
         </div>
         <div class="right">
           <button class="btn" id="expContacts">Expand list</button>
@@ -324,11 +251,11 @@
             <button class="btn" id="btnSortContacts">Sort ▾</button>
             <div class="pop" id="sortMenuContacts">
               <h4 style="margin:4px 0 10px;font-size:14px">Sort contacts</h4>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
+              <div style="margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
+              <div style="margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
+              <div style="margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
+              <div style="margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
+              <div style="margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
             </div>
           </div>
         </div>
@@ -359,11 +286,9 @@
     <!-- ORGANISATIONS -->
     <section class="card" id="sec-orgs">
       <div class="card-head">
-        <div class="card-head-left">
-          <div>
-            <h2>Organisations <span class="count" id="countOrgs"></span></h2>
-            <div class="subhint">Click a row to see people and email-all</div>
-          </div>
+        <div>
+          <h2>Organisations <span class="count" id="countOrgs"></span></h2>
+          <div class="subhint">Click a row to see people and email-all</div>
         </div>
         <div class="right">
           <button class="btn" id="expOrgs">Expand list</button>
@@ -389,11 +314,9 @@
     <!-- INTERACTIONS -->
     <section class="card" id="sec-ints">
       <div class="card-head">
-        <div class="card-head-left">
-          <div>
-            <h2>Interactions <span class="count" id="countInts"></span></h2>
-            <div class="subhint">Chronological view; click a row for details</div>
-          </div>
+        <div>
+          <h2>Interactions <span class="count" id="countInts"></span></h2>
+          <div class="subhint">Chronological view; click a row for details</div>
         </div>
         <div class="right">
           <button class="btn" id="expInts">Expand list</button>
@@ -430,7 +353,7 @@
 
 <script>
 (function(){
-  const DATA_URL = '/data/data.json';    // Netlify redirects to SharePoint
+  const DATA_URL = '/data/data.json'; // Netlify _redirects sends this to your SharePoint download URL
   const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
@@ -442,24 +365,17 @@
   const btnClearSearch = document.getElementById('btnClearSearch');
   const btnReload = document.getElementById('btnReload');
 
-  // Tips
+  // Panels
   const helpPanel = document.getElementById('helpPanel');
   const btnHelp = document.getElementById('btnHelp');
   const helpMenu = document.getElementById('helpMenu');
 
-  // Contacts sort
-  const sortPanelContacts = document.getElementById('sortPanelContacts');
-  const btnSortContacts = document.getElementById('btnSortContacts');
-  const sortMenuContacts = document.getElementById('sortMenuContacts');
-
-  // Export CSV
   const exportPanel = document.getElementById('exportPanel');
   const btnExportCsv = document.getElementById('btnExportCsv');
   const btnCancelExport = document.getElementById('btnCancelExport');
   const btnDoExport = document.getElementById('btnDoExport');
   const colChecks = document.getElementById('colChecks');
 
-  // Groups dropdown
   const groupsPanel = document.getElementById('groupsPanel');
   const btnGroups = document.getElementById('btnGroups');
   const groupsMenu = document.getElementById('groupsMenu');
@@ -467,7 +383,6 @@
   const linkClearGroups = document.getElementById('linkClearGroups');
   const btnCloseGroups = document.getElementById('btnCloseGroups');
 
-  // Admin tools
   const adminPanel = document.getElementById('adminPanel');
   const btnAdmin = document.getElementById('btnAdmin');
   const adminMenu = document.getElementById('adminMenu');
@@ -475,14 +390,23 @@
   const amLoadJson = document.getElementById('amLoadJson');
   const amExportJson = document.getElementById('amExportJson');
 
-  // File inputs
   const fileCsv = document.getElementById('fileCsv');
   const fileJson = document.getElementById('fileJson');
 
+  // Sort panel for contacts
+  const sortPanelContacts = document.getElementById('sortPanelContacts');
+  const btnSortContacts = document.getElementById('btnSortContacts');
+  const sortMenuContacts = document.getElementById('sortMenuContacts');
+
   // Counts
-  const countContacts = document.getElementById('countContacts');
-  const countOrgs = document.getElementById('countOrgs');
-  const countInts = document.getElementById('countInts');
+  const countContactsEl = document.getElementById('countContacts');
+  const countOrgsEl = document.getElementById('countOrgs');
+  const countIntsEl = document.getElementById('countInts');
+
+  // Tables
+  const contactBody = document.getElementById('tb-contacts');
+  const orgBody = document.getElementById('tb-orgs');
+  const intBody = document.getElementById('tb-ints');
 
   // State
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
@@ -512,7 +436,7 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
-  /* Soft pill colours */
+  /* Soft group pill colours */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
     const base = 205 + (hashStr(name)%20);
@@ -597,9 +521,9 @@
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, 3);
+      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
       let preview = previewArr.join(', ');
-      if(n > 3){ preview += ` …(+${n - 3})`; }
+      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
       return {
         organisation: o.organisation,
         contacts: o.contact_names.join(', '),
@@ -670,10 +594,71 @@
   btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
+  // EXPORT CSV (columns builder + handler)
+  function buildExportChecks(){
+    colChecks.innerHTML = '';
+    [
+      {key:'display_name', label:'Name', checked:true},
+      {key:'organisation', label:'Organisation', checked:true},
+      {key:'group',        label:'Group', checked:true},
+      {key:'job_title',    label:'Role', checked:false},
+      {key:'email',        label:'Email', checked:true},
+      {key:'phone',        label:'Phone', checked:true},
+      {key:'mpdc_contact', label:'MPDC contact', checked:false},
+      {key:'last_contact_at', label:'Last contact', checked:true},
+      {key:'last_subject', label:'Last subject', checked:true},
+      {key:'notes',        label:'Notes', checked:false},
+    ].forEach(c=>{
+      const id = 'col_'+c.key;
+      const w = document.createElement('label');
+      w.innerHTML = `<input type="checkbox" id="${id}" ${c.checked?'checked':''}/> ${c.label}`;
+      colChecks.appendChild(w);
+    });
+  }
+  buildExportChecks();
+
+  btnDoExport.addEventListener('click', ()=>{
+    const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
+    const cols = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
+      .filter(i=>i.checked).map(i=> i.id.replace(/^col_/,''));
+    const list = scope==='all' ? st.contacts : filteredContacts();
+    const rows = list.map(c=>{
+      const obj = {};
+      cols.forEach(k=>{
+        let v = c[k];
+        if(k==='group'){
+          v = Array.isArray(v)? v.join('; ') : (normalizeGroups(v).join('; '));
+        }
+        if(k==='last_contact_at' && v){ v = fmtDate(v); }
+        obj[k] = v ?? '';
+      });
+      return obj;
+    });
+    const csv = toCSV(rows, cols);
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'contacts_export.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    exportPanel.querySelector('.pop').style.display='none';
+  });
+
+  function toCSV(rows, headers){
+    const q = (v)=>{
+      const s = String(v ?? '');
+      if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+      return s;
+    };
+    const head = headers.map(q).join(',');
+    const body = rows.map(r => headers.map(h=> q(r[h])).join(',')).join('\n');
+    return head+'\n'+body;
+  }
+
   // FILTER + SORT
   let tSearch;
   function setSearch(val){ search = val; render(); }
-  document.getElementById('btnReload').addEventListener('click', ()=> init(true));
+  btnReload.addEventListener('click', ()=> init(true));
   document.getElementById('btnSortContacts').addEventListener('click', ()=> toggle(sortMenuContacts));
   sortMenuContacts.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-sort]'); if(!btn) return;
@@ -723,24 +708,18 @@
   }
 
   // RENDER
-  const countContacts = document.getElementById('countContacts');
-  const countOrgs = document.getElementById('countOrgs');
-  const countInts = document.getElementById('countInts');
-
   function render(){
     const contactsView = applyContactSort( filteredContacts() );
     const orgsView = deriveOrgs(contactsView);
     renderContacts(contactsView);
     renderOrgs(orgsView);
     renderInts(st.interactions);
-    countContacts.textContent = contactsView.length ? `(${contactsView.length})` : '';
-    countOrgs.textContent = orgsView.length ? `(${orgsView.length})` : '';
-    countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
+    countContactsEl.textContent = contactsView.length ? `(${contactsView.length})` : '';
+    countOrgsEl.textContent = orgsView.length ? `(${orgsView.length})` : '';
+    countIntsEl.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
   // CONTACTS (click-to-expand)
-  const contactBody = document.getElementById('tb-contacts');
-  let expandedContacts = new Set();
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -763,9 +742,8 @@
   function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
 
   function renderContacts(list){
-    const tb = contactBody;
     const rows = applyContactSort(list).slice(0, limits.contacts);
-    tb.innerHTML = rows.map(c=>{
+    contactBody.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
       const email = clean(c.email);
@@ -817,9 +795,7 @@
     `;
   }
 
-  // ORGS
-  const orgBody = document.getElementById('tb-orgs');
-  let expandedOrgs = new Set();
+  // ORGS (click-to-expand)
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -841,9 +817,8 @@
   });
 
   function renderOrgs(list){
-    const tb = orgBody;
     const rows = [...list].sort((a,b)=> a.organisation.localeCompare(b.organisation,undefined,{sensitivity:'base'})).slice(0, limits.orgs);
-    tb.innerHTML = rows.map(o=>`
+    orgBody.innerHTML = rows.map(o=>`
       <tr data-org="${esc(o.organisation)}" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
         <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
         <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
@@ -862,9 +837,9 @@
       const chip = gg.map(g=>renderTag(g)).join(' ');
       const email = clean(c.email);
       return `
-        <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #cfe2f2;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25;background:#fbfdff">
-          <span class="nm">${esc(c.display_name || '(No name)')}</span>
-          ${c.job_title ? `<span class="sep">•</span><span class="role" style="color:#3b5a73">${esc(c.job_title)}</span>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #cfe2f2;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25;background:#fbfdff">
+          <span style="font-weight:600">${esc(c.display_name || '(No name)')}</span>
+          ${c.job_title ? `<span class="sep">•</span><span style="color:#3b5a73">${esc(c.job_title)}</span>`:''}
           ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
           ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
           ${chip ? `<span class="sep">•</span>${chip}`:''}
@@ -878,15 +853,13 @@
             <h3>${esc(orgName)}</h3>
             ${mailAll ? `<a class="btn" href="${mailAll}" title="Email all contacts at ${esc(orgName)}">Email all</a>`:''}
           </div>
-          ${people ? `<div class="org-grid">${people}</div>` : `<div class="muted">No contacts (matches current filters)</div>`}
+          ${people ? `<div>${people}</div>` : `<div class="muted">No contacts (matches current filters)</div>`}
         </div>
       </td></tr>
     `;
   }
 
-  // INTERACTIONS
-  const intBody = document.getElementById('tb-ints');
-  let expandedInts = new Set();
+  // INTERACTIONS (click-to-expand)
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -920,10 +893,9 @@
   }
 
   function renderInts(list){
-    const tb = intBody;
     const sorted = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date));
     const rows = sorted.slice(0, limits.ints);
-    tb.innerHTML = rows.map((i,idx)=>{
+    intBody.innerHTML = rows.map((i,idx)=>{
       const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
       const base = `
         <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
@@ -959,7 +931,7 @@
     `;
   }
 
-  // Expand controls
+  // Expand toggles
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
       const isCollapsed = limits[key]===5;
@@ -979,7 +951,7 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV utilities + admin loader/exporter (unchanged)
+  // CSV to state + Admin loaders/exports
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
@@ -988,9 +960,7 @@
   function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
-        header:true,
-        skipEmptyLines:true,
-        transformHeader: h=>h.trim(),
+        header:true, skipEmptyLines:true, transformHeader: h=>h.trim(),
         complete: res=>{
           const headers = res.meta.fields||[];
           const find = finder(headers);
@@ -1030,42 +1000,16 @@
     });
   }
 
-  function buildExportChecks(){
-    colChecks.innerHTML = '';
-    [
-      {key:'display_name', label:'Name', checked:true},
-      {key:'organisation', label:'Organisation', checked:true},
-      {key:'group',        label:'Group', checked:true},
-      {key:'job_title',    label:'Role', checked:false},
-      {key:'email',        label:'Email', checked:true},
-      {key:'phone',        label:'Phone', checked:true},
-      {key:'mpdc_contact', label:'MPDC contact', checked:false},
-      {key:'last_contact_at', label:'Last contact', checked:true},
-      {key:'last_subject', label:'Last subject', checked:true},
-      {key:'notes',        label:'Notes', checked:false},
-    ].forEach(c=>{
-      const id = 'col_'+c.key;
-      const w = document.createElement('label');
-      w.innerHTML = `<input type="checkbox" id="${id}" ${c.checked?'checked':''}/> ${c.label}`;
-      colChecks.appendChild(w);
-    });
-  }
-  buildExportChecks();
-
-  // Admin menu file handlers
   amLoadCsv.addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   amLoadJson.addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   amExportJson.addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
-
-  const fileCsv = document.getElementById('fileCsv');
-  const fileJson = document.getElementById('fileJson');
 
   fileCsv.addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
     st = await csvToState(text);
     limits = {contacts:5,orgs:5,ints:5};
-    chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
+    chip.className='chip'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
     clearError();
     rebuildGroupIndex(); render();
@@ -1088,7 +1032,7 @@
         st.organisations = deriveOrgs(st.contacts);
       }
       limits = {contacts:5,orgs:5,ints:5};
-      chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
+      chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       clearError();
       rebuildGroupIndex(); render();
@@ -1112,31 +1056,24 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // Expand toggles
-  function hookExpand(id, key){
-    document.getElementById(id).addEventListener('click', ()=>{
-      const isCollapsed = limits[key]===5;
-      limits[key] = isCollapsed ? 99999 : 5;
-      const tw = document.getElementById('tw-'+key);
-      if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
-      document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
-      render();
-      if(!isCollapsed){
-        if(key==='contacts') closeAllContactExpanders();
-        if(key==='orgs') closeAllOrgExpanders();
-        if(key==='ints') closeAllIntExpanders();
-      }
-    });
+  // Init + sample interactions fallback
+  function sampleInteractions(){
+    return [
+      { id:'ex1', date:'2025-08-12', contact:'Anne Example', subject:'Site visit with council', summary:'Discussed traffic mgmt plan; provided draft detour map.', type:'meeting' },
+      { id:'ex2', date:'2025-08-20', contact:'Sue Gestion', subject:'Email follow-up: MOU draft', summary:'Sent revised MOU with updated timelines.', type:'email' },
+      { id:'ex3', date:'2025-09-05', contact:'Bob Placeholder', subject:'Phone check-in', summary:'Confirmed availability for stakeholder workshop.', type:'phone' },
+      { id:'ex4', date:'2025-09-10', contact:'Anne Example', subject:'Media enquiry (holding lines)', summary:'Provided holding statement re. site access.', type:'email' },
+      { id:'ex5', date:'2025-09-18', contact:'Sue Gestion', subject:'Workshop invite', summary:'Shared agenda + RSVP link for 2 Oct.', type:'email' },
+      { id:'ex6', date:'2025-09-24', contact:'Charlie Sample', subject:'Post-meeting notes', summary:'Action items captured and shared with team.', type:'meeting' }
+    ];
   }
-  hookExpand('expContacts','contacts');
-  hookExpand('expOrgs','orgs');
-  hookExpand('expInts','ints');
 
-  // Initial load
   async function init(forceNoCache=false){
     try{
        clearError();
-       const r = await fetch(DATA_URL, {cache: forceNoCache?'no-store':'default'});
+       // cache-buster so Netlify/SharePoint don’t serve a stale download
+       const url = DATA_URL + (forceNoCache ? ('?v=' + Date.now()) : '');
+       const r = await fetch(url, {cache: 'no-store'});
        if(!r.ok) throw new Error('HTTP '+r.status);
        const data = await r.json();
        st = {
@@ -1148,7 +1085,10 @@
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
          st.organisations = deriveOrgs(st.contacts);
        }
-       chip.className='chip ok';
+       if(!st.interactions || st.interactions.length===0){
+         st.interactions = sampleInteractions(); // placeholder only
+       }
+       chip.className='chip';
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
        setLastUpdated(updated || new Date());
@@ -1160,10 +1100,18 @@
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
        showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
+       // still render anything already in st (or nothing) so UI shows
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }
   }
+
+  // Groups events
+  linkClearGroups.addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
+  // Contacts sort menu toggle
+  btnSortContacts.addEventListener('click', ()=> toggle(sortMenuContacts));
+
+  // Start
   init();
 })();
 </script>
