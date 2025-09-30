@@ -9,16 +9,18 @@
     /* Brand palette */
     --accent:#5f809b;           /* MPDC blue */
     --accent-700:#3f5b6f;
+    --accent-50:#f5f9fe;
     --accent-100:#eaf3fb;
+    --accent-200:#d6e6f4;
     --grey:#6d6e71;
     --text:#163046;
     --muted:#5a6b7a;
 
-    /* Page surfaces (brighter, no grey body) */
-    --bg:#ffffff;               /* pure white page background */
-    --card:#ffffff;             /* cards/tables */
-    --border:#d6e6f4;           /* light blue borders */
-    --head:#f1f7fe;
+    /* Surfaces */
+    --bg:#ffffff;
+    --card:#ffffff;
+    --border:#cfe0f1;           /* slightly stronger blue border */
+    --head:#ecf4fe;
 
     /* Greens */
     --green:#4b7f6b;
@@ -35,9 +37,9 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif
   }
 
-  /* Header band (light blue wash) */
+  /* Header band (brighter, bluer) */
   .head-band{
-    background: linear-gradient(180deg, rgba(95,128,155,.16) 0%, rgba(95,128,155,.08) 55%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(180deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,0) 100%);
     border-bottom:1px solid var(--border);
     box-shadow: var(--shadow-sm);
   }
@@ -45,15 +47,15 @@
 
   header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#87a7be);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8fb0c7);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
   h1{font-size:22px;margin:0}
   .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .chip{
     display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
     background:var(--accent-100);border:1px solid var(--border);color:#244861;font-size:12px
   }
-  .chip.ok{background:var(--green-100);color:var(--green);border-color:#cfe8dc}
-  .stamp{font-size:12px;color:#44617a}
+  .chip.ok{background:#dff3e9;color:var(--green);border-color:#cfe8dc}
+  .stamp{font-size:12px;color:#3b5a73}
 
   /* Top toolbar */
   .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
@@ -61,7 +63,7 @@
     appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
     cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40
   }
-  .btn:hover{border-color:#99c3e4;box-shadow:0 2px 6px rgba(14,43,64,.12)}
+  .btn:hover{border-color:#9dc6e6;box-shadow:0 2px 6px rgba(14,43,64,.12)}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.primary:hover{background:var(--accent-700)}
   .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -86,18 +88,18 @@
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
 
-  /* Group pills with soft blues */
+  /* Group pills — toned way down (soft pastels) */
   .tag{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;
-    box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;
+    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#f7fbff;
+    box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;color:#0e2b40
   }
-  .tag .count{opacity:.9}
-  .tag:hover{filter:saturate(1.06)}
+  .tag .count{opacity:.85}
+  .tag:hover{filter:saturate(1.02)}
   .tag.selected{background:var(--green);color:#fff;border-color:transparent}
 
   .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 
-  .tips li{margin:6px 0;color:#415d74}
+  .tips li{margin:6px 0;color:#385a74}
   .tips strong{color:#0f2e47}
 
   /* Cards & tables */
@@ -106,18 +108,18 @@
   .card-head{
     display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
     border-bottom:1px solid var(--border);
-    background:linear-gradient(90deg, rgba(95,128,155,.14) 0%, rgba(95,128,155,.07) 55%, rgba(255,255,255,1) 100%);
+    background:linear-gradient(90deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,1) 100%);
     position:relative;
   }
   .card-head::before{
-    content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
-    background: linear-gradient(180deg, #86a7c0, #5f809b); opacity:.9;
+    content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
+    background: linear-gradient(180deg, #8fb0c7, #5f809b); opacity:.95;
     border-top-left-radius:14px; border-bottom-left-radius:14px;
   }
   .card-head-left{display:flex;align-items:center;gap:10px}
   .card-head h2{margin:0;font-size:18px}
-  .card-head h2 .count{color:#4a6b86;font-weight:500;margin-left:8px}
-  .subhint{font-size:12px;color:#4a6b86}
+  .card-head h2 .count{color:#325878;font-weight:600;margin-left:8px}
+  .subhint{font-size:12px;color:#3b5a73}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
   .card-body{padding:0}
@@ -125,8 +127,8 @@
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
   thead th{
     position:sticky;top:0;
-    background: linear-gradient(180deg, #f2f8fe, #e9f2fb);
-    z-index:1;font-weight:600;border-bottom:1px solid var(--border);color:#11364f
+    background: linear-gradient(180deg, #eaf3fe, #dcebfb);
+    z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650
   }
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   tr:nth-child(even) td{background:#f9fbff}
@@ -172,16 +174,16 @@
     display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
     font-size:13px; line-height:1.25; margin:2px 0;
   }
-  .lab{color:#4a6b86}
+  .lab{color:#3b5a73}
 
   /* Footer band */
   .foot-band{
     margin-top:22px;
-    background: linear-gradient(0deg, rgba(95,128,155,.16) 0%, rgba(95,128,155,.08) 65%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(0deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 65%, rgba(255,255,255,0) 100%);
     border-top:1px solid var(--border);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
   }
-  footer{padding:16px 0;color:#35546b;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  footer{padding:16px 0;color:#2d4c63;display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:#0b65c2;text-decoration:none}
 
   /* Error bar */
@@ -234,7 +236,7 @@
               <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
               <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
               <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:#4a6b86">Select columns:</small></div>
+              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
               <div class="cols" id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
               <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
                 <button class="btn" id="btnCancelExport">Cancel</button>
@@ -407,7 +409,7 @@
 
 <script>
 (function(){
-  const DATA_URL = '/data/data.json';    // Netlify will redirect this to your SharePoint download link
+  const DATA_URL = '/data/data.json';    // Netlify redirects to SharePoint
   const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
@@ -495,14 +497,15 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
+  /* NEW: super-soft pill colours (pastels) */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
-    const h = 205 + (hashStr(name)%28);
-    const s = 55 + ((hashStr(name)>>3)%15);
-    const l = 88 - ((hashStr(name)>>5)%12);
-    const bg = `hsl(${h} ${s}% ${l}%)`;
-    const bd = `hsl(${h} ${Math.min(75,s+8)}% ${Math.max(40,l-18)}%)`;
-    const fg = l < 75 ? '#ffffff' : '#0b2338';
+    const base = 205 + (hashStr(name)%20);            // hue: blue range
+    const s = 18 + ((hashStr(name)>>3)%10);           // very low saturation
+    const l = 95 - ((hashStr(name)>>5)%3);            // very high lightness
+    const bg = `hsl(${base} ${s}% ${l}%)`;
+    const bd = `hsl(${base} ${Math.min(30,s+8)}% ${Math.max(70,l-18)}%)`; /* subtle border */
+    const fg = '#0e2b40';
     return {bg, bd, fg};
   }
   function renderTag(label){
@@ -827,7 +830,7 @@
       return `
         <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #cfe2f2;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25;background:#fbfdff">
           <span class="nm">${esc(c.display_name || '(No name)')}</span>
-          ${c.job_title ? `<span class="sep">•</span><span class="role" style="color:#4a6b86">${esc(c.job_title)}</span>`:''}
+          ${c.job_title ? `<span class="sep">•</span><span class="role" style="color:#3b5a73">${esc(c.job_title)}</span>`:''}
           ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
           ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
           ${chip ? `<span class="sep">•</span>${chip}`:''}
@@ -879,7 +882,7 @@
     if(!name) return null;
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
-    }
+  }
 
   function renderInts(list){
     const tb = intBody;
@@ -1113,7 +1116,7 @@
     a.download = `contacts_${nameBit}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
-    exportPanel.querySelector('.pop').style.display='none';  /* ← fixed: removed stray ')' */
+    exportPanel.querySelector('.pop').style.display='none';
   });
 
   // Reload
