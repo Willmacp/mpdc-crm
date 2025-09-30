@@ -13,7 +13,7 @@
     --grey:#6d6e71;             /* MPDC grey */
     --text:#1f2937;
     --muted:#6b7280;
-    --bg:#f7f8fa;
+    --bg:#f4f6f9;
     --card:#ffffff;
     --border:#e5e7eb;
     --head:#f3f5f8;
@@ -26,17 +26,24 @@
     /* Shadows */
     --shadow-sm:0 1px 2px rgba(0,0,0,.05);
     --shadow:0 8px 24px rgba(0,0,0,.08);
+    --shadow-md:0 10px 28px rgba(28,45,58,.12);
   }
 
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
 
-  .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
+  /* Sectioned header band */
+  .head-band{
+    background: linear-gradient(180deg, rgba(95,128,155,.15) 0%, rgba(95,128,155,.08) 60%, rgba(255,255,255,0) 100%);
+    border-bottom:1px solid #d9e2ea;
+    box-shadow: var(--shadow-sm);
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
 
   /* Header / branding */
-  header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:8px}
+  header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
+  .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
   h1{font-size:22px;margin:0}
   .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);
@@ -45,7 +52,7 @@
   .stamp{font-size:12px;color:var(--muted)}
 
   /* Top toolbar */
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
   .btn{appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
     cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease}
   .btn:hover{border-color:var(--accent);box-shadow:0 2px 6px rgba(95,128,155,.15)}
@@ -60,7 +67,7 @@
   /* Popovers / panels */
   .panel{position:relative;display:inline-block}
   .pop{position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
-    border-radius:12px;box-shadow:var(--shadow);padding:12px;z-index:10;display:none}
+    border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:10;display:none}
 
   /* Group menu grid */
   .groups-grid{
@@ -72,10 +79,17 @@
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
 
-  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;
-    box-shadow:var(--shadow-sm);font-size:12px;cursor:pointer;user-select:none;line-height:1.1}
-  .tag .count{color:var(--muted)}
+  /* Group pills (tinted per-tag in JS) */
+  .tag{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;
+    box-shadow:var(--shadow-sm);font-size:12px;cursor:default;user-select:none;line-height:1.1;transition:.12s ease;
+  }
+  .tag .count{opacity:.85}
+  .tag:hover{filter:saturate(1.05)}
+
+  /* Selected in group menu = muted green to signal active filter */
   .tag.selected{background:var(--green);color:#fff;border-color:transparent}
+
   .groups-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 
   /* Tips popover */
@@ -83,21 +97,29 @@
   .tips strong{color:#111827}
 
   /* Cards & tables */
-  main{display:flex;flex-direction:column;gap:16px}
+  main{display:flex;flex-direction:column;gap:16px;margin:18px 0 0}
   section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
-  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
-    border-bottom:1px solid var(--border);background:linear-gradient(90deg,var(--accent-100),#fff 40%)}
+  .card-head{
+    display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(90deg, rgba(95,128,155,.18) 0%, rgba(95,128,155,.10) 55%, rgba(255,255,255,1) 100%);
+    position:relative;
+  }
+  .card-head::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: linear-gradient(180deg, #6f8ea8, #5f809b);
+    border-top-left-radius:14px; border-bottom-left-radius:14px;
+  }
   .card-head-left{display:flex;align-items:center;gap:10px}
   .card-head h2{margin:0;font-size:18px}
   .card-head h2 .count{color:var(--muted);font-weight:500;margin-left:8px}
-  .card-head h2::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);
-    margin-right:10px;vertical-align:middle}
   .subhint{font-size:12px;color:var(--muted)}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .card-body{padding:0}
   .table-wrap{overflow:auto;max-height:420px}
-  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px}
-  thead th{position:sticky;top:0;background:var(--head);z-index:1;font-weight:600}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
+  thead th{position:sticky;top:0;background:
+      linear-gradient(180deg, #f7f9fb, #f0f4f8);
+    z-index:1;font-weight:600;border-bottom:1px solid var(--border)}
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   tr:nth-child(even) td{background:#fafbfc}
   .muted{color:var(--muted)}
@@ -120,7 +142,7 @@
   #tb-ints  tr[data-int]{cursor:pointer}
   #tb-orgs tr[data-org]:hover td,
   #tb-contacts tr[data-id]:hover td,
-  #tb-ints  tr[data-int]:hover td{background:#f1f5f9}
+  #tb-ints  tr[data-int]:hover td{background:#f1f6fb}
   tr.org-expander td,
   tr.contact-expander td,
   tr.int-expander td{background:#fbfdff}
@@ -144,98 +166,112 @@
   }
   .lab{color:var(--muted)}
 
-  footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  /* Sectioned footer band */
+  .foot-band{
+    margin-top:22px;
+    background: linear-gradient(0deg, rgba(95,128,155,.14) 0%, rgba(95,128,155,.06) 70%, rgba(255,255,255,0) 100%);
+    border-top:1px solid #d9e2ea;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  footer{padding:16px 0;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:var(--accent);text-decoration:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
+
+<div class="head-band">
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1 style="display:flex;align-items:center;gap:8px;margin-bottom:2px">MPDC Stakeholder CRM
+            <span class="chip" title="Environment">Web</span>
+          </h1>
+          <div class="stamp" id="lastStamp">Last updated: —</div>
+        </div>
+      </div>
+
+      <!-- Toolbar: Search + Groups (side by side), then Reload / Export / Admin / Tips -->
       <div>
-        <h1 style="display:flex;align-items:center;gap:8px;margin-bottom:2px">MPDC Stakeholder CRM
-          <span class="chip" title="Environment">Web</span>
-        </h1>
-        <div class="stamp" id="lastStamp">Last updated: —</div>
-      </div>
-    </div>
+        <div class="toolbar">
+          <div class="search" title="Type to filter contacts/organisations">
+            <span>🔎</span>
+            <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
+            <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
+          </div>
 
-    <!-- Toolbar: Search + Groups (now side by side), then Reload / Export / Admin / Tips -->
-    <div class="toolbar">
-      <div class="search" title="Type to filter contacts/organisations">
-        <span>🔎</span>
-        <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
-        <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
-      </div>
+          <!-- Groups next to Search -->
+          <div class="panel" id="groupsPanel">
+            <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
+            <div class="pop" id="groupsMenu" style="min-width:520px">
+              <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
+              <div class="groups-grid" id="groupsGrid"></div>
+              <div class="groups-actions">
+                <a href="#" id="linkClearGroups" style="color:#5f809b;text-decoration:none">Clear</a>
+                <button class="btn" id="btnCloseGroups">Close</button>
+              </div>
+            </div>
+          </div>
 
-      <!-- Groups moved next to Search -->
-      <div class="panel" id="groupsPanel">
-        <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
-        <div class="pop" id="groupsMenu" style="min-width:520px">
-          <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
-          <div class="groups-grid" id="groupsGrid"></div>
-          <div class="groups-actions">
-            <a href="#" id="linkClearGroups" style="color:#5f809b;text-decoration:none">Clear</a>
-            <button class="btn" id="btnCloseGroups">Close</button>
+          <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
+
+          <!-- Export CSV -->
+          <div class="panel" id="exportPanel">
+            <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
+            <div class="pop">
+              <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
+              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+              <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:var(--muted)">Select columns:</small></div>
+              <div class="cols" id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
+              <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                <button class="btn" id="btnCancelExport">Cancel</button>
+                <button class="btn primary" id="btnDoExport">Export</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin tools -->
+          <div class="panel" id="adminPanel">
+            <button class="btn" id="btnAdmin" title="Load CSV/JSON or export a JSON snapshot">Admin tools ▾</button>
+            <div class="pop" id="adminMenu" style="min-width:220px">
+              <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
+              <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
+              <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
+            </div>
+          </div>
+
+          <!-- Quick tips -->
+          <div class="panel" id="helpPanel">
+            <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
+            <div class="pop" id="helpMenu" style="max-width:520px">
+              <ul class="tips" style="padding-left:18px;margin:0">
+                <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
+                <li><strong>Groups</strong>: select one or more tags; chosen tags are highlighted in green.</li>
+                <li><strong>Contacts</strong>: click any row to open a compact details card.</li>
+                <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
+                <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
+                <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
+                <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
 
-      <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
-
-      <!-- Export CSV -->
-      <div class="panel" id="exportPanel">
-        <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
-        <div class="pop">
-          <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
-          <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-          <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-          <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><small style="color:var(--muted)">Select columns:</small></div>
-          <div class="cols" id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
-          <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-            <button class="btn" id="btnCancelExport">Cancel</button>
-            <button class="btn primary" id="btnDoExport">Export</button>
-          </div>
+        <div class="meta" style="margin-top:10px">
+          <span id="chip" class="chip">Data: loading…</span>
         </div>
+
+        <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
+        <input type="file" id="fileJson" accept=".json,application/json" hidden />
       </div>
+    </header>
+  </div>
+</div>
 
-      <!-- Admin tools -->
-      <div class="panel" id="adminPanel">
-        <button class="btn" id="btnAdmin" title="Load CSV/JSON or export a JSON snapshot">Admin tools ▾</button>
-        <div class="pop" id="adminMenu" style="min-width:220px">
-          <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
-          <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
-          <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
-        </div>
-      </div>
-
-      <!-- Quick tips -->
-      <div class="panel" id="helpPanel">
-        <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
-        <div class="pop" id="helpMenu" style="max-width:520px">
-          <ul class="tips" style="padding-left:18px;margin:0">
-            <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-            <li><strong>Groups</strong>: select one or more tags; chosen tags are highlighted in green.</li>
-            <li><strong>Contacts</strong>: click any row to open a compact details card.</li>
-            <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
-            <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
-            <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
-            <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="meta">
-      <span id="chip" class="chip">Data: loading…</span>
-    </div>
-
-    <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
-    <input type="file" id="fileJson" accept=".json,application/json" hidden />
-  </header>
-
+<div class="wrap">
   <main>
     <!-- CONTACTS -->
     <section class="card" id="sec-contacts">
@@ -346,11 +382,15 @@
       </div>
     </section>
   </main>
+</div>
 
-  <footer>
-    <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
-    <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
-  </footer>
+<div class="foot-band">
+  <div class="wrap">
+    <footer>
+      <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
+      <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
+    </footer>
+  </div>
 </div>
 
 <script>
@@ -432,6 +472,22 @@
     const d = new Date(dt);
     try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d); }
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
+  }
+
+  /* --------- Tag colorizer (different blues per group) --------- */
+  function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
+  function pillColors(name){
+    const h = 205 + (hashStr(name)%28);          // 205–233 (blue band)
+    const s = 42 + (hashStr(name)>>3)%18;        // 42–59
+    const l = 84 - (hashStr(name)>>5)%18;        // 66–84
+    const bg = `hsl(${h} ${s}% ${l}%)`;
+    const bd = `hsl(${h} ${Math.min(70,s+10)}% ${Math.max(35,l-18)}%)`;
+    const fg = l < 62 ? '#ffffff' : '#1d3545';
+    return {bg, bd, fg};
+  }
+  function renderTag(label){
+    const {bg, bd, fg} = pillColors(label);
+    return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
   /* ---------- GROUP NORMALISATION ---------- */
@@ -520,6 +576,7 @@
   }
 
   /* ---------- GROUP INDEX + MENU ---------- */
+  let allGroups = [];
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -543,6 +600,10 @@
       tag.type='button';
       tag.className='tag';
       tag.dataset.groupKey=key;
+      const col = pillColors(name);
+      tag.style.background = col.bg;
+      tag.style.borderColor = col.bd;
+      tag.style.color = col.fg;
       tag.innerHTML = `<span>${esc(name)}</span> <span class="count">(${count})</span>`;
       if(selectedGroups.has(key)) tag.classList.add('selected');
       tag.addEventListener('click', ()=>{
@@ -655,7 +716,7 @@
     const rows = applyContactSort(list).slice(0, limits.contacts);
     tb.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const groupsHtml = groups.map(g=> `<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
+      const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
       const email = clean(c.email);
       const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
       const row = `
@@ -678,7 +739,7 @@
 
   function buildContactExpanderRow(c){
     const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
-    const chips = groups.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join('') || '<span class="muted">—</span>';
+    const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
     const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
     return `
       <tr class="contact-expander"><td colspan="10">
@@ -752,7 +813,7 @@
     const mailAll = emails.length ? `mailto:${encodeURIComponent(emails.join(','))}` : null;
     const people = all.map(c=>{
       const gg = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const chip = gg.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
+      const chip = gg.map(g=>renderTag(g)).join(' ');
       const email = clean(c.email);
       return `
         <div class="org-person" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25">
@@ -812,7 +873,7 @@
     if(!name) return null;
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
-  }
+    }
 
   function renderInts(list){
     const tb = intBody;
