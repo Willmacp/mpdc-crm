@@ -15,6 +15,7 @@
       --border:#e5e7eb;
       --head:#f3f5f8;
       --shadow:0 1px 2px rgba(0,0,0,.05);
+      --chip:#eef2f7;
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     .wrap{max-width:1200px;margin:32px auto;padding:0 16px}
@@ -23,7 +24,7 @@
     .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7899b2)}
     h1{font-size:22px;margin:0}
     .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef2f7;border:1px solid var(--border);color:#334155;font-size:12px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:#334155;font-size:12px}
     .chip.ok{background:#e9f8ef;color:#155e2e;border-color:#b7ebc2}
     .stamp{font-size:12px;color:var(--muted)}
     .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
@@ -56,13 +57,15 @@
     .muted{color:var(--muted)}
     footer{margin:28px 0 40px;color:var(--grey);display:flex;justify-content:space-between;align-items:center;font-size:13px}
     a.top{color:var(--accent);text-decoration:none}
+    a.mail{color:#0b65c2;text-decoration:none}
+    a.mail:hover{text-decoration:underline}
 
     /* column widths */
     .w-name{max-width:220px}
     .w-org{max-width:220px}
-    .w-group{max-width:220px}
+    .w-group{max-width:240px}
     .w-role{max-width:160px}
-    .w-email{max-width:220px}
+    .w-email{max-width:240px}
     .w-phone{max-width:140px}
     .w-mpdc{max-width:200px}
     .w-date{max-width:140px}
@@ -88,6 +91,25 @@
     .pop .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
     .pop small{color:var(--muted)}
     .pop label{font-size:13px}
+
+    /* Organisations expandable rows */
+    #tb-orgs tr[data-org]{cursor:pointer}
+    #tb-orgs tr[data-org]:hover td{background:#f1f5f9}
+    tr.org-expander td{background:#fbfdff}
+    .org-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+      box-shadow:var(--shadow);
+    }
+    .org-card h3{margin:0 0 8px 0;font-size:16px}
+    .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+    .org-person{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #e2e8f0;border-radius:10px;padding:8px}
+    .org-person .nm{font-weight:600}
+    .org-person .role{color:var(--muted)}
+    .org-person .sep{color:#cbd5e1}
+    .org-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -228,7 +250,7 @@
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
-  const ORG_CONTACTS_PREVIEW = 3; // show first 3 contacts, then “…(+N)”
+  const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
   const lastStamp = document.getElementById('lastStamp');
@@ -257,7 +279,8 @@
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
   let selectedGroups = new Set(); // normalised keys (lowercase)
-  let allGroups = [];             // [{key,name,count}] sorted A→Z
+  let allGroups = [];
+  let expandedOrgs = new Set();   // keep which organisations are expanded (by name)
 
   const DEFAULT_COLUMNS = [
     {key:'display_name', label:'Name', checked:true},
@@ -273,6 +296,7 @@
   ];
 
   // Helpers
+  const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
   const fmtDate = s => {
     if(!s) return '';
@@ -297,72 +321,37 @@
     }
   }
 
-  // === GROUP NORMALISATION (extra robust) ===
+  // === GROUP NORMALISATION (robust) ===
   function normalizeGroups(val){
     if(val == null) return [];
-
-    // Already an array (strings or SharePoint objects)
-    if(Array.isArray(val)){
-      return finaliseGroups(flattenArray(val));
-    }
-
-    // Single object with results or Value
+    if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
     if(typeof val === 'object'){
       if(Array.isArray(val.results)) return finaliseGroups(flattenArray(val.results));
       if('Value' in val) return finaliseGroups([clean(String(val.Value))]);
-      // fallback: stringify and keep going
       return fromString(String(val));
     }
-
-    // String representations
     return fromString(String(val));
   }
 
   function fromString(s){
-    s = s.trim();
+    s = String(s).trim();
     if(!s) return [];
-
-    // normalise quotes
     s = s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
-
-    // strip outer quotes once
-    if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))){
-      s = s.slice(1,-1).trim();
-    }
-
-    // Try strict JSON parse first (arrays or arrays of objects)
+    if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) s = s.slice(1,-1).trim();
     if(/^\s*\[.*\]\s*$/.test(s)){
-      const parsed = tryParseJsonArray(s);
-      if(parsed) return finaliseGroups(flattenArray(parsed));
-      // If still not parseable, fall through to manual stripping
+      const p = tryParseJsonArray(s);
+      if(p) return finaliseGroups(flattenArray(p));
     }
-
-    // Manual cleanup: remove brackets and quotes, then split
-    s = s.replace(/[\[\]]/g,'');  // remove [ ]
-    s = s.replace(/["']/g,'');    // remove quotes
-    const parts = s.split(/[;,|]/).map(x=>clean(x)).filter(Boolean);
+    s = s.replace(/[\[\]]/g,'').replace(/["']/g,'');
+    const parts = s.split(/[;,|]/).map(x=>x.trim()).filter(Boolean);
     return finaliseGroups(parts);
   }
-
   function tryParseJsonArray(s){
-    try{
-      const p = JSON.parse(s);
-      return Array.isArray(p) ? p : null;
-    }catch(_){
-      // retry with single-quotes turned to double-quotes
-      try{
-        const p2 = JSON.parse(s.replace(/'/g,'"'));
-        return Array.isArray(p2) ? p2 : null;
-      }catch(__){
-        // CSV double-quoted content sometimes contains doubled quotes
-        try{
-          const p3 = JSON.parse(s.replace(/""/g,'"'));
-          return Array.isArray(p3) ? p3 : null;
-        }catch(___){ return null; }
-      }
-    }
+    try{ const a = JSON.parse(s); return Array.isArray(a)?a:null; }catch(_){}
+    try{ const a = JSON.parse(s.replace(/'/g,'"')); return Array.isArray(a)?a:null; }catch(_){}
+    try{ const a = JSON.parse(s.replace(/""/g,'"')); return Array.isArray(a)?a:null; }catch(_){}
+    return null;
   }
-
   function flattenArray(arr){
     const out = [];
     for(const x of arr){
@@ -373,56 +362,46 @@
         if('value' in x){ out.push(clean(String(x.value))); continue; }
         if('Title' in x){ out.push(clean(String(x.Title))); continue; }
         if(Array.isArray(x.results)){ out.push(...x.results.map(v=>clean(String(v)))); continue; }
-        // last resort stringify then strip
-        const s = String(x);
-        out.push(clean(s.replace(/[\[\]"']/g,'')));
+        out.push(clean(String(x).replace(/[\[\]"']/g,'')));
         continue;
       }
       out.push(clean(String(x)));
     }
     return out;
   }
-
   function finaliseGroups(parts){
-    // dedupe case-insensitively, drop empties, sort alpha (case-insensitive)
-    const seen = new Set();
-    const kept = [];
+    const seen = new Set(), kept = [];
     for(let v of parts){
       v = clean(v);
       if(!v) continue;
-      const key = v.toLowerCase();
-      if(!seen.has(key)){ seen.add(key); kept.push(v); }
+      const k = v.toLowerCase();
+      if(!seen.has(k)){ seen.add(k); kept.push(v); }
     }
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Derive organisations (skip blank orgs). Also compute preview text.
+  // Derive organisations (skip blank orgs)
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
       if(!orgRaw) continue;
-      const org = orgRaw;
-      if(!m.has(org)) m.set(org,{ organisation: org, contact_names: [], last_contact_at: null, recent_topics: [] });
-      const o = m.get(org);
+      if(!m.has(orgRaw)) m.set(orgRaw,{ organisation: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
+      const o = m.get(orgRaw);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
       if(c.last_contact_at){
-        if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){
-          o.last_contact_at = c.last_contact_at;
-        }
+        if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
     }
-
     return Array.from(m.values()).map(o=>{
-      const full = o.contact_names.join(', ');
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, 3);
+      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
       let preview = previewArr.join(', ');
-      if(n > 3){ preview += ` …(+${n - 3})`; }
+      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
       return {
         organisation: o.organisation,
-        contacts: full,
+        contacts: o.contact_names.join(', '),
         contacts_preview: preview,
         contacts_count: n,
         last_contact_at: o.last_contact_at,
@@ -431,13 +410,12 @@
     });
   }
 
-  // Build group index and chips (alphabetical, unique)
+  // Build group index and chips
   function rebuildGroupIndex(){
-    const counts = new Map();   // key (lower) -> count
-    const display = new Map();  // key (lower) -> first-seen display text
+    const counts = new Map(), display = new Map();
     for(const c of st.contacts){
       const gs = normalizeGroups(c.group);
-      c.group = gs; // persist normalised array
+      c.group = gs;
       for(const g of gs){
         const key = g.toLowerCase();
         counts.set(key, (counts.get(key)||0)+1);
@@ -456,14 +434,12 @@
       const b = document.createElement('button');
       b.type='button';
       b.className='tag';
-      b.dataset.groupKey=key; // normalised key
-      b.innerHTML = `<span>${name}</span><span class="count">(${count})</span>`;
+      b.dataset.groupKey=key;
+      b.innerHTML = `<span>${esc(name)}</span><span class="count">(${count})</span>`;
       if(selectedGroups.has(key)) b.classList.add('selected');
       b.addEventListener('click', ()=>{
-        if(selectedGroups.has(key)) selectedGroups.delete(key);
-        else selectedGroups.add(key);
-        renderGroupChips();
-        render();
+        if(selectedGroups.has(key)) selectedGroups.delete(key); else selectedGroups.add(key);
+        renderGroupChips(); render();
       });
       groupFilters.appendChild(b);
     });
@@ -471,12 +447,10 @@
 
   clearGroups.addEventListener('click', (e)=>{
     e.preventDefault();
-    selectedGroups.clear();
-    renderGroupChips();
-    render();
+    selectedGroups.clear(); renderGroupChips(); render();
   });
 
-  // Search + group filter
+  // Filtered view (search + group chips)
   function filteredContacts(){
     const q = norm(search);
     const hasSearch = q.length>0;
@@ -484,23 +458,20 @@
 
     return st.contacts.filter(c=>{
       if(hasGroupFilter){
-        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group))
-          .map(g=>g.toLowerCase());
-        const ok = keys.some(k => selectedGroups.has(k));
-        if(!ok) return false;
+        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).map(g=>g.toLowerCase());
+        if(!keys.some(k => selectedGroups.has(k))) return false;
       }
       if(!hasSearch) return true;
-
       const fields = [
         c.display_name, c.organisation, c.job_title, c.email, c.phone, c.mpdc_contact,
-        (Array.isArray(c.group)? c.group.join(', ') : c.group),
-        c.last_subject, c.notes
+        (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
       ];
       return fields.some(v => norm(v).includes(q));
     });
   }
 
-  // Renderers
+  // Render cycle
+  let lastOrgsRendered = [];
   function render(){
     const contactsView = filteredContacts();
     const orgsView = deriveOrgs(contactsView);
@@ -509,56 +480,145 @@
     renderOrgs(orgsView);
     renderInts(st.interactions);
 
+    // Re-apply expanded orgs after re-render
+    lastOrgsRendered = orgsView.map(o=>o.organisation);
+    reapplyOrgExpanders();
+
     countContacts.textContent = contactsView.length ? `(${contactsView.length})` : '';
     countOrgs.textContent = orgsView.length ? `(${orgsView.length})` : '';
     countInts.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
+  // CONTACTS (with mailto links)
   function renderContacts(list){
     const tb = document.getElementById('tb-contacts');
     const rows = [...list].sort(by('display_name')).slice(0, limits.contacts);
     tb.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const groupsHtml = groups.map(g=> `<span class="tag" title="${g}">${g}</span>`).join(' ');
+      const groupsHtml = groups.map(g=> `<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
+      const email = clean(c.email);
+      const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
       return `
       <tr>
-        <td class="w-name" title="${clean(c.display_name)}">${clean(c.display_name)}</td>
-        <td class="w-org" title="${clean(c.organisation)}">${clean(c.organisation)}</td>
+        <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
+        <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
         <td class="w-group">${groupsHtml}</td>
-        <td class="w-role" title="${clean(c.job_title)}">${clean(c.job_title)}</td>
-        <td class="w-email" title="${clean(c.email)}">${clean(c.email)}</td>
-        <td class="w-phone" title="${clean(c.phone)}">${clean(c.phone)}</td>
-        <td class="w-mpdc" title="${clean(c.mpdc_contact)}">${clean(c.mpdc_contact)}</td>
+        <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
+        <td class="w-email">${emailHtml}</td>
+        <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
+        <td class="w-mpdc" title="${esc(c.mpdc_contact)}">${esc(c.mpdc_contact)}</td>
         <td class="w-date">${fmtDate(c.last_contact_at)}</td>
-        <td class="w-subj" title="${clean(c.last_subject)}">${clean(c.last_subject)}</td>
-        <td class="w-notes" title="${clean(c.notes)}">${clean(c.notes)}</td>
+        <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
+        <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
       </tr>`;
     }).join('');
   }
 
+  // ORGANISATIONS (click to expand a “tile” row)
+  const orgBody = document.getElementById('tb-orgs');
+  orgBody.addEventListener('click', (e)=>{
+    const tr = e.target.closest('tr[data-org]');
+    if(!tr) return;
+    const org = tr.dataset.org;
+    toggleOrgExpander(org, tr);
+  });
+
   function renderOrgs(list){
-    const tb = document.getElementById('tb-orgs');
+    const tb = orgBody;
     const rows = [...list].sort(by('organisation')).slice(0, limits.orgs);
     tb.innerHTML = rows.map(o=>`
-      <tr>
-        <td class="w-org" title="${clean(o.organisation)}">${clean(o.organisation)}</td>
-        <td title="${clean(o.contacts)}">${clean(o.contacts_preview || o.contacts)}</td>
+      <tr data-org="${esc(o.organisation)}" tabindex="0" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
+        <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
+        <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
         <td class="w-date">${fmtDate(o.last_contact_at)}</td>
-        <td class="w-subj" title="${clean(o.recent_topics)}">${clean(o.recent_topics)}</td>
+        <td class="w-subj" title="${esc(o.recent_topics)}">${esc(o.recent_topics)}</td>
       </tr>
+      ${expandedOrgs.has(o.organisation) ? buildOrgExpanderRow(o.organisation) : ''}
     `).join('');
   }
 
+  function buildOrgExpanderRow(orgName){
+    // Build detail card from *filtered* contacts to respect current view
+    const all = filteredContacts().filter(c=> clean(c.organisation).toLowerCase() === clean(orgName).toLowerCase());
+    const emails = all.map(c=> clean(c.email)).filter(Boolean);
+    const mailAll = emails.length ? `mailto:${encodeURIComponent(emails.join(','))}` : null;
+
+    const people = all.map(c=>{
+      const gg = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
+      const chip = gg.map(g=>`<span class="tag" title="${esc(g)}">${esc(g)}</span>`).join(' ');
+      const email = clean(c.email);
+      return `
+        <div class="org-person">
+          <span class="nm">${esc(c.display_name || '(No name)')}</span>
+          ${c.job_title ? `<span class="sep">•</span><span class="role">${esc(c.job_title)}</span>`:''}
+          ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
+          ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
+          ${chip ? `<span class="sep">•</span>${chip}`:''}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <tr class="org-expander"><td colspan="4">
+        <div class="org-card">
+          <div class="org-actions">
+            <h3 style="margin:0">${esc(orgName)}</h3>
+            ${mailAll ? `<a class="btn" href="${mailAll}" title="Email all contacts at ${esc(orgName)}">Email all</a>`:''}
+          </div>
+          ${people ? `<div class="org-grid">${people}</div>` : `<div class="muted">No contacts (matches current filters)</div>`}
+        </div>
+      </td></tr>
+    `;
+  }
+
+  function toggleOrgExpander(org, tr){
+    const isOpen = expandedOrgs.has(org);
+    if(isOpen){
+      expandedOrgs.delete(org);
+      // Remove following expander row if present
+      const next = tr.nextElementSibling;
+      if(next && next.classList.contains('org-expander')) next.remove();
+      tr.setAttribute('aria-expanded','false');
+    }else{
+      expandedOrgs.add(org);
+      tr.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
+      tr.setAttribute('aria-expanded','true');
+    }
+  }
+  function reapplyOrgExpanders(){
+    // After render, ensure any orgs that should be open are open (and still in the view)
+    const rows = Array.from(orgBody.querySelectorAll('tr[data-org]'));
+    for(const r of rows){
+      const org = r.dataset.org;
+      const should = expandedOrgs.has(org) && lastOrgsRendered.includes(org);
+      const next = r.nextElementSibling;
+      const has = next && next.classList.contains('org-expander');
+      if(should && !has){
+        r.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
+        r.setAttribute('aria-expanded','true');
+      }
+      if(!should && has){
+        next.remove();
+        r.setAttribute('aria-expanded','false');
+      }
+    }
+    // Cull expanded orgs that are no longer in the rendered set
+    expandedOrgs.forEach(org=>{
+      if(!lastOrgsRendered.includes(org)) expandedOrgs.delete(org);
+    });
+  }
+
+  // INTERACTIONS
   function renderInts(list){
     const tb = document.getElementById('tb-ints');
     const rows = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0, limits.ints);
     tb.innerHTML = rows.map(i=>`
       <tr>
         <td class="w-date">${fmtDate(i.date)}</td>
-        <td class="w-name">${clean(i.contact)}</td>
-        <td class="w-subj" title="${clean(i.subject)}">${clean(i.subject)}</td>
-        <td title="${clean(i.summary)}">${clean(i.summary)}</td>
-        <td>${clean(i.type)}</td>
+        <td class="w-name">${esc(i.contact)}</td>
+        <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
+        <td title="${esc(i.summary)}">${esc(i.summary)}</td>
+        <td>${esc(i.type)}</td>
       </tr>
     `).join('');
   }
@@ -583,10 +643,7 @@
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> {
-      for(const c of cands){
-        const hit = map[normKey(c)];
-        if(hit) return hit;
-      }
+      for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; }
       return null;
     };
   }
@@ -637,7 +694,7 @@
     });
   }
 
-  // Build export checkboxes
+  // Export checkboxes
   function buildExportChecks(){
     colChecks.innerHTML = '';
     DEFAULT_COLUMNS.forEach(c=>{
@@ -654,20 +711,17 @@
   document.getElementById('btnLoadJson').addEventListener('click', ()=> document.getElementById('fileJson').click());
 
   document.getElementById('fileCsv').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
+    const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
     st = await csvToState(text);
     limits = {contacts:5,orgs:5,ints:5};
     chip.className='chip ok'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
-    rebuildGroupIndex();
-    render();
+    rebuildGroupIndex(); render();
   });
 
   document.getElementById('fileJson').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
+    const file = e.target.files[0]; if(!file) return;
     try{
       const text = await file.text();
       const data = JSON.parse(text);
@@ -683,14 +737,11 @@
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip ok'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
-      rebuildGroupIndex();
-      render();
-    }catch(err){
-      alert('Invalid JSON file');
-    }
+      rebuildGroupIndex(); render();
+    }catch(err){ alert('Invalid JSON file'); }
   });
 
-  // JSON download (includes _meta.updated_at)
+  // JSON download
   document.getElementById('btnDlJson').addEventListener('click', ()=>{
     const out = {
       organisations: st.organisations||[],
@@ -706,7 +757,7 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // Export CSV actions
+  // Export CSV
   btnExportCsv.addEventListener('click', ()=> exportPanel.classList.toggle('open'));
   btnCancelExport.addEventListener('click', ()=> exportPanel.classList.remove('open'));
   document.addEventListener('click', (e)=>{
@@ -753,7 +804,7 @@
   // Reload remote JSON
   btnReload.addEventListener('click', ()=> init(true));
 
-  // Search (debounced)
+  // Search
   let tSearch;
   function setSearch(val){ search = val; render(); }
   searchBox.addEventListener('input', ()=>{
@@ -767,7 +818,7 @@
     searchBox.focus();
   });
 
-  // Initial load from remote JSON
+  // Initial load
   async function init(forceNoCache=false){
     try{
        const r = await fetch(DATA_URL, {cache: forceNoCache?'no-store':'default'});
@@ -790,14 +841,12 @@
        setLastUpdated(updated || new Date());
 
        limits = {contacts:5,orgs:5,ints:5};
-       rebuildGroupIndex();
-       render();
+       rebuildGroupIndex(); render();
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
-       rebuildGroupIndex();
-       render();
+       rebuildGroupIndex(); render();
     }
   }
   init();
