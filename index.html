@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r15 -->
+<!-- Build r16 -->
 <style>
   :root{
     --accent:#5f809b;
@@ -534,7 +534,7 @@
     const m = new Map();
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
-      if(!orgRaw) continue;
+      if(!orgRaw) continue; // skip individual-only
       if(!m.has(orgRaw)) m.set(orgRaw,{ organisation: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
       const o = m.get(orgRaw);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
@@ -991,7 +991,7 @@
             const groups = normalizeGroups(r[H.group]);
             return {
               id: id++,
-              display_name: clean(r[H.name]),
+              display_name: clean(r[H[name]] ?? r[H.name]),
               email: clean(r[H.email]),
               organisation: clean(r[H.organisation]),
               group: groups,
@@ -1009,15 +1009,6 @@
       });
     });
   }
-
-  document.getElementById('btnReload').addEventListener('click', ()=> init(true));
-  document.getElementById('btnCloseGroups')?.addEventListener('click', ()=> groupsMenu.style.display='none');
-
-  // Admin menu and loaders
-  document.getElementById('btnAdmin').addEventListener('click', ()=> adminMenu.style.display = (adminMenu.style.display==='block'?'none':'block'));
-  const amLoadCsv = document.getElementById('amLoadCsv');
-  const amLoadJson = document.getElementById('amLoadJson');
-  const amExportJson = document.getElementById('amExportJson');
 
   amLoadCsv.addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   amLoadJson.addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
