@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
+<!-- Build r15 -->
 <style>
   :root{
     --accent:#5f809b;
@@ -63,13 +64,14 @@
   .panel{position:relative;display:inline-block}
   .pop{
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
-    border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:10;display:none
+    border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:80;display:none
   }
 
-  /* Groups grid + tags (soft blues) */
+  /* Groups grid + tags (soft, toned-down blues/greens) */
   .groups-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:8px 10px;max-height:360px;overflow:auto}
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
+
   .tag{
     display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);
     border-radius:999px;background:#f7fbff;box-shadow:var(--shadow-sm);font-size:12px;user-select:none
@@ -393,10 +395,10 @@
   const fileCsv = document.getElementById('fileCsv');
   const fileJson = document.getElementById('fileJson');
 
-  // Sort panel for contacts
+  // Sort panel for contacts (robust)
   const sortPanelContacts = document.getElementById('sortPanelContacts');
-  const btnSortContacts = document.getElementById('btnSortContacts');
-  const sortMenuContacts = document.getElementById('sortMenuContacts');
+  const btnSortContacts   = document.getElementById('btnSortContacts');
+  const sortMenuContacts  = document.getElementById('sortMenuContacts');
 
   // Counts
   const countContactsEl = document.getElementById('countContacts');
@@ -418,6 +420,28 @@
   let expandedContacts = new Set();
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
+
+  // === Sort menu handlers (open/close and choose) ===
+  btnSortContacts.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    sortMenuContacts.style.display = (sortMenuContacts.style.display==='block' ? 'none' : 'block');
+  });
+  sortMenuContacts.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const btn = e.target.closest('button[data-sort]');
+    if(!btn) return;
+    const val = btn.dataset.sort;
+    if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
+    if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
+    if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
+    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
+    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
+    sortMenuContacts.style.display='none';
+    render();
+  });
+  document.addEventListener('click', (e)=>{
+    if(!sortPanelContacts.contains(e.target)) sortMenuContacts.style.display='none';
+  }, true);
 
   // Helpers
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -583,11 +607,9 @@
     if(!isInside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!isInside(groupsPanel)) groupsMenu.style.display='none';
     if(!isInside(adminPanel))  adminMenu.style.display='none';
-    if(!isInside(sortPanelContacts)) sortMenuContacts.style.display='none';
-    if(!isInside(helpPanel)) helpMenu.style.display='none';
+    if(!isInside(helpPanel))   helpMenu.style.display='none';
   });
   const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
-  btnGroups.addEventListener('click', ()=> toggle(groupsMenu));
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
   btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
   btnHelp.addEventListener('click', ()=> toggle(helpMenu));
@@ -659,18 +681,6 @@
   let tSearch;
   function setSearch(val){ search = val; render(); }
   btnReload.addEventListener('click', ()=> init(true));
-  document.getElementById('btnSortContacts').addEventListener('click', ()=> toggle(sortMenuContacts));
-  sortMenuContacts.addEventListener('click', (e)=>{
-    const btn = e.target.closest('button[data-sort]'); if(!btn) return;
-    const val = btn.dataset.sort;
-    if(val==='name-asc') contactSort = {mode:'name', dir:1};
-    if(val==='name-desc') contactSort = {mode:'name', dir:-1};
-    if(val==='org-asc') contactSort = {mode:'org', dir:1};
-    if(val==='org-desc') contactSort = {mode:'org', dir:-1};
-    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
-    sortMenuContacts.style.display='none';
-    render();
-  });
   function applyContactSort(list){
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
@@ -890,7 +900,7 @@
     if(!name) return null;
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
-  }
+    }
 
   function renderInts(list){
     const sorted = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date));
@@ -1000,6 +1010,15 @@
     });
   }
 
+  document.getElementById('btnReload').addEventListener('click', ()=> init(true));
+  document.getElementById('btnCloseGroups')?.addEventListener('click', ()=> groupsMenu.style.display='none');
+
+  // Admin menu and loaders
+  document.getElementById('btnAdmin').addEventListener('click', ()=> adminMenu.style.display = (adminMenu.style.display==='block'?'none':'block'));
+  const amLoadCsv = document.getElementById('amLoadCsv');
+  const amLoadJson = document.getElementById('amLoadJson');
+  const amExportJson = document.getElementById('amExportJson');
+
   amLoadCsv.addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   amLoadJson.addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   amExportJson.addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
@@ -1071,7 +1090,6 @@
   async function init(forceNoCache=false){
     try{
        clearError();
-       // cache-buster so Netlify/SharePoint don’t serve a stale download
        const url = DATA_URL + (forceNoCache ? ('?v=' + Date.now()) : '');
        const r = await fetch(url, {cache: 'no-store'});
        if(!r.ok) throw new Error('HTTP '+r.status);
@@ -1100,16 +1118,13 @@
        chip.textContent='Data: local only (no remote)';
        setLastUpdated(null);
        showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
-       // still render anything already in st (or nothing) so UI shows
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }
   }
 
   // Groups events
-  linkClearGroups.addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
-  // Contacts sort menu toggle
-  btnSortContacts.addEventListener('click', ()=> toggle(sortMenuContacts));
+  document.getElementById('linkClearGroups').addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
 
   // Start
   init();
