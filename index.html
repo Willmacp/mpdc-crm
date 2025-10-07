@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r18 -->
+<!-- Build r19 -->
 <style>
   :root{
     --accent:#5f809b;
@@ -243,7 +243,6 @@
       <div class="card-head">
         <div>
           <h2>Contacts <span class="count" id="countContacts"></span></h2>
-          <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
         </div>
         <div class="right">
           <button class="btn" id="expContacts">Expand list</button>
@@ -288,7 +287,6 @@
       <div class="card-head">
         <div>
           <h2>Organisations <span class="count" id="countOrgs"></span></h2>
-          <div class="subhint">Click a row to see people and email-all</div>
         </div>
         <div class="right">
           <button class="btn" id="expOrgs">Expand list</button>
@@ -981,6 +979,7 @@
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
+
   function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
@@ -1005,7 +1004,7 @@
             const groups = normalizeGroups(r[H.group]);
             return {
               id: id++,
-              display_name: clean(r[H.name]), /* fixed bug */
+              display_name: clean(r[H.name]),
               email: clean(r[H.email]),
               organisation: clean(r[H.organisation]),
               group: groups,
@@ -1023,6 +1022,33 @@
       });
     });
   }
+
+  // --- New: Interaction normalizer (maps SharePoint/CSV keys) ---
+  function normalizeInteractions(arr){
+    if(!Array.isArray(arr)) return [];
+    const out = [];
+    for(const raw of arr){
+      const dateRaw = raw?.date ?? raw?.Date ?? raw?.dateTime ?? raw?.InteractionDate ?? raw?.['Interaction Date'] ?? raw?.['Latest Interaction Date'] ?? raw?.LatestInteractionDate ?? raw?.['Date'];
+      const contact = raw?.contact ?? raw?.Contact ?? raw?.Name ?? raw?.ContactName ?? raw?.['Contact'];
+      const subject = raw?.subject ?? raw?.Subject ?? raw?.Title ?? raw?.['Latest Interaction Subject'] ?? raw?.LatestInteractionSubject ?? raw?.['Subject'];
+      const summary = raw?.summary ?? raw?.Summary ?? raw?.Notes ?? '';
+      const type    = raw?.type ?? raw?.Type ?? raw?.Mode ?? '';
+      const id      = raw?.id ?? raw?.ID ?? raw?.Id ?? `${dateRaw||''}__${contact||''}__${subject||''}`;
+
+      const dateISO = toISOorBlank(clean(dateRaw));
+      if(!dateISO) continue; // skip rows without a valid date
+      out.push({
+        id: String(id||'').trim() || `${dateISO}__${clean(contact)}`,
+        date: dateISO,
+        contact: clean(contact),
+        subject: clean(subject),
+        summary: clean(summary),
+        type: clean(type)
+      });
+    }
+    return out;
+  }
+  // -------------------------------------------------------------
 
   document.getElementById('amLoadCsv').addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   document.getElementById('amLoadJson').addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
@@ -1049,7 +1075,7 @@
       st = {
         organisations: data.organisations||[],
         contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-        interactions: data.interactions||[],
+        interactions: normalizeInteractions(data.interactions || data.Interactions || []),
         _meta: data._meta||null
       };
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
@@ -1080,8 +1106,6 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // Note: removed sampleInteractions() fallback. We render only real data from JSON.
-
   // Add subtle header shadow on scroll
   ['tw-contacts','tw-orgs','tw-ints'].forEach(id=>{
     const el = document.getElementById(id);
@@ -1101,7 +1125,7 @@
        st = {
          organisations: data.organisations||[],
          contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-         interactions: data.interactions||[],
+         interactions: normalizeInteractions(data.interactions || data.Interactions || []),
          _meta: data._meta||null
        };
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
@@ -1117,7 +1141,7 @@
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
-       setLastUpdated(new Date()); /* clearer timestamp when remote fails */
+       setLastUpdated(new Date());
        showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
