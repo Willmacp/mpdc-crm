@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r18 -->
+<!-- Build r19 -->
 <style>
   :root{
     --accent:#5f809b;
@@ -37,7 +37,7 @@
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   h1{font-size:22px;margin:0}
 
-  .icon-db{width:36px;height:36px;display:block}
+  .icon-cog{width:36px;height:36px;display:block}
   .logo-wrap{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 8px rgba(11,41,64,.12)}
 
   .under-title{margin-top:10px}
@@ -99,7 +99,11 @@
   .subhint{font-size:12px;color:#3b5a73}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
+  /* Tables + scrolling */
   .table-wrap{overflow:auto;max-height:420px}
+  .scroll-top{height:14px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);background:#fff}
+  .scroll-spacer{height:1px;}
+
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
   thead th{position:sticky;top:0;background: linear-gradient(180deg, #eaf3fe, #dcebfb);z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650}
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -107,7 +111,7 @@
   .muted{color:#5a6b7a}
 
   .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
-  .w-email{max-width:240px}.w-phone{max-width:140px}.w-mpdc{max-width:200px}.w-date{max-width:140px}
+  .w-email{max-width:240px}.w-phone{max-width:140px}.w-date{max-width:140px}
   .w-subj{max-width:260px}.w-notes{max-width:320px}
 
   #tb-orgs tr[data-org],
@@ -138,14 +142,11 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <div class="logo-wrap">
-          <svg class="icon-db" viewBox="0 0 48 48" role="img" aria-label="Data">
-            <defs><linearGradient id="dbGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#5f809b"/><stop offset="1" stop-color="#8fb0c7"/></linearGradient></defs>
-            <ellipse fill="url(#dbGrad)" cx="24" cy="11" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
-            <rect fill="url(#dbGrad)" x="10" y="11" width="28" height="22" rx="5" stroke="#2b4c62" stroke-opacity=".25"></rect>
-            <ellipse fill="url(#dbGrad)" cx="24" cy="19" rx="14" ry="6" style="opacity:.65" stroke="#2b4c62" stroke-opacity=".25"></ellipse>
-            <ellipse fill="url(#dbGrad)" cx="24" cy="27" rx="14" ry="6" style="opacity:.5" stroke="#2b4c62" stroke-opacity:.25"></ellipse>
-            <ellipse fill="url(#dbGrad)" cx="24" cy="33" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
+        <div class="logo-wrap" aria-hidden="true">
+          <!-- COG ICON -->
+          <svg class="icon-cog" viewBox="0 0 24 24" fill="none" role="img" aria-label="Settings">
+            <path d="M10.325 2.317a1.5 1.5 0 0 1 3.35 0l.122.86a7.51 7.51 0 0 1 1.92.793l.77-.44a1.5 1.5 0 1 1 1.5 2.598l-.75.433c.29.6.51 1.24.65 1.91l.868.124a1.5 1.5 0 1 1 0 2.98l-.868.124a7.53 7.53 0 0 1-.65 1.91l.75.433a1.5 1.5 0 0 1-1.5 2.598l-.77-.44a7.51 7.51 0 0 1-1.92.793l-.122.86a1.5 1.5 0 1 1-3.35 0l-.122-.86a7.51 7.51 0 0 1-1.92-.793l-.77.44a1.5 1.5 0 0 1-1.5-2.598l.75-.433a7.53 7.53 0 0 1-.65-1.91l-.868-.124a1.5 1.5 0 1 1 0-2.98l.868-.124c.14-.67.36-1.31.65-1.91l-.75-.433a1.5 1.5 0 1 1 1.5-2.598l.77.44c.59-.34 1.23-.61 1.92-.793l.122-.86Z" fill="url(#g1)"/>
+            <defs><linearGradient id="g1" x1="0" x2="24" y1="0" y2="24"><stop offset="0" stop-color="#5f809b"/><stop offset="1" stop-color="#8fb0c7"/></linearGradient></defs>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -258,6 +259,8 @@
         </div>
       </div>
       <div class="card-body">
+        <!-- Top scrollbar -->
+        <div class="scroll-top"><div class="scroll-spacer" id="sp-contacts"></div></div>
         <div class="table-wrap" id="tw-contacts">
           <table>
             <thead>
@@ -268,7 +271,6 @@
                 <th class="w-role">Role</th>
                 <th class="w-email">Email</th>
                 <th class="w-phone">Phone</th>
-                <th class="w-mpdc">MPDC contact</th>
                 <th class="w-date">Last contact</th>
                 <th class="w-subj">Last subject</th>
                 <th class="w-notes">Notes</th>
@@ -292,6 +294,8 @@
         </div>
       </div>
       <div class="card-body">
+        <!-- Top scrollbar -->
+        <div class="scroll-top"><div class="scroll-spacer" id="sp-orgs"></div></div>
         <div class="table-wrap" id="tw-orgs">
           <table>
             <thead>
@@ -320,6 +324,8 @@
         </div>
       </div>
       <div class="card-body">
+        <!-- Top scrollbar -->
+        <div class="scroll-top"><div class="scroll-spacer" id="sp-ints"></div></div>
         <div class="table-wrap" id="tw-ints">
           <table>
             <thead>
@@ -328,7 +334,6 @@
                 <th class="w-name">Contact</th>
                 <th class="w-subj">Subject</th>
                 <th>Summary</th>
-                <th>Type</th>
               </tr>
             </thead>
             <tbody id="tb-ints"></tbody>
@@ -399,6 +404,17 @@
   const contactBody = document.getElementById('tb-contacts');
   const orgBody = document.getElementById('tb-orgs');
   const intBody = document.getElementById('tb-ints');
+
+  // scroll wrappers
+  const twContacts = document.getElementById('tw-contacts');
+  const twOrgs = document.getElementById('tw-orgs');
+  const twInts = document.getElementById('tw-ints');
+  const spContacts = document.getElementById('sp-contacts');
+  const spOrgs = document.getElementById('sp-orgs');
+  const spInts = document.getElementById('sp-ints');
+  const topScrollContacts = spContacts.parentElement;
+  const topScrollOrgs = spOrgs.parentElement;
+  const topScrollInts = spInts.parentElement;
 
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
@@ -480,6 +496,16 @@
     return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
+  // Org normaliser (merge obvious variants)
+  function normalizeOrgKey(s){
+    return clean(s)
+      .toLowerCase()
+      .replace(/&/g,'and')
+      .replace(/[.,]/g,'')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
   // Groups normalize
   function normalizeGroups(val){
     if(val == null) return [];
@@ -536,17 +562,33 @@
   }
 
   function deriveOrgs(contacts){
-    const m = new Map();
+    const m = new Map(); // key -> aggregate
+    const display = new Map(); // key -> preferred display name
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
       if(!orgRaw) continue;
-      if(!m.has(orgRaw)) m.set(orgRaw,{ organisation: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
-      const o = m.get(orgRaw);
+      const key = normalizeOrgKey(orgRaw);
+      if(!m.has(key)) m.set(key,{ key, organisation: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] , nameCounts: new Map()});
+      const o = m.get(key);
+      // count variants to choose a nice display
+      const count = o.nameCounts.get(orgRaw) || 0;
+      o.nameCounts.set(orgRaw, count+1);
+
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
       if(c.last_contact_at){
         if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
+    }
+    // choose best display variant (most frequent, then longest)
+    for(const o of m.values()){
+      let best = null, bestCount = -1;
+      for(const [variant, cnt] of o.nameCounts.entries()){
+        if(cnt > bestCount || (cnt===bestCount && variant.length > (best?.length||0))){
+          best = variant; bestCount = cnt;
+        }
+      }
+      display.set(o.key, best || o.organisation);
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
@@ -554,7 +596,7 @@
       let preview = previewArr.join(', ');
       if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
-        organisation: o.organisation,
+        organisation: display.get(o.key) || o.organisation,
         contacts: o.contact_names.join(', '),
         contacts_preview: preview,
         contacts_count: n,
@@ -618,7 +660,6 @@
       {key:'job_title',    label:'Role', checked:false},
       {key:'email',        label:'Email', checked:true},
       {key:'phone',        label:'Phone', checked:true},
-      {key:'mpdc_contact', label:'MPDC contact', checked:false},
       {key:'last_contact_at', label:'Last contact', checked:true},
       {key:'last_subject', label:'Last subject', checked:true},
       {key:'notes',        label:'Notes', checked:false},
@@ -632,7 +673,7 @@
   buildExportChecks();
 
   document.getElementById('btnDoExport').addEventListener('click', ()=>{
-    const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
+    const scope = document.querySelector('input[name="exportScope"]:checked)?.value || 'filtered';
     const cols = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
       .filter(i=>i.checked).map(i=> i.id.replace(/^col_/,'')); 
     const list = scope==='all' ? st.contacts : filteredContacts();
@@ -702,7 +743,7 @@
       }
       if(!hasSearch) return true;
       const fields = [
-        c.display_name, c.organisation, c.job_title, c.email, c.phone, c.mpdc_contact,
+        c.display_name, c.organisation, c.job_title, c.email, c.phone,
         (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
       ];
       return fields.some(v => norm(v).includes(q));
@@ -718,6 +759,11 @@
     countContactsEl.textContent = contactsView.length ? `(${contactsView.length})` : '';
     countOrgsEl.textContent = orgsView.length ? `(${orgsView.length})` : '';
     countIntsEl.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
+
+    // sync top scrollbars widths
+    syncTopScrollbar(twContacts, spContacts);
+    syncTopScrollbar(twOrgs, spOrgs);
+    syncTopScrollbar(twInts, spInts);
   }
 
   // CONTACTS expanders
@@ -743,7 +789,7 @@
   function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
 
   function renderContacts(list){
-    const rows = applyContactSort(list).slice(0, limits.contacts);
+    const rows = [...list].slice(0, limits.contacts);
     contactBody.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
@@ -757,7 +803,6 @@
           <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
           <td class="w-email">${emailHtml}</td>
           <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-mpdc" title="${esc(c.mpdc_contact)}">${esc(c.mpdc_contact)}</td>
           <td class="w-date">${fmtDate(c.last_contact_at)}</td>
           <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
           <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
@@ -771,7 +816,7 @@
     const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
     const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
     return `
-      <tr class="contact-expander"><td colspan="10">
+      <tr class="contact-expander"><td colspan="9">
         <div class="contact-card">
           <div class="contact-actions">
             <h3>${esc(c.display_name || '(No name)')}</h3>
@@ -782,7 +827,6 @@
             ${c.job_title ? `<span class="sep">•</span><span class="lab">Role</span><span>${esc(c.job_title)}</span>`:''}
             ${clean(c.email) ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:''}
             ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
-            ${c.mpdc_contact ? `<span class="sep">•</span><span class="lab">MPDC</span><span>${esc(c.mpdc_contact)}</span>`:''}
           </div>
           <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
           <div class="compact-line">
@@ -830,7 +874,8 @@
     `).join('');
   }
   function buildOrgExpanderRow(orgName){
-    const all = filteredContacts().filter(c=> clean(c.organisation).toLowerCase() === clean(orgName).toLowerCase());
+    const normOrg = normalizeOrgKey(orgName);
+    const all = filteredContacts().filter(c=> normalizeOrgKey(c.organisation) === normOrg);
     const emails = all.map(c=> clean(c.email)).filter(Boolean);
     const mailAll = emails.length ? `mailto:${encodeURIComponent(emails.join(','))}` : null;
     const people = all.map(c=>{
@@ -903,7 +948,6 @@
           <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
           <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
           <td title="${esc(i.summary)}">${esc(i.summary)}</td>
-          <td>${esc(i.type)}</td>
         </tr>`;
       const exp = expandedInts.has(key) ? buildIntExpanderRow(i) : '';
       return base + exp;
@@ -913,7 +957,7 @@
     const c = findContactByName(i.contact);
     const emailBtn = c && c.email ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email ${esc(c.display_name||'contact')}</a>` : '';
     return `
-      <tr class="int-expander"><td colspan="5">
+      <tr class="int-expander"><td colspan="4">
         <div class="int-card">
           <div class="int-actions">
             <h3>${esc(i.subject || 'Interaction')}</h3>
@@ -921,7 +965,6 @@
           </div>
           <div class="compact-line">
             <span class="lab">Date</span><span>${fmtDate(i.date) || '—'}</span>
-            ${i.type ? `<span class="sep">•</span><span class="lab">Type</span><span>${esc(i.type)}</span>`:''}
             ${i.contact ? `<span class="sep">•</span><span class="lab">Contact</span><span>${esc(i.contact)}</span>`:''}
           </div>
           ${i.summary ? `<div class="compact-line"><span class="lab">Summary</span><span>${esc(i.summary)}</span></div>`:''}
@@ -971,7 +1014,6 @@
             role: find('Role','Job Title','Position','job_title'),
             email: find('Email','E-mail'),
             phone: find('Phone','Phone number','Mobile'),
-            mpdc: find('MPDC contact','MPDC Contact','MPDC_contact','mpdc_contact'),
             lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact'),
             lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject'),
             notes: find('Notes','Comment','Comments','notes')
@@ -987,7 +1029,6 @@
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              mpdc_contact: clean(r[H.mpdc]) || 'communications@macpoint.com',
               last_contact_at: toISOorBlank(clean(r[H.lastDate])),
               last_subject: clean(r[H.lastSubj]),
               notes: clean(r[H.notes])
@@ -1013,7 +1054,6 @@
     setLastUpdated(new Date());
     clearError();
     rebuildGroupIndex(); 
-    // Derive interactions from contacts if none in CSV
     if(!st.interactions || st.interactions.length===0){
       st.interactions = deriveInteractionsFromContacts(st.contacts);
     }
@@ -1036,7 +1076,6 @@
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
         st.organisations = deriveOrgs(st.contacts);
       }
-      // Fallback: derive interactions from contacts if none present
       if(!st.interactions || st.interactions.length===0){
         st.interactions = deriveInteractionsFromContacts(st.contacts);
       }
@@ -1065,7 +1104,7 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // NEW: derive an interactions list from contacts' latest fields (fallback only)
+  // derive interactions from contacts' latest fields (fallback only)
   function deriveInteractionsFromContacts(contacts){
     return (contacts||[])
       .filter(c => c && c.last_contact_at && c.last_subject)
@@ -1074,10 +1113,23 @@
         date: c.last_contact_at,
         contact: c.display_name || c.email || '(Unknown)',
         subject: c.last_subject,
-        summary: '',
-        type: 'email'
+        summary: ''
       }));
   }
+
+  // Top scrollbar sync
+  function syncTopScrollbar(tw, spacerEl){
+    const table = tw.querySelector('table');
+    if(!table) return;
+    spacerEl.style.width = table.scrollWidth + 'px';
+    const top = spacerEl.parentElement;
+    // avoid multiple bindings
+    if(top._bound) return;
+    top._bound = true;
+    top.addEventListener('scroll', ()=> { tw.scrollLeft = top.scrollLeft; }, {passive:true});
+    tw.addEventListener('scroll', ()=> { top.scrollLeft = tw.scrollLeft; }, {passive:true});
+  }
+  window.addEventListener('resize', ()=> render(), {passive:true});
 
   async function init(forceNoCache=false){
     try{
@@ -1095,7 +1147,6 @@
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
          st.organisations = deriveOrgs(st.contacts);
        }
-       // IMPORTANT: no dummy sample data; fallback is a derived list from contacts if truly empty
        if(!st.interactions || st.interactions.length===0){
          st.interactions = deriveInteractionsFromContacts(st.contacts);
        }
