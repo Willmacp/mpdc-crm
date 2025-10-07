@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r19 -->
+<!-- Build r18 -->
 <style>
   :root{
     --accent:#5f809b;
@@ -106,9 +106,6 @@
   tr:nth-child(even) td{background:#f9fbff}
   .muted{color:#5a6b7a}
 
-  /* Header shadow when scrolled */
-  .table-wrap.scrolled thead th{ box-shadow: 0 2px 6px rgba(11,41,64,.08); }
-
   .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
   .w-email{max-width:240px}.w-phone{max-width:140px}.w-mpdc{max-width:200px}.w-date{max-width:140px}
   .w-subj{max-width:260px}.w-notes{max-width:320px}
@@ -147,7 +144,7 @@
             <ellipse fill="url(#dbGrad)" cx="24" cy="11" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
             <rect fill="url(#dbGrad)" x="10" y="11" width="28" height="22" rx="5" stroke="#2b4c62" stroke-opacity=".25"></rect>
             <ellipse fill="url(#dbGrad)" cx="24" cy="19" rx="14" ry="6" style="opacity:.65" stroke="#2b4c62" stroke-opacity=".25"></ellipse>
-            <ellipse fill="url(#dbGrad)" cx="24" cy="27" rx="14" ry="6" style="opacity:.5" stroke="#2b4c62" stroke-opacity=".25"></ellipse>
+            <ellipse fill="url(#dbGrad)" cx="24" cy="27" rx="14" ry="6" style="opacity:.5" stroke="#2b4c62" stroke-opacity:.25"></ellipse>
             <ellipse fill="url(#dbGrad)" cx="24" cy="33" rx="14" ry="6" stroke="#ffffffaa" stroke-width=".5"></ellipse>
           </svg>
         </div>
@@ -165,7 +162,7 @@
                 <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
               </div>
               <div class="panel" id="groupsPanel">
-                <button class="btn" id="btnGroups" title="Filter by one or more groups" aria-haspopup="true" aria-expanded="false">Groups ▾</button>
+                <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
                 <div class="pop" id="groupsMenu" style="min-width:520px">
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
                   <div class="groups-grid" id="groupsGrid"></div>
@@ -243,6 +240,7 @@
       <div class="card-head">
         <div>
           <h2>Contacts <span class="count" id="countContacts"></span></h2>
+          <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
         </div>
         <div class="right">
           <button class="btn" id="expContacts">Expand list</button>
@@ -287,6 +285,7 @@
       <div class="card-head">
         <div>
           <h2>Organisations <span class="count" id="countOrgs"></span></h2>
+          <div class="subhint">Click a row to see people and email-all</div>
         </div>
         <div class="right">
           <button class="btn" id="expOrgs">Expand list</button>
@@ -413,41 +412,20 @@
 
   // OPEN/CLOSE MENUS
   const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
-
-  function closeAllPops(){
-    const expPop = exportPanel.querySelector('.pop');
-    if(expPop) expPop.style.display='none';
-    groupsMenu.style.display='none';
-    adminMenu.style.display='none';
-    helpMenu.style.display='none';
-    sortMenuContacts.style.display='none';
-    btnGroups.setAttribute('aria-expanded','false');
-  }
-
-  btnGroups.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const open = groupsMenu.style.display==='block';
-    closeAllPops();
-    groupsMenu.style.display = open ? 'none' : 'block';
-    btnGroups.setAttribute('aria-expanded', open ? 'false' : 'true');
-  });
-  btnCloseGroups.addEventListener('click', ()=> { groupsMenu.style.display='none'; btnGroups.setAttribute('aria-expanded','false'); });
-  btnAdmin.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(adminMenu); });
-  btnHelp.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(helpMenu); });
-  btnExportCsv.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(exportPanel.querySelector('.pop')); });
+  btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
+  btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
+  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
+  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
   document.addEventListener('click', (e)=>{
     const inside = p => p && p.contains(e.target);
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
-    if(!inside(groupsPanel)) { groupsMenu.style.display='none'; btnGroups.setAttribute('aria-expanded','false'); }
+    if(!inside(groupsPanel)) groupsMenu.style.display='none';
     if(!inside(adminPanel))  adminMenu.style.display='none';
     if(!inside(helpPanel))   helpMenu.style.display='none';
     if(!inside(sortPanelContacts)) sortMenuContacts.style.display='none';
-  });
-
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape') closeAllPops();
   });
 
   // SORT menu
@@ -572,9 +550,9 @@
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, ORG_CONTACTS_PREVIEW);
+      const previewArr = o.contact_names.slice(0, 3);
       let preview = previewArr.join(', ');
-      if(n > ORG_CONTACTS_PREVIEW){ preview += ` …(+${n - ORG_CONTACTS_PREVIEW})`; }
+      if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
         organisation: o.organisation,
         contacts: o.contact_names.join(', '),
@@ -979,7 +957,6 @@
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
-
   function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
@@ -1004,7 +981,7 @@
             const groups = normalizeGroups(r[H.group]);
             return {
               id: id++,
-              display_name: clean(r[H.name]),
+              display_name: clean(r[H[name]] ?? r[H.name]),
               email: clean(r[H.email]),
               organisation: clean(r[H.organisation]),
               group: groups,
@@ -1023,33 +1000,6 @@
     });
   }
 
-  // --- New: Interaction normalizer (maps SharePoint/CSV keys) ---
-  function normalizeInteractions(arr){
-    if(!Array.isArray(arr)) return [];
-    const out = [];
-    for(const raw of arr){
-      const dateRaw = raw?.date ?? raw?.Date ?? raw?.dateTime ?? raw?.InteractionDate ?? raw?.['Interaction Date'] ?? raw?.['Latest Interaction Date'] ?? raw?.LatestInteractionDate ?? raw?.['Date'];
-      const contact = raw?.contact ?? raw?.Contact ?? raw?.Name ?? raw?.ContactName ?? raw?.['Contact'];
-      const subject = raw?.subject ?? raw?.Subject ?? raw?.Title ?? raw?.['Latest Interaction Subject'] ?? raw?.LatestInteractionSubject ?? raw?.['Subject'];
-      const summary = raw?.summary ?? raw?.Summary ?? raw?.Notes ?? '';
-      const type    = raw?.type ?? raw?.Type ?? raw?.Mode ?? '';
-      const id      = raw?.id ?? raw?.ID ?? raw?.Id ?? `${dateRaw||''}__${contact||''}__${subject||''}`;
-
-      const dateISO = toISOorBlank(clean(dateRaw));
-      if(!dateISO) continue; // skip rows without a valid date
-      out.push({
-        id: String(id||'').trim() || `${dateISO}__${clean(contact)}`,
-        date: dateISO,
-        contact: clean(contact),
-        subject: clean(subject),
-        summary: clean(summary),
-        type: clean(type)
-      });
-    }
-    return out;
-  }
-  // -------------------------------------------------------------
-
   document.getElementById('amLoadCsv').addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   document.getElementById('amLoadJson').addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   document.getElementById('amExportJson').addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
@@ -1062,7 +1012,12 @@
     chip.className='chip'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
     clearError();
-    rebuildGroupIndex(); render();
+    rebuildGroupIndex(); 
+    // Derive interactions from contacts if none in CSV
+    if(!st.interactions || st.interactions.length===0){
+      st.interactions = deriveInteractionsFromContacts(st.contacts);
+    }
+    render();
     closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     e.target.value='';
   });
@@ -1075,11 +1030,15 @@
       st = {
         organisations: data.organisations||[],
         contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-        interactions: normalizeInteractions(data.interactions || data.Interactions || []),
+        interactions: data.interactions||[],
         _meta: data._meta||null
       };
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
         st.organisations = deriveOrgs(st.contacts);
+      }
+      // Fallback: derive interactions from contacts if none present
+      if(!st.interactions || st.interactions.length===0){
+        st.interactions = deriveInteractionsFromContacts(st.contacts);
       }
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
@@ -1106,14 +1065,19 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // Add subtle header shadow on scroll
-  ['tw-contacts','tw-orgs','tw-ints'].forEach(id=>{
-    const el = document.getElementById(id);
-    el.addEventListener('scroll', ()=>{
-      if(el.scrollTop > 0) el.classList.add('scrolled');
-      else el.classList.remove('scrolled');
-    });
-  });
+  // NEW: derive an interactions list from contacts' latest fields (fallback only)
+  function deriveInteractionsFromContacts(contacts){
+    return (contacts||[])
+      .filter(c => c && c.last_contact_at && c.last_subject)
+      .map(c => ({
+        id: `c_${c.id ?? c.email ?? Math.random().toString(36).slice(2)}`,
+        date: c.last_contact_at,
+        contact: c.display_name || c.email || '(Unknown)',
+        subject: c.last_subject,
+        summary: '',
+        type: 'email'
+      }));
+  }
 
   async function init(forceNoCache=false){
     try{
@@ -1125,11 +1089,15 @@
        st = {
          organisations: data.organisations||[],
          contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-         interactions: normalizeInteractions(data.interactions || data.Interactions || []),
+         interactions: data.interactions||[],
          _meta: data._meta||null
        };
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
          st.organisations = deriveOrgs(st.contacts);
+       }
+       // IMPORTANT: no dummy sample data; fallback is a derived list from contacts if truly empty
+       if(!st.interactions || st.interactions.length===0){
+         st.interactions = deriveInteractionsFromContacts(st.contacts);
        }
        chip.className='chip';
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
@@ -1141,7 +1109,7 @@
     }catch(err){
        chip.className='chip';
        chip.textContent='Data: local only (no remote)';
-       setLastUpdated(new Date());
+       setLastUpdated(null);
        showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
