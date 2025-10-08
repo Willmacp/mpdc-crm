@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r24 — AU-first parse + "8 Oct 25" display + prior fixes -->
+<!-- Build r25 — strict AU-first parsing + "8 Oct 25" display, no native Date.parse -->
 <style>
   :root{
     --accent:#5f809b;
@@ -499,22 +499,20 @@
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
 
-  // --- AU-first date parsing (dd/mm/yyyy) then ISO, then native
+  // --- STRICT AU-first date parsing (dd/mm/yyyy or dd-mm-yyyy) then ISO; native parse LAST.
   function parseDateFlexible(v){
-    if(!v) return null;
-    if(typeof v !== 'string'){
-      const d = new Date(v);
-      return isNaN(d) ? null : d;
-    }
-    const s = v.trim();
+    if(!v && v!==0) return null;
 
-    // ISO / RFC-like first (YYYY-MM-DD or contains 'T')
-    if (/^\d{4}-\d{2}-\d{2}/.test(s) || /T\d{2}:\d{2}/.test(s)) {
-      const di = new Date(s);
-      if(!isNaN(di)) return di;
+    // If already a Date
+    if(Object.prototype.toString.call(v) === '[object Date]'){
+      return isNaN(v.getTime()) ? null : v;
     }
 
-    // AU dd/mm/yyyy (or dd-mm-yyyy), optional time
+    // Coerce to string
+    const s = String(v).trim();
+    if(!s) return null;
+
+    // 1) AU dd/mm/yyyy (or dd-mm-yyyy), optional time — ALWAYS day-first
     const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
     if (m) {
       let [, dd, mm, yyyy, HH='0', MM='0', SS='0'] = m;
@@ -523,7 +521,13 @@
       if (!isNaN(d)) return d;
     }
 
-    // Last resort: native parse
+    // 2) ISO / RFC-like first (YYYY-MM-DD or contains 'T')
+    if (/^\d{4}-\d{2}-\d{2}/.test(s) || /T\d{2}:\d{2}/.test(s)) {
+      const di = new Date(s);
+      if(!isNaN(di)) return di;
+    }
+
+    // 3) Last resort: native parse (could be US), used ONLY if nothing matched
     const dn = new Date(s);
     return isNaN(dn) ? null : dn;
   }
@@ -547,13 +551,15 @@
     }
   }
 
+  // Normalisers
   const clean = v => (v??'').toString().trim();
-  const toISOorBlank = v => { if(!v) return null; const d=parseDateFlexible(v); return d?d.toISOString():null; };
+  const toISOorBlank = v => { if(v==null || v==='') return null; const d=parseDateFlexible(v); return d?d.toISOString():null; };
   const norm = v => clean(v).toLowerCase();
 
   function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
   function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
   function setLastUpdated(dt){
+    // Leave this as-is per your note (works fine already)
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = parseDateFlexible(dt) || new Date();
     try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
@@ -988,12 +994,12 @@
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
   }
+  function ts(v){
+    const d = parseDateFlexible(v);
+    return d ? d.getTime() : 0;
+  }
   function renderInts(list){
-    const sorted = [...list].sort((a,b)=>{
-      const da = a._iso ? Date.parse(a._iso) : Date.parse(a.date) || 0;
-      const db = b._iso ? Date.parse(b._iso) : Date.parse(b.date) || 0;
-      return db - da;
-    });
+    const sorted = [...list].sort((a,b)=> ts(b._iso||b.date) - ts(a._iso||a.date));
     const rows = sorted.slice(0, limits.ints);
     intBody.innerHTML = rows.map((i,idx)=>{
       const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
@@ -1083,7 +1089,7 @@
           _iso: toISOorBlank(iso) || null
         };
       })
-      .sort((a,b)=> (Date.parse(b._iso||b.date)||0) - (Date.parse(a._iso||a.date)||0));
+      .sort((a,b)=> ts(b._iso||b.date) - ts(a._iso||a.date));
   }
 
   // Robust interaction field normaliser (for JSON loads)
