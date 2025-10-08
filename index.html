@@ -1,11 +1,10 @@
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r20 — CSV interactions + UI tidy -->
+<!-- Build r21 — r20 base + AU dates + Tips/Export next to Groups -->
 <style>
   :root{
     --accent:#5f809b;
@@ -162,6 +161,8 @@
                 <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
                 <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
               </div>
+
+              <!-- Groups -->
               <div class="panel" id="groupsPanel">
                 <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
                 <div class="pop" id="groupsMenu" style="min-width:520px">
@@ -173,7 +174,40 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Export (moved next to Groups) -->
+              <div class="panel" id="exportPanel">
+                <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
+                <div class="pop">
+                  <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
+                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+                  <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
+                  <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
+                  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                    <button class="btn" id="btnCancelExport">Cancel</button>
+                    <button class="btn primary" id="btnDoExport">Export</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tips (moved next to Groups) -->
+              <div class="panel" id="helpPanel">
+                <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
+                <div class="pop" id="helpMenu" style="max-width:520px">
+                  <ul class="tips" style="padding-left:18px;margin:0">
+                    <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
+                    <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
+                    <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
+                    <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
+                    <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
+                    <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
+                    <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+
             <div class="toolbar-row" style="gap:12px">
               <span id="chip" class="chip">Data: loading…</span>
               <span class="stamp" id="lastStamp">Last updated: —</span>
@@ -184,42 +218,12 @@
           <div class="toolbar-row">
             <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
 
-            <div class="panel" id="exportPanel">
-              <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
-              <div class="pop">
-                <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
-                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-                <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
-                <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
-                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                  <button class="btn" id="btnCancelExport">Cancel</button>
-                  <button class="btn primary" id="btnDoExport">Export</button>
-                </div>
-              </div>
-            </div>
-
             <div class="panel" id="adminPanel">
               <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
               <div class="pop" id="adminMenu" style="min-width:220px">
                 <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
                 <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
                 <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
-              </div>
-            </div>
-
-            <div class="panel" id="helpPanel">
-              <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
-              <div class="pop" id="helpMenu" style="max-width:520px">
-                <ul class="tips" style="padding-left:18px;margin:0">
-                  <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-                  <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
-                  <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
-                  <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
-                  <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
-                  <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
-                  <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
-                </ul>
               </div>
             </div>
 
@@ -379,6 +383,10 @@
   const linkClearGroups = document.getElementById('linkClearGroups');
   const btnCloseGroups = document.getElementById('btnCloseGroups');
 
+  const helpPanel = document.getElementById('helpPanel');
+  const btnHelp = document.getElementById('btnHelp');
+  const helpMenu = document.getElementById('helpMenu');
+
   const adminPanel = document.getElementById('adminPanel');
   const btnAdmin = document.getElementById('btnAdmin');
   const adminMenu = document.getElementById('adminMenu');
@@ -433,7 +441,7 @@
   btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
   btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
-  btnHelp.addEventListener('click', ()=> toggle(document.getElementById('helpMenu')));
+  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
   btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
@@ -442,6 +450,7 @@
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!inside(groupsPanel)) groupsMenu.style.display='none';
     if(!inside(adminPanel))  adminMenu.style.display='none';
+    if(!inside(helpPanel))   helpMenu.style.display='none';
     if(!inside(sortPanelContacts)) sortMenuContacts.style.display='none';
   });
 
@@ -467,7 +476,18 @@
   // Helpers
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
-  const fmtDate = s => { if(!s) return ''; const d = new Date(s); return isNaN(d) ? (''+s) : d.toLocaleDateString(); };
+
+  // AU dd/mm/yyyy format everywhere
+  const fmtDate = s => {
+    if(!s) return '';
+    const d = new Date(s);
+    if(isNaN(d)) return (''+s);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const clean = v => (v??'').toString().trim();
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
@@ -477,8 +497,8 @@
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
-    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d); }
-    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
+    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
+    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString('en-AU'); }
   }
 
   // Soft pill colours
@@ -552,7 +572,7 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Case-insensitive org merge
+  // Case-insensitive org merge (as in r20)
   function deriveOrgs(contacts){
     const m = new Map(); // key = lowercased organisation
     for(const c of contacts){
