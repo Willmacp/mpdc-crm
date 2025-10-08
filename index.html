@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r19.4 — interactions normalisation -->
+<!-- Build r20 — CSV interactions + UI tidy -->
 <style>
   :root{
     --accent:#5f809b;
@@ -145,7 +145,7 @@
         <div class="logo-wrap" aria-hidden="true">
           <!-- Cog icon -->
           <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
-            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0-.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -356,7 +356,6 @@
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
-  const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
   const lastStamp = document.getElementById('lastStamp');
@@ -365,10 +364,6 @@
   const searchBox = document.getElementById('searchBox');
   const btnClearSearch = document.getElementById('btnClearSearch');
   const btnReload = document.getElementById('btnReload');
-
-  const helpPanel = document.getElementById('helpPanel');
-  const btnHelp = document.getElementById('btnHelp');
-  const helpMenu = document.getElementById('helpMenu');
 
   const exportPanel = document.getElementById('exportPanel');
   const btnExportCsv = document.getElementById('btnExportCsv');
@@ -420,7 +415,7 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
-  // Setup top scrollbars sync
+  // Top scrollbar sync
   function syncTopScroller(wrapper, spacer){
     function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
     updateSpacer();
@@ -437,7 +432,7 @@
   btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
   btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
-  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  btnHelp.addEventListener('click', ()=> toggle(document.getElementById('helpMenu')));
   btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
@@ -446,7 +441,6 @@
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!inside(groupsPanel)) groupsMenu.style.display='none';
     if(!inside(adminPanel))  adminMenu.style.display='none';
-    if(!inside(helpPanel))   helpMenu.style.display='none';
     if(!inside(sortPanelContacts)) sortMenuContacts.style.display='none';
   });
 
@@ -557,7 +551,7 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Case-insensitive org merge with pretty display
+  // Case-insensitive org merge
   function deriveOrgs(contacts){
     const m = new Map(); // key = lowercased organisation
     for(const c of contacts){
@@ -571,8 +565,7 @@
         if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
-      // keep the longest-cased variant as display (heuristic)
-      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw;
+      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw; // prettier display
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
@@ -730,7 +723,7 @@
         c.display_name, c.organisation, c.job_title, c.email, c.phone,
         (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
       ];
-        return fields.some(v => norm(v).includes(q));
+      return fields.some(v => norm(v).includes(q));
     });
   }
 
@@ -768,7 +761,7 @@
   function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
 
   function renderContacts(list){
-    const rows = applyContactSort(list).slice(0, limits.contacts);
+    const rows = [...list].slice(0, limits.contacts);
     contactBody.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
@@ -928,7 +921,7 @@
           <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
           <td class="w-org" title="${esc(org)}">${esc(org)}</td>
           <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
-          <td title="${esc(i.summary)}">${esc(i.summary)}</td>
+          <td title="${esc(i.summary)}">${esc(i.summary || '')}</td>
         </tr>`;
       const exp = expandedInts.has(key) ? buildIntExpanderRow({...i, organisation: org}) : '';
       return base + exp;
@@ -976,19 +969,55 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV/JSON loaders & export
+  // ---------- CSV/JSON loaders & export
+
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
-  function csvToState(csvText){
+
+  // Build interactions from contacts (fallback)
+  function contactsToInteractions(contacts){
+    return (contacts||[])
+      .filter(c => c.last_contact_at)
+      .map((c, i) => ({
+        id: c.id ?? ('c_'+i),
+        date: c.last_contact_at,
+        contact: c.display_name || c.email || '(Unknown)',
+        subject: c.last_subject || '',
+        organisation: c.organisation || '',
+        summary: ''
+      }))
+      .sort((a,b)=> new Date(b.date)-new Date(a.date));
+  }
+
+  // Robust interaction field normaliser (for JSON loads)
+  function normalizeInteractions(arr){
+    if(!Array.isArray(arr)) return [];
+    return arr.map((it, idx)=>{
+      const get = (...keys)=> { for(const k of keys){ if(it && it[k]!=null && String(it[k]).trim()!=='') return it[k]; } return ''; };
+      const rawDate = get('date','Date','interactionDate','InteractionDate','created_at','CreatedAt');
+      const iso = toISOorBlank(rawDate);
+      const contact = String(get('contact','Contact','name','Name')).trim();
+      const subject = String(get('subject','Subject','title','Title')).trim();
+      const summary = String(get('summary','Summary','notes','Notes','body','Body')).trim();
+      const organisation = String(get('organisation','Organization','Organisation')).trim();
+      const id = String(get('id','Id','ID') || `${rawDate||''}__${contact||idx}`);
+      return { id, date: iso || String(rawDate||''), contact, subject, summary, organisation };
+    }).filter(x => x.contact || x.subject || x.date);
+  }
+
+  // CSV → state (contacts + interactions)
+  async function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
         header:true, skipEmptyLines:true, transformHeader: h=>h.trim(),
         complete: res=>{
           const headers = res.meta.fields||[];
           const find = finder(headers);
+
+          // Contact columns
           const H = {
             name: find('Name','Title','Full Name','display_name'),
             organisation: find('Organisation','Organization'),
@@ -996,28 +1025,59 @@
             role: find('Role','Job Title','Position','job_title'),
             email: find('Email','E-mail'),
             phone: find('Phone','Phone number','Mobile'),
-            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact'),
-            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject'),
+            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact','Last Contact'),
+            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject','Last Subject'),
             notes: find('Notes','Comment','Comments','notes')
           };
+
+          // Interaction columns (if present in the same CSV)
+          const HI = {
+            date: find('Interaction Date','Date','InteractionDate'),
+            subject: find('Interaction Subject','Subject','InteractionSubject'),
+            summary: find('Summary','Notes','Interaction Notes','InteractionSummary'),
+            contact: find('Contact','Contact Name','Name','Full Name','Title'),
+            organisation: find('Organisation','Organization'),
+            type: find('Type','Interaction Type')
+          };
+
+          // Contacts
           let id = 1;
           const contacts = res.data.map(r=>{
             const groups = normalizeGroups(r[H.group]);
             return {
               id: id++,
-              display_name: clean(r[H[name]] ?? r[H.name]),
+              display_name: clean(r[H.name] ?? r[H.name]),
               email: clean(r[H.email]),
               organisation: clean(r[H.organisation]),
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              last_contact_at: toISOorBlank(clean(r[H.lastDate])),
+              last_contact_at: toISOorBlank(clean(r[H.lastDate])) || clean(r[H.lastDate]),
               last_subject: clean(r[H.lastSubj]),
               notes: clean(r[H.notes])
             };
           }).filter(c=> Object.values(c).some(v=> String(v||'').length));
+
+          // Interactions (explicit, if present)
+          const interactionsRaw = res.data.map((r, i)=>{
+            const d = clean(r[HI.date]);
+            const s = clean(r[HI.subject]);
+            if(!d && !s) return null;
+            return {
+              id: 'csv_'+(i+1),
+              date: toISOorBlank(d) || d,
+              contact: clean(r[HI.contact] || r[H.name] || r[H.email]) || '',
+              subject: s || '',
+              organisation: clean(r[HI.organisation] || r[H.organisation]) || '',
+              summary: clean(r[HI.summary]) || ''
+            };
+          }).filter(Boolean);
+
+          // Fallback if no explicit interactions: derive from contacts' last_* fields
+          const interactions = interactionsRaw.length ? interactionsRaw : contactsToInteractions(contacts);
+
           const organisations = deriveOrgs(contacts);
-          resolve({organisations, contacts, interactions: []});
+          resolve({organisations, contacts, interactions});
         }
       });
     });
@@ -1043,33 +1103,6 @@
     e.target.value='';
   });
 
-  // ---- NEW: robust interaction field normaliser
-  function normalizeInteractions(arr){
-    if(!Array.isArray(arr)) return [];
-    return arr.map((it, idx)=>{
-      const get = (...keys)=> {
-        for(const k of keys){
-          if(it && it[k]!=null && String(it[k]).trim()!=='') return it[k];
-        }
-        return '';
-      };
-      const rawDate = get('date','Date','interactionDate','InteractionDate','created_at','CreatedAt');
-      // Keep original if parse fails; rendering will show raw text
-      const normDate = ( ()=> {
-        const d = new Date(rawDate);
-        return isNaN(d) ? String(rawDate||'') : d.toISOString();
-      })();
-
-      const contact = String(get('contact','Contact','name','Name')).trim();
-      const subject = String(get('subject','Subject','title','Title')).trim();
-      const summary = String(get('summary','Summary','notes','Notes','body','Body')).trim();
-      const organisation = String(get('organisation','Organization','Organisation')).trim();
-      const id = String(get('id','Id','ID') || `${rawDate||''}__${contact||idx}`);
-
-      return { id, date: normDate || '', contact, subject, summary, organisation };
-    }).filter(x => x.contact || x.subject || x.date);
-  }
-
   fileJson.addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
     try{
@@ -1083,6 +1116,9 @@
       };
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
         st.organisations = deriveOrgs(st.contacts);
+      }
+      if(!st.interactions || st.interactions.length===0){
+        st.interactions = contactsToInteractions(st.contacts);
       }
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
@@ -1124,6 +1160,9 @@
        };
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
          st.organisations = deriveOrgs(st.contacts);
+       }
+       if(!st.interactions || st.interactions.length===0){
+         st.interactions = contactsToInteractions(st.contacts);
        }
        chip.className='chip';
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
