@@ -1,10 +1,11 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r18 -->
+<!-- Build r20 — CSV interactions + UI tidy -->
 <style>
   :root{
     --accent:#5f809b;
@@ -37,7 +38,7 @@
   .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   h1{font-size:22px;margin:0}
 
-  .icon-db{width:36px;height:36px;display:block}
+  .icon-cog{width:36px;height:36px;display:block}
   .logo-wrap{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 8px rgba(11,41,64,.12)}
 
   .under-title{margin-top:10px}
@@ -99,7 +100,11 @@
   .subhint{font-size:12px;color:#3b5a73}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
+  /* Tables + top scrollbars */
   .table-wrap{overflow:auto;max-height:420px}
+  .scroll-top{height:14px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);background:#fff}
+  .scroll-spacer{height:1px;}
+
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
   thead th{position:sticky;top:0;background: linear-gradient(180deg, #eaf3fe, #dcebfb);z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650}
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -107,7 +112,7 @@
   .muted{color:#5a6b7a}
 
   .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
-  .w-email{max-width:240px}.w-phone{max-width:140px}.w-mpdc{max-width:200px}.w-date{max-width:140px}
+  .w-email{max-width:240px}.w-phone{max-width:140px}.w-date{max-width:140px}
   .w-subj{max-width:260px}.w-notes{max-width:320px}
 
   #tb-orgs tr[data-org],
@@ -138,11 +143,10 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <div class="logo-wrap">
-          <!-- switched to a cog icon per your earlier request -->
-          <svg class="icon-db" viewBox="0 0 48 48" role="img" aria-label="Settings">
-            <path fill="url(#dbGrad)" d="M24 14a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0-10 3 3 4-1 2 4 4 2-1 4 3 3-3 3 1 4-4 2-2 4-4-1-3 3-3-3-4 1-2-4-4-2 1-4-3-3 3-3-1-4 4-2 2-4 4 1 3-3z"/>
-            <defs><linearGradient id="dbGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#5f809b"/><stop offset="1" stop-color="#8fb0c7"/></linearGradient></defs>
+        <div class="logo-wrap" aria-hidden="true">
+          <!-- Cog icon -->
+          <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
+            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -150,7 +154,7 @@
 
       <div class="under-title">
         <div class="toolbar">
-          <!-- LEFT: team-facing controls -->
+          <!-- LEFT -->
           <div class="toolbar-left">
             <div class="toolbar-row">
               <div class="search" title="Type to filter contacts/organisations">
@@ -158,8 +162,6 @@
                 <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
                 <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
               </div>
-
-              <!-- Groups -->
               <div class="panel" id="groupsPanel">
                 <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
                 <div class="pop" id="groupsMenu" style="min-width:520px">
@@ -171,49 +173,31 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Export moved next to Groups -->
-              <div class="panel" id="exportPanel">
-                <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
-                <div class="pop">
-                  <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
-                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-                  <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
-                  <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
-                  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                    <button class="btn" id="btnCancelExport">Cancel</button>
-                    <button class="btn primary" id="btnDoExport">Export</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tips moved next to Groups -->
-              <div class="panel" id="helpPanel">
-                <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
-                <div class="pop" id="helpMenu" style="max-width:520px">
-                  <ul class="tips" style="padding-left:18px;margin:0">
-                    <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-                    <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
-                    <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
-                    <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
-                    <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
-                    <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
-                    <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
-                  </ul>
-                </div>
-              </div>
             </div>
-
             <div class="toolbar-row" style="gap:12px">
               <span id="chip" class="chip">Data: loading…</span>
               <span class="stamp" id="lastStamp">Last updated: —</span>
             </div>
           </div>
 
-          <!-- RIGHT: owner/admin controls -->
+          <!-- RIGHT -->
           <div class="toolbar-row">
             <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
+
+            <div class="panel" id="exportPanel">
+              <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
+              <div class="pop">
+                <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
+                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
+                <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
+                <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
+                <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+                  <button class="btn" id="btnCancelExport">Cancel</button>
+                  <button class="btn primary" id="btnDoExport">Export</button>
+                </div>
+              </div>
+            </div>
 
             <div class="panel" id="adminPanel">
               <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
@@ -221,6 +205,21 @@
                 <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
                 <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
                 <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
+              </div>
+            </div>
+
+            <div class="panel" id="helpPanel">
+              <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
+              <div class="pop" id="helpMenu" style="max-width:520px">
+                <ul class="tips" style="padding-left:18px;margin:0">
+                  <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
+                  <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
+                  <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
+                  <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
+                  <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
+                  <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
+                  <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
+                </ul>
               </div>
             </div>
 
@@ -259,6 +258,8 @@
           </div>
         </div>
       </div>
+      <!-- top scrollbar -->
+      <div class="scroll-top"><div class="scroll-spacer" id="sp-contacts"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-contacts">
           <table>
@@ -270,7 +271,6 @@
                 <th class="w-role">Role</th>
                 <th class="w-email">Email</th>
                 <th class="w-phone">Phone</th>
-                <th class="w-mpdc">MPDC contact</th>
                 <th class="w-date">Last contact</th>
                 <th class="w-subj">Last subject</th>
                 <th class="w-notes">Notes</th>
@@ -293,6 +293,8 @@
           <button class="btn" id="expOrgs">Expand list</button>
         </div>
       </div>
+      <!-- top scrollbar -->
+      <div class="scroll-top"><div class="scroll-spacer" id="sp-orgs"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-orgs">
           <table>
@@ -321,6 +323,8 @@
           <button class="btn" id="expInts">Expand list</button>
         </div>
       </div>
+      <!-- top scrollbar -->
+      <div class="scroll-top"><div class="scroll-spacer" id="sp-ints"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-ints">
           <table>
@@ -353,7 +357,6 @@
 <script>
 (function(){
   const DATA_URL = '/data/data.json';
-  const ORG_CONTACTS_PREVIEW = 3;
 
   const chip = document.getElementById('chip');
   const lastStamp = document.getElementById('lastStamp');
@@ -362,10 +365,6 @@
   const searchBox = document.getElementById('searchBox');
   const btnClearSearch = document.getElementById('btnClearSearch');
   const btnReload = document.getElementById('btnReload');
-
-  const helpPanel = document.getElementById('helpPanel');
-  const btnHelp = document.getElementById('btnHelp');
-  const helpMenu = document.getElementById('helpMenu');
 
   const exportPanel = document.getElementById('exportPanel');
   const btnExportCsv = document.getElementById('btnExportCsv');
@@ -387,9 +386,6 @@
   const amLoadJson = document.getElementById('amLoadJson');
   const amExportJson = document.getElementById('amExportJson');
 
-  const fileCsv = document.getElementById('fileCsv');
-  const fileJson = document.getElementById('fileJson');
-
   const sortPanelContacts = document.getElementById('sortPanelContacts');
   const btnSortContacts   = document.getElementById('btnSortContacts');
   const sortMenuContacts  = document.getElementById('sortMenuContacts');
@@ -402,6 +398,14 @@
   const orgBody = document.getElementById('tb-orgs');
   const intBody = document.getElementById('tb-ints');
 
+  const twContacts = document.getElementById('tw-contacts');
+  const twOrgs = document.getElementById('tw-orgs');
+  const twInts = document.getElementById('tw-ints');
+
+  const spContacts = document.getElementById('sp-contacts');
+  const spOrgs = document.getElementById('sp-orgs');
+  const spInts = document.getElementById('sp-ints');
+
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, ints: 5 };
   let search = '';
@@ -412,12 +416,24 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
+  // Top scrollbar sync
+  function syncTopScroller(wrapper, spacer){
+    function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
+    updateSpacer();
+    wrapper.addEventListener('scroll', ()=> { spacer.parentElement.scrollLeft = wrapper.scrollLeft; });
+    spacer.parentElement.addEventListener('scroll', ()=> { wrapper.scrollLeft = spacer.parentElement.scrollLeft; });
+    new ResizeObserver(updateSpacer).observe(wrapper);
+  }
+  syncTopScroller(twContacts, spContacts);
+  syncTopScroller(twOrgs, spOrgs);
+  syncTopScroller(twInts, spInts);
+
   // OPEN/CLOSE MENUS
   const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
   btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
   btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
-  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  btnHelp.addEventListener('click', ()=> toggle(document.getElementById('helpMenu')));
   btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
@@ -426,7 +442,6 @@
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!inside(groupsPanel)) groupsMenu.style.display='none';
     if(!inside(adminPanel))  adminMenu.style.display='none';
-    if(!inside(helpPanel))   helpMenu.style.display='none';
     if(!inside(sortPanelContacts)) sortMenuContacts.style.display='none';
   });
 
@@ -452,16 +467,7 @@
   // Helpers
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
-  // AU dd/mm/yyyy format
-  const fmtDate = s => {
-    if(!s) return '';
-    const d = new Date(s);
-    if(isNaN(d)) return (''+s);
-    const dd = String(d.getDate()).padStart(2,'0');
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
+  const fmtDate = s => { if(!s) return ''; const d = new Date(s); return isNaN(d) ? (''+s) : d.toLocaleDateString(); };
   const clean = v => (v??'').toString().trim();
   const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
@@ -471,8 +477,8 @@
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
     const d = new Date(dt);
-    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
-    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString('en-AU'); }
+    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(d); }
+    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString(); }
   }
 
   // Soft pill colours
@@ -546,26 +552,21 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Merge org names by normalising case/spacing
-  function normaliseOrgKey(s){
-    return (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');
-  }
-
+  // Case-insensitive org merge
   function deriveOrgs(contacts){
-    const m = new Map();
+    const m = new Map(); // key = lowercased organisation
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
       if(!orgRaw) continue;
-      const key = normaliseOrgKey(orgRaw);
-      if(!m.has(key)) m.set(key,{ organisation: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
+      const key = orgRaw.toLowerCase();
+      if(!m.has(key)) m.set(key,{ organisationDisplay: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
       const o = m.get(key);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
       if(c.last_contact_at){
         if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
-      // prefer the longest-cased spelling seen as display name
-      if(orgRaw.length > o.organisation.length) o.organisation = orgRaw;
+      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw; // prettier display
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
@@ -573,7 +574,7 @@
       let preview = previewArr.join(', ');
       if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
-        organisation: o.organisation,
+        organisation: o.organisationDisplay,
         contacts: o.contact_names.join(', '),
         contacts_preview: preview,
         contacts_count: n,
@@ -637,15 +638,13 @@
       {key:'job_title',    label:'Role', checked:false},
       {key:'email',        label:'Email', checked:true},
       {key:'phone',        label:'Phone', checked:true},
-      {key:'mpdc_contact', label:'MPDC contact', checked:false},
       {key:'last_contact_at', label:'Last contact', checked:true},
       {key:'last_subject', label:'Last subject', checked:true},
       {key:'notes',        label:'Notes', checked:false},
     ].forEach(c=>{
       const id = 'col_'+c.key;
       const w = document.createElement('label');
-      const checked = c.checked ? 'checked' : '';
-      w.innerHTML = `<input type="checkbox" id="${id}" ${checked}/> ${c.label}`;
+      w.innerHTML = `<input type="checkbox" id="${id}" ${c.checked?'checked':''}/> ${c.label}`;
       colChecks.appendChild(w);
     });
   }
@@ -654,7 +653,7 @@
   document.getElementById('btnDoExport').addEventListener('click', ()=>{
     const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
     const cols = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
-      .filter(i=>i.checked).map(i=> i.id.replace(/^col_/,''));
+      .filter(i=>i.checked).map(i=> i.id.replace(/^col_/,'')); 
     const list = scope==='all' ? st.contacts : filteredContacts();
     const rows = list.map(c=>{
       const obj = {};
@@ -722,7 +721,7 @@
       }
       if(!hasSearch) return true;
       const fields = [
-        c.display_name, c.organisation, c.job_title, c.email, c.phone, c.mpdc_contact,
+        c.display_name, c.organisation, c.job_title, c.email, c.phone,
         (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
       ];
       return fields.some(v => norm(v).includes(q));
@@ -763,7 +762,7 @@
   function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
 
   function renderContacts(list){
-    const rows = applyContactSort(list).slice(0, limits.contacts);
+    const rows = [...list].slice(0, limits.contacts);
     contactBody.innerHTML = rows.map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
       const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
@@ -777,7 +776,6 @@
           <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
           <td class="w-email">${emailHtml}</td>
           <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-mpdc" title="${esc(c.mpdc_contact)}">${esc(c.mpdc_contact)}</td>
           <td class="w-date">${fmtDate(c.last_contact_at)}</td>
           <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
           <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
@@ -791,7 +789,7 @@
     const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
     const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
     return `
-      <tr class="contact-expander"><td colspan="10">
+      <tr class="contact-expander"><td colspan="9">
         <div class="contact-card">
           <div class="contact-actions">
             <h3>${esc(c.display_name || '(No name)')}</h3>
@@ -802,7 +800,6 @@
             ${c.job_title ? `<span class="sep">•</span><span class="lab">Role</span><span>${esc(c.job_title)}</span>`:''}
             ${clean(c.email) ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:''}
             ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
-            ${c.mpdc_contact ? `<span class="sep">•</span><span class="lab">MPDC</span><span>${esc(c.mpdc_contact)}</span>`:''}
           </div>
           <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
           <div class="compact-line">
@@ -913,19 +910,21 @@
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
   }
   function renderInts(list){
-    const sorted = [...list].sort((a,b)=> new Date(b.date)-new Date(a.date));
+    const sorted = [...list].sort((a,b)=> (Date.parse(b.date)||0)-(Date.parse(a.date)||0));
     const rows = sorted.slice(0, limits.ints);
     intBody.innerHTML = rows.map((i,idx)=>{
       const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
+      const contact = findContactByName(i.contact);
+      const org = contact ? contact.organisation : (i.organisation || '');
       const base = `
         <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
           <td class="w-date">${fmtDate(i.date)}</td>
           <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
-          <td class="w-org" title="${esc(i.organisation||'')}">${esc(i.organisation||'')}</td>
+          <td class="w-org" title="${esc(org)}">${esc(org)}</td>
           <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
-          <td title="${esc(i.summary||'')}">${esc(i.summary||'')}</td>
+          <td title="${esc(i.summary)}">${esc(i.summary || '')}</td>
         </tr>`;
-      const exp = expandedInts.has(key) ? buildIntExpanderRow(i) : '';
+      const exp = expandedInts.has(key) ? buildIntExpanderRow({...i, organisation: org}) : '';
       return base + exp;
     }).join('');
   }
@@ -971,19 +970,55 @@
   hookExpand('expOrgs','orgs');
   hookExpand('expInts','ints');
 
-  // CSV/JSON loaders & export
+  // ---------- CSV/JSON loaders & export
+
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
-  function csvToState(csvText){
+
+  // Build interactions from contacts (fallback)
+  function contactsToInteractions(contacts){
+    return (contacts||[])
+      .filter(c => c.last_contact_at)
+      .map((c, i) => ({
+        id: c.id ?? ('c_'+i),
+        date: c.last_contact_at,
+        contact: c.display_name || c.email || '(Unknown)',
+        subject: c.last_subject || '',
+        organisation: c.organisation || '',
+        summary: ''
+      }))
+      .sort((a,b)=> new Date(b.date)-new Date(a.date));
+  }
+
+  // Robust interaction field normaliser (for JSON loads)
+  function normalizeInteractions(arr){
+    if(!Array.isArray(arr)) return [];
+    return arr.map((it, idx)=>{
+      const get = (...keys)=> { for(const k of keys){ if(it && it[k]!=null && String(it[k]).trim()!=='') return it[k]; } return ''; };
+      const rawDate = get('date','Date','interactionDate','InteractionDate','created_at','CreatedAt');
+      const iso = toISOorBlank(rawDate);
+      const contact = String(get('contact','Contact','name','Name')).trim();
+      const subject = String(get('subject','Subject','title','Title')).trim();
+      const summary = String(get('summary','Summary','notes','Notes','body','Body')).trim();
+      const organisation = String(get('organisation','Organization','Organisation')).trim();
+      const id = String(get('id','Id','ID') || `${rawDate||''}__${contact||idx}`);
+      return { id, date: iso || String(rawDate||''), contact, subject, summary, organisation };
+    }).filter(x => x.contact || x.subject || x.date);
+  }
+
+  // CSV → state (contacts + interactions)
+  async function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
         header:true, skipEmptyLines:true, transformHeader: h=>h.trim(),
         complete: res=>{
           const headers = res.meta.fields||[];
           const find = finder(headers);
+
+          // Contact columns
           const H = {
             name: find('Name','Title','Full Name','display_name'),
             organisation: find('Organisation','Organization'),
@@ -991,30 +1026,59 @@
             role: find('Role','Job Title','Position','job_title'),
             email: find('Email','E-mail'),
             phone: find('Phone','Phone number','Mobile'),
-            mpdc: find('MPDC contact','MPDC Contact','MPDC_contact','mpdc_contact'),
-            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact'),
-            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject'),
+            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact','Last Contact'),
+            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject','Last Subject'),
             notes: find('Notes','Comment','Comments','notes')
           };
+
+          // Interaction columns (if present in the same CSV)
+          const HI = {
+            date: find('Interaction Date','Date','InteractionDate'),
+            subject: find('Interaction Subject','Subject','InteractionSubject'),
+            summary: find('Summary','Notes','Interaction Notes','InteractionSummary'),
+            contact: find('Contact','Contact Name','Name','Full Name','Title'),
+            organisation: find('Organisation','Organization'),
+            type: find('Type','Interaction Type')
+          };
+
+          // Contacts
           let id = 1;
           const contacts = res.data.map(r=>{
             const groups = normalizeGroups(r[H.group]);
             return {
               id: id++,
-              display_name: clean(r[H.name]),
+              display_name: clean(r[H.name] ?? r[H.name]),
               email: clean(r[H.email]),
               organisation: clean(r[H.organisation]),
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              mpdc_contact: clean(r[H.mpdc]) || 'communications@macpoint.com',
-              last_contact_at: toISOorBlank(clean(r[H.lastDate])),
+              last_contact_at: toISOorBlank(clean(r[H.lastDate])) || clean(r[H.lastDate]),
               last_subject: clean(r[H.lastSubj]),
               notes: clean(r[H.notes])
             };
           }).filter(c=> Object.values(c).some(v=> String(v||'').length));
+
+          // Interactions (explicit, if present)
+          const interactionsRaw = res.data.map((r, i)=>{
+            const d = clean(r[HI.date]);
+            const s = clean(r[HI.subject]);
+            if(!d && !s) return null;
+            return {
+              id: 'csv_'+(i+1),
+              date: toISOorBlank(d) || d,
+              contact: clean(r[HI.contact] || r[H.name] || r[H.email]) || '',
+              subject: s || '',
+              organisation: clean(r[HI.organisation] || r[H.organisation]) || '',
+              summary: clean(r[HI.summary]) || ''
+            };
+          }).filter(Boolean);
+
+          // Fallback if no explicit interactions: derive from contacts' last_* fields
+          const interactions = interactionsRaw.length ? interactionsRaw : contactsToInteractions(contacts);
+
           const organisations = deriveOrgs(contacts);
-          resolve({organisations, contacts, interactions: []});
+          resolve({organisations, contacts, interactions});
         }
       });
     });
@@ -1023,6 +1087,9 @@
   document.getElementById('amLoadCsv').addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
   document.getElementById('amLoadJson').addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
   document.getElementById('amExportJson').addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
+
+  const fileCsv = document.getElementById('fileCsv');
+  const fileJson = document.getElementById('fileJson');
 
   fileCsv.addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
@@ -1045,11 +1112,14 @@
       st = {
         organisations: data.organisations||[],
         contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-        interactions: data.interactions||[],
+        interactions: normalizeInteractions(data.interactions||[]),
         _meta: data._meta||null
       };
       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
         st.organisations = deriveOrgs(st.contacts);
+      }
+      if(!st.interactions || st.interactions.length===0){
+        st.interactions = contactsToInteractions(st.contacts);
       }
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
@@ -1086,11 +1156,14 @@
        st = {
          organisations: data.organisations||[],
          contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-         interactions: data.interactions||[],
+         interactions: normalizeInteractions(data.interactions||[]),
          _meta: data._meta||null
        };
        if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
          st.organisations = deriveOrgs(st.contacts);
+       }
+       if(!st.interactions || st.interactions.length===0){
+         st.interactions = contactsToInteractions(st.contacts);
        }
        chip.className='chip';
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
