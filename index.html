@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r23 — AU-first date parse + r22 features -->
+<!-- Build r24 — AU-first parse + "8 Oct 25" display + prior fixes -->
 <style>
   :root{
     --accent:#5f809b;
@@ -489,8 +489,8 @@
     if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
     if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
     if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
-    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
-    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
+    if(val==='org-desc')   contactSort = {mode:'org',   dir: -1};
+    if(val==='added-desc') contactSort = {mode:'added', dir: -1};
     sortMenuContacts.style.display='none';
     render();
   });
@@ -528,16 +528,24 @@
     return isNaN(dn) ? null : dn;
   }
 
-  // AU dd/mm/yyyy display
-  const fmtDate = s => {
+  // --- Display as "8 Oct 25"
+  function fmtDateShort(s){
     if(!s) return '';
     const d = parseDateFlexible(s);
     if(!d) return (''+s);
-    const dd = String(d.getDate()).padStart(2,'0');
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
+    try{
+      return new Intl.DateTimeFormat('en-AU', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit'
+      }).format(d).replace(',', '');
+    }catch(e){
+      const day = d.getDate();
+      const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${day} ${mon} ${yy}`;
+    }
+  }
 
   const clean = v => (v??'').toString().trim();
   const toISOorBlank = v => { if(!v) return null; const d=parseDateFlexible(v); return d?d.toISOString():null; };
@@ -733,7 +741,7 @@
         }
         if(k==='last_contact_at'){
           const iso = c._lastISO || c.last_contact_at;
-          v = iso ? fmtDate(iso) : '';
+          v = iso ? fmtDateShort(iso) : '';
         }
         obj[k] = v ?? '';
       });
@@ -848,7 +856,7 @@
           <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
           <td class="w-email">${emailHtml}</td>
           <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-date">${fmtDate(c._lastISO || c.last_contact_at)}</td>
+          <td class="w-date">${fmtDateShort(c._lastISO || c.last_contact_at)}</td>
           <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
         </tr>`;
       const exp = expandedContacts.has(String(c.id)) ? buildContactExpanderRow(c) : '';
@@ -875,7 +883,7 @@
           <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
           <div class="compact-line">
             <span class="lab">Last</span>
-            <span>${fmtDate(c._lastISO || c.last_contact_at) || '—'}</span>
+            <span>${fmtDateShort(c._lastISO || c.last_contact_at) || '—'}</span>
             ${c.last_subject ? `<span class="sep">•</span><span>${esc(c.last_subject)}</span>`:''}
           </div>
           ${c.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(c.notes)}</span></div>`:''}
@@ -911,7 +919,7 @@
       <tr data-org="${esc(o.organisation)}" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
         <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
         <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
-        <td class="w-date">${fmtDate(o.last_contact_at)}</td>
+        <td class="w-date">${fmtDateShort(o.last_contact_at)}</td>
         <td class="w-subj" title="${esc(o.recent_topics)}">${esc(o.recent_topics)}</td>
       </tr>
       ${expandedOrgs.has(o.organisation) ? buildOrgExpanderRow(o.organisation) : ''}
@@ -993,7 +1001,7 @@
       const org = contact ? contact.organisation : (i.organisation || '');
       const base = `
         <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
-          <td class="w-date">${fmtDate(i._iso || i.date)}</td>
+          <td class="w-date">${fmtDateShort(i._iso || i.date)}</td>
           <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
           <td class="w-org" title="${esc(org)}">${esc(org)}</td>
           <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
@@ -1020,7 +1028,7 @@
             ${emailBtn}
           </div>
           <div class="compact-line">
-            <span class="lab">Date</span><span>${fmtDate(i._iso || i.date) || '—'}</span>
+            <span class="lab">Date</span><span>${fmtDateShort(i._iso || i.date) || '—'}</span>
             ${i.contact ? `<span class="sep">•</span><span class="lab">Contact</span><span>${esc(i.contact)}</span>`:''}
             ${i.organisation ? `<span class="sep">•</span><span class="lab">Organisation</span><span>${esc(i.organisation)}</span>`:''}
           </div>
