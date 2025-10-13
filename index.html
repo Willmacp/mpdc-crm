@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r25 — strict AU-first parsing + "8 Oct 25" display, no native Date.parse -->
+<!-- Build r22 — adds 'Add Stakeholder' form button -->
 <style>
   :root{
     --accent:#5f809b;
@@ -47,7 +47,9 @@
 
   .btn{
     appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
-    cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40
+    cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40;
+    text-decoration:none; /* so <a> looks like button */
+    display:inline-flex; align-items:center;
   }
   .btn:hover{border-color:#9dc6e6;box-shadow:0 2px 6px rgba(14,43,64,.12)}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
@@ -104,7 +106,7 @@
   .scroll-top{height:14px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);background:#fff}
   .scroll-spacer{height:1px;}
 
-  table{border-collapse:separate;border-spacing:0;width:100%;min-width:980px;background:#fff}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
   thead th{position:sticky;top:0;background: linear-gradient(180deg, #eaf3fe, #dcebfb);z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650}
   th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   tr:nth-child(even) td{background:#f9fbff}
@@ -112,7 +114,7 @@
 
   .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
   .w-email{max-width:240px}.w-phone{max-width:140px}.w-date{max-width:140px}
-  .w-subj{max-width:260px} /* notes + summary cols removed */
+  .w-subj{max-width:260px}.w-notes{max-width:320px}
 
   #tb-orgs tr[data-org],
   #tb-contacts tr[data-id],
@@ -145,7 +147,7 @@
         <div class="logo-wrap" aria-hidden="true">
           <!-- Cog icon -->
           <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
-            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0,.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -175,7 +177,7 @@
                 </div>
               </div>
 
-              <!-- Export -->
+              <!-- Export (next to Groups) -->
               <div class="panel" id="exportPanel">
                 <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
                 <div class="pop">
@@ -191,7 +193,7 @@
                 </div>
               </div>
 
-              <!-- Tips -->
+              <!-- Tips (next to Groups) -->
               <div class="panel" id="helpPanel">
                 <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
                 <div class="pop" id="helpMenu" style="max-width:520px">
@@ -211,6 +213,18 @@
             <div class="toolbar-row" style="gap:12px">
               <span id="chip" class="chip">Data: loading…</span>
               <span class="stamp" id="lastStamp">Last updated: —</span>
+            </div>
+
+            <!-- NEW: Add Stakeholder button under the data chip -->
+            <div class="toolbar-row">
+              <a
+                class="btn primary"
+                id="btnAddStakeholder"
+                href="https://forms.office.com/Pages/ResponsePage.aspx?id=iqvrZPTMXEui0ytOly2Wsrl40AF9vslDorV-Toe-MB5UMVRTWTlTT1lETU45TjVNU0ZQNzU3QUhVMi4u"
+                target="_blank"
+                rel="noopener"
+                title="Open the form to add a stakeholder"
+              >Add Stakeholder</a>
             </div>
           </div>
 
@@ -277,7 +291,7 @@
                 <th class="w-phone">Phone</th>
                 <th class="w-date">Last contact</th>
                 <th class="w-subj">Last subject</th>
-                <!-- notes column removed -->
+                <th class="w-notes">Notes</th>
               </tr>
             </thead>
             <tbody id="tb-contacts"></tbody>
@@ -338,7 +352,7 @@
                 <th class="w-name">Contact</th>
                 <th class="w-org">Organisation</th>
                 <th class="w-subj">Subject</th>
-                <!-- Summary column removed -->
+                <th>Summary</th>
               </tr>
             </thead>
             <tbody id="tb-ints"></tbody>
@@ -390,6 +404,9 @@
   const adminPanel = document.getElementById('adminPanel');
   const btnAdmin = document.getElementById('btnAdmin');
   const adminMenu = document.getElementById('adminMenu');
+  const amLoadCsv = document.getElementById('amLoadCsv');
+  const amLoadJson = document.getElementById('amLoadJson');
+  const amExportJson = document.getElementById('amExportJson');
 
   const sortPanelContacts = document.getElementById('sortPanelContacts');
   const btnSortContacts   = document.getElementById('btnSortContacts');
@@ -433,38 +450,13 @@
   syncTopScroller(twOrgs, spOrgs);
   syncTopScroller(twInts, spInts);
 
-  // ---------- Pop positioning so menus never overflow viewport
-  function fitPop(popEl, triggerEl){
-    if(!popEl || !triggerEl) return;
-    popEl.style.left = '';
-    popEl.style.right = '0px';
-    popEl.style.display = 'block';
-
-    const rect = popEl.getBoundingClientRect();
-    const vw = document.documentElement.clientWidth;
-
-    if(rect.right > vw - 8){
-      popEl.style.right = '';
-      popEl.style.left = '0px';
-    }
-    const rect2 = popEl.getBoundingClientRect();
-    if(rect2.left < 8){
-      popEl.style.left = (8 - triggerEl.getBoundingClientRect().left) + 'px';
-      popEl.style.right = '';
-    }
-  }
-  function togglePop(panel, pop){
-    const open = pop.style.display==='block';
-    pop.style.display = open ? 'none' : 'block';
-    if(!open) fitPop(pop, panel);
-  }
-
   // OPEN/CLOSE MENUS
-  btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); togglePop(groupsPanel, groupsMenu); });
+  const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
+  btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
-  btnAdmin.addEventListener('click', (e)=>{ e.stopPropagation(); togglePop(adminPanel, adminMenu); });
-  btnHelp.addEventListener('click',  (e)=>{ e.stopPropagation(); togglePop(helpPanel, helpMenu); });
-  btnExportCsv.addEventListener('click', (e)=>{ e.stopPropagation(); togglePop(exportPanel, exportPanel.querySelector('.pop')); });
+  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
+  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
+  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
   btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
 
   document.addEventListener('click', (e)=>{
@@ -479,7 +471,7 @@
   // SORT menu
   btnSortContacts.addEventListener('click', (e)=>{
     e.stopPropagation();
-    togglePop(sortPanelContacts, sortMenuContacts);
+    sortMenuContacts.style.display = (sortMenuContacts.style.display==='block' ? 'none' : 'block');
   });
   sortMenuContacts.addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -489,8 +481,8 @@
     if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
     if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
     if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
-    if(val==='org-desc')   contactSort = {mode:'org',   dir: -1};
-    if(val==='added-desc') contactSort = {mode:'added', dir: -1};
+    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
+    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
     sortMenuContacts.style.display='none';
     render();
   });
@@ -499,69 +491,26 @@
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
 
-  // --- STRICT AU-first date parsing (dd/mm/yyyy or dd-mm-yyyy) then ISO; native parse LAST.
-  function parseDateFlexible(v){
-    if(!v && v!==0) return null;
-
-    // If already a Date
-    if(Object.prototype.toString.call(v) === '[object Date]'){
-      return isNaN(v.getTime()) ? null : v;
-    }
-
-    // Coerce to string
-    const s = String(v).trim();
-    if(!s) return null;
-
-    // 1) AU dd/mm/yyyy (or dd-mm-yyyy), optional time — ALWAYS day-first
-    const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-    if (m) {
-      let [, dd, mm, yyyy, HH='0', MM='0', SS='0'] = m;
-      if (yyyy.length === 2) yyyy = (Number(yyyy) < 50 ? '20' : '19') + yyyy;
-      const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(HH), Number(MM), Number(SS));
-      if (!isNaN(d)) return d;
-    }
-
-    // 2) ISO / RFC-like first (YYYY-MM-DD or contains 'T')
-    if (/^\d{4}-\d{2}-\d{2}/.test(s) || /T\d{2}:\d{2}/.test(s)) {
-      const di = new Date(s);
-      if(!isNaN(di)) return di;
-    }
-
-    // 3) Last resort: native parse (could be US), used ONLY if nothing matched
-    const dn = new Date(s);
-    return isNaN(dn) ? null : dn;
-  }
-
-  // --- Display as "8 Oct 25"
-  function fmtDateShort(s){
+  // AU dd/mm/yyyy format everywhere
+  const fmtDate = s => {
     if(!s) return '';
-    const d = parseDateFlexible(s);
-    if(!d) return (''+s);
-    try{
-      return new Intl.DateTimeFormat('en-AU', {
-        day: 'numeric',
-        month: 'short',
-        year: '2-digit'
-      }).format(d).replace(',', '');
-    }catch(e){
-      const day = d.getDate();
-      const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-      const yy = String(d.getFullYear()).slice(-2);
-      return `${day} ${mon} ${yy}`;
-    }
-  }
+    const d = new Date(s);
+    if(isNaN(d)) return (''+s);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
 
-  // Normalisers
   const clean = v => (v??'').toString().trim();
-  const toISOorBlank = v => { if(v==null || v==='') return null; const d=parseDateFlexible(v); return d?d.toISOString():null; };
+  const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
 
   function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
   function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
   function setLastUpdated(dt){
-    // Leave this as-is per your note (works fine already)
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
-    const d = parseDateFlexible(dt) || new Date();
+    const d = new Date(dt);
     try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
     catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString('en-AU'); }
   }
@@ -637,32 +586,33 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Case-insensitive org merge (uses shadow _lastISO for newest)
+  // Case-insensitive org merge
   function deriveOrgs(contacts){
-    const m = new Map();
+    const m = new Map(); // key = lowercased organisation
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
       if(!orgRaw) continue;
       const key = orgRaw.toLowerCase();
-      if(!m.has(key)) m.set(key,{ organisationDisplay: orgRaw, contact_names: [], lastISO: null, recent_topics: [] });
+      if(!m.has(key)) m.set(key,{ organisationDisplay: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
       const o = m.get(key);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
-
-      const iso = c._lastISO || toISOorBlank(c.last_contact_at);
-      if(iso && (!o.lastISO || iso > o.lastISO)) o.lastISO = iso;
-
+      if(c.last_contact_at){
+        if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
+      }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
-      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw;
+      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw; // prettier display
     }
     return Array.from(m.values()).map(o=>{
-      const names = o.contact_names;
-      const preview = names.slice(0,3).join(', ') + (names.length>3 ? ` …(+${names.length-3})` : '');
+      const n = o.contact_names.length;
+      const previewArr = o.contact_names.slice(0, 3);
+      let preview = previewArr.join(', ');
+      if(n > 3){ preview += ` …(+${n - 3})`; }
       return {
         organisation: o.organisationDisplay,
-        contacts: names.join(', '),
+        contacts: o.contact_names.join(', '),
         contacts_preview: preview,
-        contacts_count: names.length,
-        last_contact_at: o.lastISO,
+        contacts_count: n,
+        last_contact_at: o.last_contact_at,
         recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
       };
     });
@@ -716,14 +666,15 @@
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
-      {key:'display_name',    label:'Name',          checked:true},
-      {key:'organisation',    label:'Organisation',  checked:true},
-      {key:'group',           label:'Group',         checked:true},
-      {key:'job_title',       label:'Role',          checked:false},
-      {key:'email',           label:'Email',         checked:true},
-      {key:'phone',           label:'Phone',         checked:true},
-      {key:'last_contact_at', label:'Last contact',  checked:true},
-      {key:'last_subject',    label:'Last subject',  checked:true},
+      {key:'display_name', label:'Name', checked:true},
+      {key:'organisation', label:'Organisation', checked:true},
+      {key:'group',        label:'Group', checked:true},
+      {key:'job_title',    label:'Role', checked:false},
+      {key:'email',        label:'Email', checked:true},
+      {key:'phone',        label:'Phone', checked:true},
+      {key:'last_contact_at', label:'Last contact', checked:true},
+      {key:'last_subject', label:'Last subject', checked:true},
+      {key:'notes',        label:'Notes', checked:false},
     ].forEach(c=>{
       const id = 'col_'+c.key;
       const w = document.createElement('label');
@@ -745,10 +696,7 @@
         if(k==='group'){
           v = Array.isArray(v)? v.join('; ') : (normalizeGroups(v).join('; '));
         }
-        if(k==='last_contact_at'){
-          const iso = c._lastISO || c.last_contact_at;
-          v = iso ? fmtDateShort(iso) : '';
-        }
+        if(k==='last_contact_at' && v){ v = fmtDate(v); }
         obj[k] = v ?? '';
       });
       return obj;
@@ -862,8 +810,9 @@
           <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
           <td class="w-email">${emailHtml}</td>
           <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-date">${fmtDateShort(c._lastISO || c.last_contact_at)}</td>
+          <td class="w-date">${fmtDate(c.last_contact_at)}</td>
           <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
+          <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
         </tr>`;
       const exp = expandedContacts.has(String(c.id)) ? buildContactExpanderRow(c) : '';
       return row + exp;
@@ -874,7 +823,7 @@
     const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
     const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
     return `
-      <tr class="contact-expander"><td colspan="8">
+      <tr class="contact-expander"><td colspan="9">
         <div class="contact-card">
           <div class="contact-actions">
             <h3>${esc(c.display_name || '(No name)')}</h3>
@@ -889,7 +838,7 @@
           <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
           <div class="compact-line">
             <span class="lab">Last</span>
-            <span>${fmtDateShort(c._lastISO || c.last_contact_at) || '—'}</span>
+            <span>${fmtDate(c.last_contact_at) || '—'}</span>
             ${c.last_subject ? `<span class="sep">•</span><span>${esc(c.last_subject)}</span>`:''}
           </div>
           ${c.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(c.notes)}</span></div>`:''}
@@ -925,7 +874,7 @@
       <tr data-org="${esc(o.organisation)}" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
         <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
         <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
-        <td class="w-date">${fmtDateShort(o.last_contact_at)}</td>
+        <td class="w-date">${fmtDate(o.last_contact_at)}</td>
         <td class="w-subj" title="${esc(o.recent_topics)}">${esc(o.recent_topics)}</td>
       </tr>
       ${expandedOrgs.has(o.organisation) ? buildOrgExpanderRow(o.organisation) : ''}
@@ -994,12 +943,8 @@
     const n = norm(name);
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
   }
-  function ts(v){
-    const d = parseDateFlexible(v);
-    return d ? d.getTime() : 0;
-  }
   function renderInts(list){
-    const sorted = [...list].sort((a,b)=> ts(b._iso||b.date) - ts(a._iso||a.date));
+    const sorted = [...list].sort((a,b)=> (Date.parse(b.date)||0)-(Date.parse(a.date)||0));
     const rows = sorted.slice(0, limits.ints);
     intBody.innerHTML = rows.map((i,idx)=>{
       const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
@@ -1007,10 +952,11 @@
       const org = contact ? contact.organisation : (i.organisation || '');
       const base = `
         <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
-          <td class="w-date">${fmtDateShort(i._iso || i.date)}</td>
+          <td class="w-date">${fmtDate(i.date)}</td>
           <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
           <td class="w-org" title="${esc(org)}">${esc(org)}</td>
           <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
+          <td title="${esc(i.summary)}">${esc(i.summary || '')}</td>
         </tr>`;
       const exp = expandedInts.has(key) ? buildIntExpanderRow({...i, organisation: org}) : '';
       return base + exp;
@@ -1018,23 +964,16 @@
   }
   function buildIntExpanderRow(i){
     const c = findContactByName(i.contact);
-    let emailHref, btnLabel = `Email ${esc(i.contact||'contact')}`;
-    if(c && c.email){
-      emailHref = `mailto:${encodeURIComponent(c.email)}`;
-    } else {
-      const subj = i.subject ? `?subject=${encodeURIComponent('Re: '+i.subject)}` : '';
-      emailHref = `mailto:${subj}`;
-    }
-    const emailBtn = `<a class="btn" href="${emailHref}">${btnLabel}</a>`;
+    const emailBtn = c && c.email ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email ${esc(c.display_name||'contact')}</a>` : '';
     return `
-      <tr class="int-expander"><td colspan="4">
+      <tr class="int-expander"><td colspan="5">
         <div class="int-card">
           <div class="int-actions">
             <h3>${esc(i.subject || 'Interaction')}</h3>
             ${emailBtn}
           </div>
           <div class="compact-line">
-            <span class="lab">Date</span><span>${fmtDateShort(i._iso || i.date) || '—'}</span>
+            <span class="lab">Date</span><span>${fmtDate(i.date) || '—'}</span>
             ${i.contact ? `<span class="sep">•</span><span class="lab">Contact</span><span>${esc(i.contact)}</span>`:''}
             ${i.organisation ? `<span class="sep">•</span><span class="lab">Organisation</span><span>${esc(i.organisation)}</span>`:''}
           </div>
@@ -1073,23 +1012,19 @@
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
 
-  // Build interactions from contacts (fallback) with _iso
+  // Build interactions from contacts (fallback)
   function contactsToInteractions(contacts){
     return (contacts||[])
-      .filter(c => c._lastISO || c.last_contact_at)
-      .map((c, i) => {
-        const iso = c._lastISO || toISOorBlank(c.last_contact_at) || c.last_contact_at;
-        return {
-          id: c.id ?? ('c_'+i),
-          date: iso,
-          contact: c.display_name || c.email || '(Unknown)',
-          subject: c.last_subject || '',
-          organisation: c.organisation || '',
-          summary: '',
-          _iso: toISOorBlank(iso) || null
-        };
-      })
-      .sort((a,b)=> ts(b._iso||b.date) - ts(a._iso||a.date));
+      .filter(c => c.last_contact_at)
+      .map((c, i) => ({
+        id: c.id ?? ('c_'+i),
+        date: c.last_contact_at,
+        contact: c.display_name || c.email || '(Unknown)',
+        subject: c.last_subject || '',
+        organisation: c.organisation || '',
+        summary: ''
+      }))
+      .sort((a,b)=> new Date(b.date)-new Date(a.date));
   }
 
   // Robust interaction field normaliser (for JSON loads)
@@ -1104,7 +1039,7 @@
       const summary = String(get('summary','Summary','notes','Notes','body','Body')).trim();
       const organisation = String(get('organisation','Organization','Organisation')).trim();
       const id = String(get('id','Id','ID') || `${rawDate||''}__${contact||idx}`);
-      return { id, date: iso || String(rawDate||''), contact, subject, summary, organisation, _iso: iso };
+      return { id, date: iso || String(rawDate||''), contact, subject, summary, organisation };
     }).filter(x => x.contact || x.subject || x.date);
   }
 
@@ -1142,10 +1077,8 @@
 
           // Contacts
           let id = 1;
-          let contacts = res.data.map(r=>{
+          const contacts = res.data.map(r=>{
             const groups = normalizeGroups(r[H.group]);
-            const lastRaw = clean(r[H.lastDate]);
-            const iso = toISOorBlank(lastRaw);
             return {
               id: id++,
               display_name: clean(r[H.name] ?? r[H.name]),
@@ -1154,33 +1087,29 @@
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              last_contact_at: iso || lastRaw,
+              last_contact_at: toISOorBlank(clean(r[H.lastDate])) || clean(r[H.lastDate]),
               last_subject: clean(r[H.lastSubj]),
-              notes: clean(r[H.notes]),
-              _lastISO: iso
+              notes: clean(r[H.notes])
             };
           }).filter(c=> Object.values(c).some(v=> String(v||'').length));
 
           // Interactions (explicit, if present)
-          let interactions = res.data.map((r, i)=>{
+          const interactionsRaw = res.data.map((r, i)=>{
             const d = clean(r[HI.date]);
-            const iso = toISOorBlank(d);
             const s = clean(r[HI.subject]);
             if(!d && !s) return null;
             return {
               id: 'csv_'+(i+1),
-              date: iso || d,
+              date: toISOorBlank(d) || d,
               contact: clean(r[HI.contact] || r[H.name] || r[H.email]) || '',
               subject: s || '',
               organisation: clean(r[HI.organisation] || r[H.organisation]) || '',
-              summary: clean(r[HI.summary]) || '',
-              _iso: iso
+              summary: clean(r[HI.summary]) || ''
             };
           }).filter(Boolean);
 
-          if(!interactions.length){
-            interactions = contactsToInteractions(contacts);
-          }
+          // Fallback if no explicit interactions: derive from contacts' last_* fields
+          const interactions = interactionsRaw.length ? interactionsRaw : contactsToInteractions(contacts);
 
           const organisations = deriveOrgs(contacts);
           resolve({organisations, contacts, interactions});
@@ -1214,19 +1143,18 @@
     try{
       const text = await file.text();
       const data = JSON.parse(text);
-      let contacts = (data.contacts||[]).map(c=>{
-        const iso = toISOorBlank(c.last_contact_at);
-        return {...c, group: normalizeGroups(c.group), _lastISO: iso};
-      });
-      let interactions = normalizeInteractions(data.interactions||[]);
-      if(!interactions.length) interactions = contactsToInteractions(contacts);
-
       st = {
-        organisations: (data.organisations&&data.organisations.length)? data.organisations : deriveOrgs(contacts),
-        contacts,
-        interactions,
+        organisations: data.organisations||[],
+        contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
+        interactions: normalizeInteractions(data.interactions||[]),
         _meta: data._meta||null
       };
+      if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
+        st.organisations = deriveOrgs(st.contacts);
+      }
+      if(!st.interactions || st.interactions.length===0){
+        st.interactions = contactsToInteractions(st.contacts);
+      }
       limits = {contacts:5,orgs:5,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
@@ -1240,8 +1168,8 @@
   function downloadJson(){
     const out = {
       organisations: st.organisations||[],
-      contacts: (st.contacts||[]).map(({_lastISO, ...c})=> ({...c, group: normalizeGroups(c.group)})),
-      interactions: (st.interactions||[]).map(({_iso, ...i})=> i),
+      contacts: (st.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
+      interactions: st.interactions||[],
       _meta: { updated_at: new Date().toISOString(), source: 'manual-export', contact_count: st.contacts?.length || 0 }
     };
     const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
@@ -1259,21 +1187,18 @@
        const r = await fetch(url, {cache: 'no-store'});
        if(!r.ok) throw new Error('HTTP '+r.status);
        const data = await r.json();
-
-       let contacts = (data.contacts||[]).map(c=>{
-         const iso = toISOorBlank(c.last_contact_at);
-         return {...c, group: normalizeGroups(c.group), _lastISO: iso};
-       });
-       let interactions = normalizeInteractions(data.interactions||[]);
-       if(!interactions.length) interactions = contactsToInteractions(contacts);
-
        st = {
-         organisations: (data.organisations&&data.organisations.length)? data.organisations : deriveOrgs(contacts),
-         contacts,
-         interactions,
+         organisations: data.organisations||[],
+         contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
+         interactions: normalizeInteractions(data.interactions||[]),
          _meta: data._meta||null
        };
-
+       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
+         st.organisations = deriveOrgs(st.contacts);
+       }
+       if(!st.interactions || st.interactions.length===0){
+         st.interactions = contactsToInteractions(st.contacts);
+       }
        chip.className='chip';
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
