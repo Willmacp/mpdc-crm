@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r22 — adds 'Add Stakeholder' form button -->
+<!-- Build r23 — fix Groups popup alignment (left), keep r22 features -->
 <style>
   :root{
     --accent:#5f809b;
@@ -48,8 +48,7 @@
   .btn{
     appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
     cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40;
-    text-decoration:none; /* so <a> looks like button */
-    display:inline-flex; align-items:center;
+    text-decoration:none;display:inline-flex;align-items:center;
   }
   .btn:hover{border-color:#9dc6e6;box-shadow:0 2px 6px rgba(14,43,64,.12)}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
@@ -66,6 +65,8 @@
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:80;display:none
   }
+  /* Only the Groups menu should anchor to the left edge of its button */
+  #groupsMenu{left:0;right:auto;min-width:520px;}
 
   /* Groups grid + tags */
   .groups-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:8px 10px;max-height:360px;overflow:auto}
@@ -167,7 +168,7 @@
               <!-- Groups -->
               <div class="panel" id="groupsPanel">
                 <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
-                <div class="pop" id="groupsMenu" style="min-width:520px">
+                <div class="pop" id="groupsMenu">
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
                   <div class="groups-grid" id="groupsGrid"></div>
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
@@ -215,7 +216,7 @@
               <span class="stamp" id="lastStamp">Last updated: —</span>
             </div>
 
-            <!-- NEW: Add Stakeholder button under the data chip -->
+            <!-- Add Stakeholder button -->
             <div class="toolbar-row">
               <a
                 class="btn primary"
