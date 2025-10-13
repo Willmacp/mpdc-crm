@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r23 — fix Groups popup alignment (left), keep r22 features -->
+<!-- Build r24 — AU date parser (dd/mm/yyyy) for display + sorting -->
 <style>
   :root{
     --accent:#5f809b;
@@ -65,7 +65,7 @@
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:80;display:none
   }
-  /* Only the Groups menu should anchor to the left edge of its button */
+  /* Groups popup anchors left so it doesn't spill off-screen */
   #groupsMenu{left:0;right:auto;min-width:520px;}
 
   /* Groups grid + tags */
@@ -178,7 +178,7 @@
                 </div>
               </div>
 
-              <!-- Export (next to Groups) -->
+              <!-- Export -->
               <div class="panel" id="exportPanel">
                 <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
                 <div class="pop">
@@ -194,7 +194,7 @@
                 </div>
               </div>
 
-              <!-- Tips (next to Groups) -->
+              <!-- Tips -->
               <div class="panel" id="helpPanel">
                 <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
                 <div class="pop" id="helpMenu" style="max-width:520px">
@@ -439,81 +439,60 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
-  // Top scrollbar sync
-  function syncTopScroller(wrapper, spacer){
-    function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
-    updateSpacer();
-    wrapper.addEventListener('scroll', ()=> { spacer.parentElement.scrollLeft = wrapper.scrollLeft; });
-    spacer.parentElement.addEventListener('scroll', ()=> { wrapper.scrollLeft = spacer.parentElement.scrollLeft; });
-    new ResizeObserver(updateSpacer).observe(wrapper);
+  // ---------- DATE HELPERS (AU dd/mm/yyyy)
+
+  function parseDateAU(input){
+    if(!input) return null;
+    const s = String(input).trim();
+    // ISO or unambiguous formats first
+    const dISO = new Date(s);
+    if(!isNaN(dISO)) return dISO;
+
+    // dd/mm/yyyy or dd-mm-yyyy
+    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(m){
+      let dd = parseInt(m[1],10);
+      let mm = parseInt(m[2],10);
+      let yy = parseInt(m[3],10);
+      if(yy < 100) yy += 2000;
+      if(mm >= 1 && mm <= 12 && dd >=1 && dd <= 31){
+        const d = new Date(yy, mm-1, dd);
+        if(!isNaN(d)) return d;
+      }
+    }
+    return null;
   }
-  syncTopScroller(twContacts, spContacts);
-  syncTopScroller(twOrgs, spOrgs);
-  syncTopScroller(twInts, spInts);
 
-  // OPEN/CLOSE MENUS
-  const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
-  btnGroups.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
-  btnCloseGroups.addEventListener('click', ()=> groupsMenu.style.display='none');
-  btnAdmin.addEventListener('click', ()=> toggle(adminMenu));
-  btnHelp.addEventListener('click', ()=> toggle(helpMenu));
-  btnExportCsv.addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
-  btnCancelExport.addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
-
-  document.addEventListener('click', (e)=>{
-    const inside = p => p && p.contains(e.target);
-    if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
-    if(!inside(groupsPanel)) groupsMenu.style.display='none';
-    if(!inside(adminPanel))  adminMenu.style.display='none';
-    if(!inside(helpPanel))   helpMenu.style.display='none';
-    if(!inside(sortPanelContacts)) sortMenuContacts.style.display='none';
-  });
-
-  // SORT menu
-  btnSortContacts.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    sortMenuContacts.style.display = (sortMenuContacts.style.display==='block' ? 'none' : 'block');
-  });
-  sortMenuContacts.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const btn = e.target.closest('button[data-sort]');
-    if(!btn) return;
-    const val = btn.dataset.sort;
-    if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
-    if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
-    if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
-    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
-    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
-    sortMenuContacts.style.display='none';
-    render();
-  });
-
-  // Helpers
-  const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
-
-  // AU dd/mm/yyyy format everywhere
-  const fmtDate = s => {
-    if(!s) return '';
-    const d = new Date(s);
-    if(isNaN(d)) return (''+s);
+  // Format for display: dd/mm/yyyy (AU)
+  function fmtDate(v){
+    const d = parseDateAU(v);
+    if(!d) return (v ?? '') + '';
     const dd = String(d.getDate()).padStart(2,'0');
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const yyyy = d.getFullYear();
     return `${dd}/${mm}/${yyyy}`;
-  };
+  }
 
+  // Convert to ISO if we can; otherwise keep null
+  function toISOorBlank(v){
+    const d = parseDateAU(v);
+    return d ? d.toISOString() : null;
+  }
+
+  // ---------- UI HELPERS
+
+  const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
   const clean = v => (v??'').toString().trim();
-  const toISOorBlank = v => { if(!v) return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); };
   const norm = v => clean(v).toLowerCase();
 
   function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
   function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
-    const d = new Date(dt);
+    const d = parseDateAU(dt) || new Date(dt);
     try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
-    catch(e){ lastStamp.textContent = 'Last updated: ' + d.toLocaleString('en-AU'); }
+    catch(e){ lastStamp.textContent = 'Last updated: ' + (d.toLocaleString ? d.toLocaleString('en-AU') : dt); }
   }
 
   // Soft pill colours
@@ -532,7 +511,58 @@
     return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
-  // Groups normalize
+  // Top scrollbar sync
+  function syncTopScroller(wrapper, spacer){
+    function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
+    updateSpacer();
+    wrapper.addEventListener('scroll', ()=> { spacer.parentElement.scrollLeft = wrapper.scrollLeft; });
+    spacer.parentElement.addEventListener('scroll', ()=> { wrapper.scrollLeft = spacer.parentElement.scrollLeft; });
+    new ResizeObserver(updateSpacer).observe(wrapper);
+  }
+
+  syncTopScroller(document.getElementById('tw-contacts'), document.getElementById('sp-contacts'));
+  syncTopScroller(document.getElementById('tw-orgs'), document.getElementById('sp-orgs'));
+  syncTopScroller(document.getElementById('tw-ints'), document.getElementById('sp-ints'));
+
+  // OPEN/CLOSE MENUS
+  const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
+  document.getElementById('btnGroups').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
+  document.getElementById('btnCloseGroups').addEventListener('click', ()=> groupsMenu.style.display='none');
+  document.getElementById('btnAdmin').addEventListener('click', ()=> toggle(adminMenu));
+  document.getElementById('btnHelp').addEventListener('click', ()=> toggle(helpMenu));
+  document.getElementById('btnExportCsv').addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
+  document.getElementById('btnCancelExport').addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
+
+  document.addEventListener('click', (e)=>{
+    const inside = p => p && p.contains(e.target);
+    if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
+    if(!inside(document.getElementById('groupsPanel'))) groupsMenu.style.display='none';
+    if(!inside(adminPanel))  adminMenu.style.display='none';
+    if(!inside(document.getElementById('sortPanelContacts'))) sortMenuContacts.style.display='none';
+    if(!inside(document.getElementById('helpPanel'))) helpMenu.style.display='none';
+  });
+
+  // SORT menu
+  document.getElementById('btnSortContacts').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    document.getElementById('sortMenuContacts').style.display =
+      (document.getElementById('sortMenuContacts').style.display==='block' ? 'none' : 'block');
+  });
+  document.getElementById('sortMenuContacts').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const btn = e.target.closest('button[data-sort]');
+    if(!btn) return;
+    const val = btn.dataset.sort;
+    if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
+    if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
+    if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
+    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
+    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
+    document.getElementById('sortMenuContacts').style.display='none';
+    render();
+  });
+
+  // Groups normalise
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -598,7 +628,10 @@
       const o = m.get(key);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
       if(c.last_contact_at){
-        if(!o.last_contact_at || new Date(c.last_contact_at) > new Date(o.last_contact_at)){ o.last_contact_at = c.last_contact_at; }
+        const d = parseDateAU(c.last_contact_at) || new Date(c.last_contact_at);
+        if(!o.last_contact_at || (parseDateAU(o.last_contact_at) || new Date(o.last_contact_at)) < d){
+          o.last_contact_at = d.toISOString();
+        }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
       if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw; // prettier display
@@ -620,6 +653,8 @@
   }
 
   // Build groups menu with ✓ highlight
+  let selectedGroups = new Set();
+  let allGroups = [];
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -663,7 +698,7 @@
     btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
   }
 
-  // EXPORT CSV
+  // EXPORT CSV (unchanged)
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -727,6 +762,7 @@
   let tSearch;
   function setSearch(val){ search = val; render(); }
   btnReload.addEventListener('click', ()=> init(true));
+  let contactSort = { mode:'name', dir:1 };
   function applyContactSort(list){
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
@@ -775,6 +811,7 @@
   }
 
   // CONTACTS expanders
+  let expandedContacts = new Set();
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -849,6 +886,7 @@
   }
 
   // ORGS expanders
+  let expandedOrgs = new Set();
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -912,7 +950,8 @@
     `;
   }
 
-  // INTERACTIONS expanders
+  // INTERACTIONS
+  let expandedInts = new Set();
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -945,7 +984,11 @@
     return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
   }
   function renderInts(list){
-    const sorted = [...list].sort((a,b)=> (Date.parse(b.date)||0)-(Date.parse(a.date)||0));
+    const sorted = [...list].sort((a,b)=>{
+      const da = parseDateAU(a.date) || new Date(a.date);
+      const db = parseDateAU(b.date) || new Date(b.date);
+      return (db - da);
+    });
     const rows = sorted.slice(0, limits.ints);
     intBody.innerHTML = rows.map((i,idx)=>{
       const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
@@ -1025,7 +1068,11 @@
         organisation: c.organisation || '',
         summary: ''
       }))
-      .sort((a,b)=> new Date(b.date)-new Date(a.date));
+      .sort((a,b)=>{
+        const da = parseDateAU(a.date) || new Date(a.date);
+        const db = parseDateAU(b.date) || new Date(b.date);
+        return db - da;
+      });
   }
 
   // Robust interaction field normaliser (for JSON loads)
@@ -1080,6 +1127,7 @@
           let id = 1;
           const contacts = res.data.map(r=>{
             const groups = normalizeGroups(r[H.group]);
+            const iso = toISOorBlank(clean(r[H.lastDate]));
             return {
               id: id++,
               display_name: clean(r[H.name] ?? r[H.name]),
@@ -1088,7 +1136,7 @@
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              last_contact_at: toISOorBlank(clean(r[H.lastDate])) || clean(r[H.lastDate]),
+              last_contact_at: iso || clean(r[H.lastDate]), // keep original if unparseable
               last_subject: clean(r[H.lastSubj]),
               notes: clean(r[H.notes])
             };
@@ -1099,9 +1147,10 @@
             const d = clean(r[HI.date]);
             const s = clean(r[HI.subject]);
             if(!d && !s) return null;
+            const iso = toISOorBlank(d);
             return {
               id: 'csv_'+(i+1),
-              date: toISOorBlank(d) || d,
+              date: iso || d,
               contact: clean(r[HI.contact] || r[H.name] || r[H.email]) || '',
               subject: s || '',
               organisation: clean(r[HI.organisation] || r[H.organisation]) || '',
@@ -1219,6 +1268,8 @@
 
   document.getElementById('linkClearGroups').addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
 
+  // Limits + state init
+  var limits = {contacts:5,orgs:5,ints:5};
   init();
 })();
 </script>
