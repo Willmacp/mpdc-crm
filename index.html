@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r26 — AU-first date parser + Consultants card (2-row default) -->
+<!-- Build r27 — Outlook-aware AU date parser + Consultants card (2-row default) -->
 <style>
   :root{
     --accent:#5f809b;
@@ -467,40 +467,69 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
-  /* ---------- DATE HELPERS (AU-first, robust) */
-  function parseDateAU(input){
+  /* ---------- DATE HELPERS (Outlook-aware, AU-first) */
+  function isMonthNamey(s){
+    return /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\b/i.test(s);
+  }
+  function looksUSSlashWithTime(s){
+    // e.g., 9/10/2025 3:15 PM or 09/10/2025 11 AM (typical Outlook text)
+    return /^\s*\d{1,2}\/\d{1,2}\/\d{2,4}(?:[ T]\d{1,2}(?::\d{2})?\s*(?:AM|PM))?\s*$/i.test(s);
+  }
+  function tryDate(y, m, d){
+    const dt = new Date(y, m - 1, d);
+    return isNaN(dt) ? null : dt;
+  }
+  function parseDateSmart(input){
     if(!input) return null;
     const s = String(input).trim();
+    if(!s) return null;
 
-    // ISO first (yyyy-mm-dd...)
-    if(/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    // Month-name strings: "29 September 2025"
+    if(isMonthNamey(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // dd/mm/yyyy or mm/dd/yyyy (or with -)
-    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    // ISO first (yyyy-mm-dd)
+    if(/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)){
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+
+    // Numeric dd/mm/yyyy or mm/dd/yyyy (allow -)
+    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:.*)?$/);
     if(m){
       let a = parseInt(m[1],10);
       let b = parseInt(m[2],10);
       let y = parseInt(m[3],10); if(y < 100) y += 2000;
 
-      // AU default (dd/mm); switch to US (mm/dd) only if second token > 12 and first <= 12
-      let dd, mm;
-      if (b > 12 && a >= 1 && a <= 12) { mm = a; dd = b; } else { dd = a; mm = b; }
-
-      const d = new Date(y, mm-1, dd);
-      return isNaN(d) ? null : d;
+      // If looks like Outlook US (slashes + optional AM/PM), prefer US mm/dd.
+      if (looksUSSlashWithTime(s)) {
+        const us = tryDate(y, a, b);
+        if (us) return us;
+        const au = tryDate(y, b, a);
+        return au;
+      } else {
+        // AU-first (dd/mm). If AU impossible (b>12) try US.
+        if (b > 12 && a >= 1 && a <= 12) {
+          const us = tryDate(y, a, b);
+          if (us) return us;
+        }
+        const au = tryDate(y, b, a);
+        if (au) return au;
+        const us = tryDate(y, a, b);
+        if (us) return us;
+      }
     }
 
-    // Fallback for other parseable forms
-    const dLoose = new Date(s);
-    return isNaN(dLoose) ? null : dLoose;
+    // Final fallback
+    const loose = new Date(s);
+    return isNaN(loose) ? null : loose;
   }
 
-  // AU display
+  // AU display: dd/mm/yyyy
   function fmtDate(v){
-    const d = parseDateAU(v);
+    const d = parseDateSmart(v);
     if(!d) return (v ?? '') + '';
     const dd = String(d.getDate()).padStart(2,'0');
     const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -508,7 +537,7 @@
     return `${dd}/${mm}/${yyyy}`;
   }
   function toISOorBlank(v){
-    const d = parseDateAU(v);
+    const d = parseDateSmart(v);
     return d ? d.toISOString() : null;
   }
 
@@ -522,7 +551,7 @@
   function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
   function setLastUpdated(dt){
     if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
-    const d = parseDateAU(dt) || new Date(dt);
+    const d = parseDateSmart(dt) || new Date(dt);
     try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
     catch(e){ lastStamp.textContent = 'Last updated: ' + (d.toLocaleString ? d.toLocaleString('en-AU') : dt); }
   }
@@ -657,8 +686,8 @@
       const o = m.get(key);
       if(clean(c.display_name)) o.contact_names.push(c.display_name);
       if(c.last_contact_at){
-        const d = parseDateAU(c.last_contact_at) || new Date(c.last_contact_at);
-        if(!o.last_contact_at || (parseDateAU(o.last_contact_at) || new Date(o.last_contact_at)) < d){
+        const d = parseDateSmart(c.last_contact_at) || new Date(c.last_contact_at);
+        if(!o.last_contact_at || (parseDateSmart(o.last_contact_at) || new Date(o.last_contact_at)) < d){
           o.last_contact_at = d.toISOString();
         }
       }
@@ -1010,8 +1039,8 @@
   }
   function renderInts(list){
     const sorted = [...list].sort((a,b)=>{
-      const da = parseDateAU(a.date) || new Date(a.date);
-      const db = parseDateAU(b.date) || new Date(b.date);
+      const da = parseDateSmart(a.date) || new Date(a.date);
+      const db = parseDateSmart(b.date) || new Date(b.date);
       return (db - da);
     });
     const rows = sorted.slice(0, limits.ints);
@@ -1061,7 +1090,7 @@
     return keys.some(k => needles.some(n => k.includes(n)));
   }
   function renderConsultants(){
-    // To respect current filters, use filteredContacts() instead of st.contacts
+    // Using the full contacts set (not filtered) so it always shows the cohort
     const list = applyContactSort((st.contacts || []).filter(isConsultantContact));
     const rows = list.slice(0, limits.consultants).map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group))
@@ -1126,8 +1155,8 @@
         summary: ''
       }))
       .sort((a,b)=>{
-        const da = parseDateAU(a.date) || new Date(a.date);
-        const db = parseDateAU(b.date) || new Date(b.date);
+        const da = parseDateSmart(a.date) || new Date(a.date);
+        const db = parseDateSmart(b.date) || new Date(b.date);
         return db - da;
       });
   }
