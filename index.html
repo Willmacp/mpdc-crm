@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r24 — AU date parser (dd/mm/yyyy) for display + sorting -->
+<!-- Build r25 — AU date parser (dd/mm/yyyy) for display + sorting + Consultants card -->
 <style>
   :root{
     --accent:#5f809b;
@@ -331,6 +331,39 @@
       </div>
     </section>
 
+    <!-- CONSULTANTS / CONTRACTORS -->
+    <section class="card" id="sec-consultants">
+      <div class="card-head">
+        <div>
+          <h2>Consultants & Contractors <span class="count" id="countConsultants"></span></h2>
+          <div class="subhint">Quick view of people tagged as consultants/contractors</div>
+        </div>
+        <div class="right">
+          <button class="btn" id="expConsultants">Expand list</button>
+        </div>
+      </div>
+      <!-- top scrollbar -->
+      <div class="scroll-top"><div class="scroll-spacer" id="sp-consultants"></div></div>
+      <div class="card-body">
+        <div class="table-wrap" id="tw-consultants">
+          <table>
+            <thead>
+              <tr>
+                <th class="w-name">Name</th>
+                <th class="w-org">Organisation</th>
+                <th class="w-role">Role</th>
+                <th class="w-email">Email</th>
+                <th class="w-phone">Phone</th>
+                <th class="w-group">Group</th>
+                <th class="w-date">Last contact</th>
+              </tr>
+            </thead>
+            <tbody id="tb-consultants"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- INTERACTIONS -->
     <section class="card" id="sec-ints">
       <div class="card-head">
@@ -429,8 +462,14 @@
   const spOrgs = document.getElementById('sp-orgs');
   const spInts = document.getElementById('sp-ints');
 
+  /* Consultants elements */
+  const tbConsultants = document.getElementById('tb-consultants');
+  const countConsultantsEl = document.getElementById('countConsultants');
+  const twConsultants = document.getElementById('tw-consultants');
+  const spConsultants = document.getElementById('sp-consultants');
+
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
-  let limits = { contacts: 5, orgs: 5, ints: 5 };
+  let limits = { contacts: 5, orgs: 5, consultants: 5, ints: 5 };
   let search = '';
   let selectedGroups = new Set();
   let allGroups = [];
@@ -439,16 +478,12 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
-  // ---------- DATE HELPERS (AU dd/mm/yyyy)
-
+  /* ---------- DATE HELPERS (AU dd/mm/yyyy) */
   function parseDateAU(input){
     if(!input) return null;
     const s = String(input).trim();
-    // ISO or unambiguous formats first
     const dISO = new Date(s);
     if(!isNaN(dISO)) return dISO;
-
-    // dd/mm/yyyy or dd-mm-yyyy
     const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if(m){
       let dd = parseInt(m[1],10);
@@ -462,8 +497,6 @@
     }
     return null;
   }
-
-  // Format for display: dd/mm/yyyy (AU)
   function fmtDate(v){
     const d = parseDateAU(v);
     if(!d) return (v ?? '') + '';
@@ -472,15 +505,12 @@
     const yyyy = d.getFullYear();
     return `${dd}/${mm}/${yyyy}`;
   }
-
-  // Convert to ISO if we can; otherwise keep null
   function toISOorBlank(v){
     const d = parseDateAU(v);
     return d ? d.toISOString() : null;
   }
 
-  // ---------- UI HELPERS
-
+  /* ---------- UI HELPERS */
   const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
   const clean = v => (v??'').toString().trim();
@@ -495,7 +525,7 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + (d.toLocaleString ? d.toLocaleString('en-AU') : dt); }
   }
 
-  // Soft pill colours
+  /* Soft pill colours */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
     const base = 205 + (hashStr(name)%20);
@@ -511,7 +541,7 @@
     return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
-  // Top scrollbar sync
+  /* Top scrollbar sync */
   function syncTopScroller(wrapper, spacer){
     function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
     updateSpacer();
@@ -519,12 +549,12 @@
     spacer.parentElement.addEventListener('scroll', ()=> { wrapper.scrollLeft = spacer.parentElement.scrollLeft; });
     new ResizeObserver(updateSpacer).observe(wrapper);
   }
+  syncTopScroller(twContacts, spContacts);
+  syncTopScroller(twOrgs, spOrgs);
+  syncTopScroller(twConsultants, spConsultants);
+  syncTopScroller(twInts, spInts);
 
-  syncTopScroller(document.getElementById('tw-contacts'), document.getElementById('sp-contacts'));
-  syncTopScroller(document.getElementById('tw-orgs'), document.getElementById('sp-orgs'));
-  syncTopScroller(document.getElementById('tw-ints'), document.getElementById('sp-ints'));
-
-  // OPEN/CLOSE MENUS
+  /* OPEN/CLOSE MENUS */
   const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
   document.getElementById('btnGroups').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   document.getElementById('btnCloseGroups').addEventListener('click', ()=> groupsMenu.style.display='none');
@@ -542,11 +572,10 @@
     if(!inside(document.getElementById('helpPanel'))) helpMenu.style.display='none';
   });
 
-  // SORT menu
+  /* SORT menu */
   document.getElementById('btnSortContacts').addEventListener('click', (e)=>{
     e.stopPropagation();
-    document.getElementById('sortMenuContacts').style.display =
-      (document.getElementById('sortMenuContacts').style.display==='block' ? 'none' : 'block');
+    sortMenuContacts.style.display = (sortMenuContacts.style.display==='block' ? 'none' : 'block');
   });
   document.getElementById('sortMenuContacts').addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -558,11 +587,11 @@
     if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
     if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
     if(val==='added-desc') contactSort = {mode:'added', dir:-1};
-    document.getElementById('sortMenuContacts').style.display='none';
+    sortMenuContacts.style.display='none';
     render();
   });
 
-  // Groups normalise
+  /* Groups normalise */
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -617,9 +646,9 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  // Case-insensitive org merge
+  /* Case-insensitive org merge */
   function deriveOrgs(contacts){
-    const m = new Map(); // key = lowercased organisation
+    const m = new Map();
     for(const c of contacts){
       const orgRaw = clean(c.organisation);
       if(!orgRaw) continue;
@@ -634,7 +663,7 @@
         }
       }
       if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
-      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw; // prettier display
+      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw;
     }
     return Array.from(m.values()).map(o=>{
       const n = o.contact_names.length;
@@ -652,9 +681,7 @@
     });
   }
 
-  // Build groups menu with ✓ highlight
-  let selectedGroups = new Set();
-  let allGroups = [];
+  /* Build groups menu with ✓ highlight */
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -698,7 +725,7 @@
     btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
   }
 
-  // EXPORT CSV (unchanged)
+  /* EXPORT CSV */
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -758,11 +785,10 @@
     return head+'\n'+body;
   }
 
-  // Search & Sort
+  /* Search & Sort */
   let tSearch;
   function setSearch(val){ search = val; render(); }
   btnReload.addEventListener('click', ()=> init(true));
-  let contactSort = { mode:'name', dir:1 };
   function applyContactSort(list){
     const L = [...list];
     if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
@@ -804,14 +830,15 @@
     const orgsView = deriveOrgs(contactsView);
     renderContacts(contactsView);
     renderOrgs(orgsView);
+    renderConsultants();      /* NEW */
     renderInts(st.interactions);
-    countContactsEl.textContent = contactsView.length ? `(${contactsView.length})` : '';
-    countOrgsEl.textContent = orgsView.length ? `(${orgsView.length})` : '';
-    countIntsEl.textContent = st.interactions.length ? `(${st.interactions.length})` : '';
+    countContactsEl.textContent    = contactsView.length ? `(${contactsView.length})` : '';
+    countOrgsEl.textContent        = orgsView.length ? `(${orgsView.length})` : '';
+    /* consultants count set inside renderConsultants */
+    countIntsEl.textContent        = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  // CONTACTS expanders
-  let expandedContacts = new Set();
+  /* CONTACTS expanders */
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -885,8 +912,7 @@
     `;
   }
 
-  // ORGS expanders
-  let expandedOrgs = new Set();
+  /* ORGS expanders */
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -950,8 +976,7 @@
     `;
   }
 
-  // INTERACTIONS
-  let expandedInts = new Set();
+  /* INTERACTIONS */
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -1028,7 +1053,39 @@
     `;
   }
 
-  // Expand toggles
+  /* CONSULTANTS / CONTRACTORS */
+  function isConsultantContact(c){
+    const gs = Array.isArray(c.group) ? c.group : normalizeGroups(c.group);
+    const keys = gs.map(g=>g.toLowerCase());
+    const needles = ['consultants/contractors','consultant','consultants','contractor','contractors'];
+    return keys.some(k => needles.some(n => k.includes(n)));
+  }
+  function renderConsultants(){
+    /* To make it respect current search/group filters, swap st.contacts for filteredContacts() */
+    const list = applyContactSort((st.contacts || []).filter(isConsultantContact));
+    const rows = list.slice(0, limits.consultants).map(c=>{
+      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group))
+        .slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
+      const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
+      const email = (c.email||'').trim();
+      const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
+      return `
+        <tr>
+          <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
+          <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
+          <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
+          <td class="w-email">${emailHtml}</td>
+          <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
+          <td class="w-group">${groupsHtml}</td>
+          <td class="w-date">${fmtDate(c.last_contact_at)}</td>
+        </tr>
+      `;
+    }).join('');
+    tbConsultants.innerHTML = rows || '';
+    countConsultantsEl.textContent = list.length ? `(${list.length})` : '';
+  }
+
+  /* Expand toggles */
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
       const isCollapsed = limits[key]===5;
@@ -1046,17 +1103,16 @@
   }
   hookExpand('expContacts','contacts');
   hookExpand('expOrgs','orgs');
+  hookExpand('expConsultants','consultants');
   hookExpand('expInts','ints');
 
-  // ---------- CSV/JSON loaders & export
-
+  /* ---------- CSV/JSON loaders & export */
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
     return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
   }
 
-  // Build interactions from contacts (fallback)
   function contactsToInteractions(contacts){
     return (contacts||[])
       .filter(c => c.last_contact_at)
@@ -1075,7 +1131,6 @@
       });
   }
 
-  // Robust interaction field normaliser (for JSON loads)
   function normalizeInteractions(arr){
     if(!Array.isArray(arr)) return [];
     return arr.map((it, idx)=>{
@@ -1091,7 +1146,6 @@
     }).filter(x => x.contact || x.subject || x.date);
   }
 
-  // CSV → state (contacts + interactions)
   async function csvToState(csvText){
     return new Promise((resolve)=>{
       Papa.parse(csvText,{
@@ -1100,7 +1154,6 @@
           const headers = res.meta.fields||[];
           const find = finder(headers);
 
-          // Contact columns
           const H = {
             name: find('Name','Title','Full Name','display_name'),
             organisation: find('Organisation','Organization'),
@@ -1113,7 +1166,6 @@
             notes: find('Notes','Comment','Comments','notes')
           };
 
-          // Interaction columns (if present in the same CSV)
           const HI = {
             date: find('Interaction Date','Date','InteractionDate'),
             subject: find('Interaction Subject','Subject','InteractionSubject'),
@@ -1123,7 +1175,6 @@
             type: find('Type','Interaction Type')
           };
 
-          // Contacts
           let id = 1;
           const contacts = res.data.map(r=>{
             const groups = normalizeGroups(r[H.group]);
@@ -1136,13 +1187,12 @@
               group: groups,
               job_title: clean(r[H.role]),
               phone: clean(r[H.phone]),
-              last_contact_at: iso || clean(r[H.lastDate]), // keep original if unparseable
+              last_contact_at: iso || clean(r[H.lastDate]),
               last_subject: clean(r[H.lastSubj]),
               notes: clean(r[H.notes])
             };
           }).filter(c=> Object.values(c).some(v=> String(v||'').length));
 
-          // Interactions (explicit, if present)
           const interactionsRaw = res.data.map((r, i)=>{
             const d = clean(r[HI.date]);
             const s = clean(r[HI.subject]);
@@ -1158,9 +1208,7 @@
             };
           }).filter(Boolean);
 
-          // Fallback if no explicit interactions: derive from contacts' last_* fields
           const interactions = interactionsRaw.length ? interactionsRaw : contactsToInteractions(contacts);
-
           const organisations = deriveOrgs(contacts);
           resolve({organisations, contacts, interactions});
         }
@@ -1179,7 +1227,7 @@
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
     st = await csvToState(text);
-    limits = {contacts:5,orgs:5,ints:5};
+    limits = {contacts:5,orgs:5,consultants:5,ints:5};
     chip.className='chip'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
     clearError();
@@ -1205,7 +1253,7 @@
       if(!st.interactions || st.interactions.length===0){
         st.interactions = contactsToInteractions(st.contacts);
       }
-      limits = {contacts:5,orgs:5,ints:5};
+      limits = {contacts:5,orgs:5,consultants:5,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       clearError();
@@ -1253,7 +1301,7 @@
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
        setLastUpdated(updated || new Date());
-       limits = {contacts:5,orgs:5,ints:5};
+       limits = {contacts:5,orgs:5,consultants:5,ints:5};
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){
@@ -1268,8 +1316,7 @@
 
   document.getElementById('linkClearGroups').addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
 
-  // Limits + state init
-  var limits = {contacts:5,orgs:5,ints:5};
+  /* init */
   init();
 })();
 </script>
