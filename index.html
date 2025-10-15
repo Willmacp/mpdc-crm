@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r25 — AU date parser (dd/mm/yyyy) for display + sorting + Consultants card -->
+<!-- Build r26 — AU-first date parser + Consultants card (2-row default) -->
 <style>
   :root{
     --accent:#5f809b;
@@ -65,10 +65,8 @@
     position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
     border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:80;display:none
   }
-  /* Groups popup anchors left so it doesn't spill off-screen */
   #groupsMenu{left:0;right:auto;min-width:520px;}
 
-  /* Groups grid + tags */
   .groups-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:8px 10px;max-height:360px;overflow:auto}
   @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
   @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
@@ -102,7 +100,6 @@
   .subhint{font-size:12px;color:#3b5a73}
   .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-  /* Tables + top scrollbars */
   .table-wrap{overflow:auto;max-height:420px}
   .scroll-top{height:14px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);background:#fff}
   .scroll-spacer{height:1px;}
@@ -277,7 +274,6 @@
           </div>
         </div>
       </div>
-      <!-- top scrollbar -->
       <div class="scroll-top"><div class="scroll-spacer" id="sp-contacts"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-contacts">
@@ -312,7 +308,6 @@
           <button class="btn" id="expOrgs">Expand list</button>
         </div>
       </div>
-      <!-- top scrollbar -->
       <div class="scroll-top"><div class="scroll-spacer" id="sp-orgs"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-orgs">
@@ -342,7 +337,6 @@
           <button class="btn" id="expConsultants">Expand list</button>
         </div>
       </div>
-      <!-- top scrollbar -->
       <div class="scroll-top"><div class="scroll-spacer" id="sp-consultants"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-consultants">
@@ -375,7 +369,6 @@
           <button class="btn" id="expInts">Expand list</button>
         </div>
       </div>
-      <!-- top scrollbar -->
       <div class="scroll-top"><div class="scroll-spacer" id="sp-ints"></div></div>
       <div class="card-body">
         <div class="table-wrap" id="tw-ints">
@@ -424,25 +417,21 @@
   const btnDoExport = document.getElementById('btnDoExport');
   const colChecks = document.getElementById('colChecks');
 
-  const groupsPanel = document.getElementById('groupsPanel');
   const btnGroups = document.getElementById('btnGroups');
   const groupsMenu = document.getElementById('groupsMenu');
   const groupsGrid = document.getElementById('groupsGrid');
   const linkClearGroups = document.getElementById('linkClearGroups');
   const btnCloseGroups = document.getElementById('btnCloseGroups');
 
-  const helpPanel = document.getElementById('helpPanel');
   const btnHelp = document.getElementById('btnHelp');
   const helpMenu = document.getElementById('helpMenu');
 
-  const adminPanel = document.getElementById('adminPanel');
   const btnAdmin = document.getElementById('btnAdmin');
   const adminMenu = document.getElementById('adminMenu');
   const amLoadCsv = document.getElementById('amLoadCsv');
   const amLoadJson = document.getElementById('amLoadJson');
   const amExportJson = document.getElementById('amExportJson');
 
-  const sortPanelContacts = document.getElementById('sortPanelContacts');
   const btnSortContacts   = document.getElementById('btnSortContacts');
   const sortMenuContacts  = document.getElementById('sortMenuContacts');
 
@@ -469,7 +458,7 @@
   const spConsultants = document.getElementById('sp-consultants');
 
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
-  let limits = { contacts: 5, orgs: 5, consultants: 5, ints: 5 };
+  let limits = { contacts: 5, orgs: 5, consultants: 2, ints: 5 };
   let search = '';
   let selectedGroups = new Set();
   let allGroups = [];
@@ -478,25 +467,38 @@
   let expandedInts = new Set();
   let contactSort = { mode:'name', dir:1 };
 
-  /* ---------- DATE HELPERS (AU dd/mm/yyyy) */
+  /* ---------- DATE HELPERS (AU-first, robust) */
   function parseDateAU(input){
     if(!input) return null;
     const s = String(input).trim();
-    const dISO = new Date(s);
-    if(!isNaN(dISO)) return dISO;
+
+    // ISO first (yyyy-mm-dd...)
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+
+    // dd/mm/yyyy or mm/dd/yyyy (or with -)
     const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if(m){
-      let dd = parseInt(m[1],10);
-      let mm = parseInt(m[2],10);
-      let yy = parseInt(m[3],10);
-      if(yy < 100) yy += 2000;
-      if(mm >= 1 && mm <= 12 && dd >=1 && dd <= 31){
-        const d = new Date(yy, mm-1, dd);
-        if(!isNaN(d)) return d;
-      }
+      let a = parseInt(m[1],10);
+      let b = parseInt(m[2],10);
+      let y = parseInt(m[3],10); if(y < 100) y += 2000;
+
+      // AU default (dd/mm); switch to US (mm/dd) only if second token > 12 and first <= 12
+      let dd, mm;
+      if (b > 12 && a >= 1 && a <= 12) { mm = a; dd = b; } else { dd = a; mm = b; }
+
+      const d = new Date(y, mm-1, dd);
+      return isNaN(d) ? null : d;
     }
-    return null;
+
+    // Fallback for other parseable forms
+    const dLoose = new Date(s);
+    return isNaN(dLoose) ? null : dLoose;
   }
+
+  // AU display
   function fmtDate(v){
     const d = parseDateAU(v);
     if(!d) return (v ?? '') + '';
@@ -525,7 +527,6 @@
     catch(e){ lastStamp.textContent = 'Last updated: ' + (d.toLocaleString ? d.toLocaleString('en-AU') : dt); }
   }
 
-  /* Soft pill colours */
   function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
   function pillColors(name){
     const base = 205 + (hashStr(name)%20);
@@ -541,7 +542,6 @@
     return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
   }
 
-  /* Top scrollbar sync */
   function syncTopScroller(wrapper, spacer){
     function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
     updateSpacer();
@@ -567,7 +567,7 @@
     const inside = p => p && p.contains(e.target);
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
     if(!inside(document.getElementById('groupsPanel'))) groupsMenu.style.display='none';
-    if(!inside(adminPanel))  adminMenu.style.display='none';
+    if(!inside(document.getElementById('adminPanel')))  adminMenu.style.display='none';
     if(!inside(document.getElementById('sortPanelContacts'))) sortMenuContacts.style.display='none';
     if(!inside(document.getElementById('helpPanel'))) helpMenu.style.display='none';
   });
@@ -681,7 +681,7 @@
     });
   }
 
-  /* Build groups menu with ✓ highlight */
+  /* Build groups menu */
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -830,11 +830,11 @@
     const orgsView = deriveOrgs(contactsView);
     renderContacts(contactsView);
     renderOrgs(orgsView);
-    renderConsultants();      /* NEW */
+    renderConsultants();
     renderInts(st.interactions);
     countContactsEl.textContent    = contactsView.length ? `(${contactsView.length})` : '';
     countOrgsEl.textContent        = orgsView.length ? `(${orgsView.length})` : '';
-    /* consultants count set inside renderConsultants */
+    countConsultantsEl.textContent = ''; // set in renderConsultants
     countIntsEl.textContent        = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
@@ -1061,7 +1061,7 @@
     return keys.some(k => needles.some(n => k.includes(n)));
   }
   function renderConsultants(){
-    /* To make it respect current search/group filters, swap st.contacts for filteredContacts() */
+    // To respect current filters, use filteredContacts() instead of st.contacts
     const list = applyContactSort((st.contacts || []).filter(isConsultantContact));
     const rows = list.slice(0, limits.consultants).map(c=>{
       const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group))
@@ -1085,11 +1085,12 @@
     countConsultantsEl.textContent = list.length ? `(${list.length})` : '';
   }
 
-  /* Expand toggles */
+  /* Expand toggles (consultants default is 2 rows) */
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
-      const isCollapsed = limits[key]===5;
-      limits[key] = isCollapsed ? 99999 : 5;
+      const base = (key==='consultants' ? 2 : 5);
+      const isCollapsed = limits[key] === base;
+      limits[key] = isCollapsed ? 99999 : base;
       const tw = document.getElementById('tw-'+key);
       if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
       document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
@@ -1227,7 +1228,7 @@
     const file = e.target.files[0]; if(!file) return;
     const text = await file.text();
     st = await csvToState(text);
-    limits = {contacts:5,orgs:5,consultants:5,ints:5};
+    limits = {contacts:5,orgs:5,consultants:2,ints:5};
     chip.className='chip'; chip.textContent='Data: loaded from CSV (local)';
     setLastUpdated(new Date());
     clearError();
@@ -1253,7 +1254,7 @@
       if(!st.interactions || st.interactions.length===0){
         st.interactions = contactsToInteractions(st.contacts);
       }
-      limits = {contacts:5,orgs:5,consultants:5,ints:5};
+      limits = {contacts:5,orgs:5,consultants:2,ints:5};
       chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       clearError();
@@ -1301,7 +1302,7 @@
        chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
        let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
        setLastUpdated(updated || new Date());
-       limits = {contacts:5,orgs:5,consultants:5,ints:5};
+       limits = {contacts:5,orgs:5,consultants:2,ints:5};
        rebuildGroupIndex(); render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){
