@@ -1,1354 +1,298 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MPDC Stakeholder CRM</title>
-<!-- Build r27 — Outlook-aware AU date parser + Consultants card (2-row default) -->
-<style>
-  :root{
-    --accent:#5f809b;
-    --accent-700:#3f5b6f;
-    --accent-50:#f5f9fe;
-    --accent-100:#eaf3fb;
-    --accent-200:#d6e6f4;
-    --grey:#6d6e71;
-    --text:#163046;
-
-    --bg:#ffffff;
-    --card:#ffffff;
-    --border:#cfe0f1;
-
-    --shadow-sm:0 1px 2px rgba(11,41,64,.06);
-    --shadow:0 8px 24px rgba(11,41,64,.08);
-    --shadow-md:0 10px 28px rgba(11,41,64,.12);
-  }
-
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-
-  .head-band{
-    background: linear-gradient(180deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,0) 100%);
-    border-bottom:1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-  }
-  .wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
-
-  .brand{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  h1{font-size:22px;margin:0}
-
-  .icon-cog{width:36px;height:36px;display:block}
-  .logo-wrap{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 8px rgba(11,41,64,.12)}
-
-  .under-title{margin-top:10px}
-  .toolbar{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
-  .toolbar-left{display:flex;flex-direction:column;gap:8px;min-width:280px;flex:1}
-  .toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-  .btn{
-    appearance:none;border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:10px;
-    cursor:pointer;font-size:14px;box-shadow:var(--shadow-sm);transition:.15s ease;color:#0e2b40;
-    text-decoration:none;display:inline-flex;align-items:center;
-  }
-  .btn:hover{border-color:#9dc6e6;box-shadow:0 2px 6px rgba(14,43,64,.12)}
-  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
-  .btn.primary:hover{background:var(--accent-700)}
-  .btn:disabled{opacity:.6;cursor:not-allowed}
-
-  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;
-    padding:6px 10px;box-shadow:var(--shadow-sm);min-width:260px}
-  .search input{border:none;outline:none;font-size:14px;flex:1;background:transparent}
-  .search .clear{border:none;background:transparent;cursor:pointer;color:#496b85}
-
-  .panel{position:relative;display:inline-block}
-  .pop{
-    position:absolute;right:0;top:44px;min-width:260px;background:#fff;border:1px solid var(--border);
-    border-radius:12px;box-shadow:var(--shadow-md);padding:12px;z-index:80;display:none
-  }
-  #groupsMenu{left:0;right:auto;min-width:520px;}
-
-  .groups-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:8px 10px;max-height:360px;overflow:auto}
-  @media (max-width:900px){ .groups-grid{grid-template-columns:repeat(2,minmax(160px,1fr));} }
-  @media (max-width:600px){ .groups-grid{grid-template-columns:1fr;} }
-
-  .tag{
-    display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);
-    border-radius:999px;background:#f7fbff;box-shadow:var(--shadow-sm);font-size:12px;user-select:none
-  }
-  .tag .tick{display:none;font-weight:700}
-  .tag.selected{background:#4b7f6b;color:#fff;border-color:transparent;font-weight:600}
-  .tag.selected .tick{display:inline}
-
-  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#dff3e9;color:#2a5546;border:1px solid #cfe8dc}
-  .stamp{font-size:12px;color:#3b5a73}
-
-  main{display:flex;flex-direction:column;gap:16px;margin:18px 0 0}
-  section.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
-  .card-head{
-    display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
-    border-bottom:1px solid var(--border);
-    background:linear-gradient(90deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 55%, rgba(255,255,255,1) 100%);
-    position:relative;
-  }
-  .card-head::before{
-    content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
-    background: linear-gradient(180deg, #8fb0c7, #5f809b); opacity:.95;
-    border-top-left-radius:14px; border-bottom-left-radius:14px;
-  }
-  .card-head h2{margin:0;font-size:18px}
-  .card-head h2 .count{color:#325878;font-weight:600;margin-left:8px}
-  .subhint{font-size:12px;color:#3b5a73}
-  .card-head .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-  .table-wrap{overflow:auto;max-height:420px}
-  .scroll-top{height:14px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);background:#fff}
-  .scroll-spacer{height:1px;}
-
-  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;background:#fff}
-  thead th{position:sticky;top:0;background: linear-gradient(180deg, #eaf3fe, #dcebfb);z-index:1;font-weight:700;border-bottom:1px solid var(--border);color:#103650}
-  th,td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  tr:nth-child(even) td{background:#f9fbff}
-  .muted{color:#5a6b7a}
-
-  .w-name{max-width:220px}.w-org{max-width:220px}.w-group{max-width:240px}.w-role{max-width:160px}
-  .w-email{max-width:240px}.w-phone{max-width:140px}.w-date{max-width:140px}
-  .w-subj{max-width:260px}.w-notes{max-width:320px}
-
-  #tb-orgs tr[data-org],
-  #tb-contacts tr[data-id],
-  #tb-ints  tr[data-int]{cursor:pointer}
-  #tb-orgs tr[data-org]:hover td,
-  #tb-contacts tr[data-id]:hover td,
-  #tb-ints  tr[data-int]:hover td{background:#edf6ff}
-  tr.org-expander td, tr.contact-expander td, tr.int-expander td{background:#f6faff}
-
-  .org-card,.contact-card,.int-card{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;box-shadow:var(--shadow-sm)}
-  .org-actions,.contact-actions,.int-actions{display:flex;gap:8px;margin:4px 0 6px;flex-wrap:wrap;align-items:center}
-  .compact-line{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;font-size:13px;line-height:1.25;margin:2px 0}
-  .lab{color:#3b5a73}.sep{color:#b9d3e7}
-  .mail{color:#0b65c2;text-decoration:none}.mail:hover{text-decoration:underline}
-
-  .err{display:none;background:#ffeaea;border:1px solid #ffbcbc;color:#7a1e1e;border-radius:10px;padding:10px 12px;margin-top:12px}
-
-  .foot-band{margin-top:22px;background: linear-gradient(0deg, rgba(95,128,155,.22) 0%, rgba(95,128,155,.12) 65%, rgba(255,255,255,0) 100%);border-top:1px solid var(--border);box-shadow: inset 0 1px 0 rgba(255,255,255,.65)}
-  footer{padding:16px 0;color:#2d4c63;display:flex;justify-content:space-between;align-items:center;font-size:13px}
-  a.top{color:#0b65c2;text-decoration:none}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <meta charset="utf-8" />
+  <title>MPDC Stakeholder CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f7f7f9;
+      --card:#ffffff;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --accent:#1f79ff;
+      --chip:#eef4ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+    header{
+      position:sticky;top:0;z-index:10;
+      background:#0b315c;color:#fff;border-bottom:1px solid #062440;
+    }
+    header .wrap{
+      max-width:1200px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 20px;
+    }
+    .title{font-weight:700;font-size:18px;letter-spacing:.2px}
+    main{max-width:1200px;margin:18px auto;padding:0 20px 80px}
+    .filters{
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;
+      background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;
+    }
+    .filter{display:flex;flex-direction:column;gap:6px}
+    .filter label{font-size:12px;color:var(--muted)}
+    select,input[type="text"]{
+      appearance:none;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;
+      padding:10px 12px;font-size:14px;outline:none;
+    }
+    input[type="text"]{background:#fff}
+    .results{
+      margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    }
+    table{width:100%;border-collapse:collapse}
+    thead th{
+      text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:12px;border-bottom:1px solid var(--line);background:#fafafa;
+      white-space:nowrap;
+    }
+    tbody td{padding:12px;border-top:1px solid var(--line);vertical-align:top;font-size:14px}
+    .name{font-weight:600}
+    .subtle{color:var(--muted);font-size:12px}
+    .pill{
+      display:inline-block;padding:2px 8px;border-radius:999px;background:var(--chip);border:1px solid #dbe7ff;font-size:12px;margin:2px 4px 2px 0
+    }
+    .btn{
+      display:inline-block;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;
+      text-decoration:none;color:var(--ink);font-size:13px
+    }
+    .btn:hover{border-color:#cad0d6}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .count{margin:10px 0 0 0;color:var(--muted);font-size:12px}
+    @media (max-width:1000px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:720px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:520px){
+      .filters{grid-template-columns:1fr}
+      thead{display:none}
+      table,tbody,tr,td{display:block;width:100%}
+      tbody td{border:0;border-bottom:1px solid var(--line)}
+      tbody tr{border-top:1px solid var(--line)}
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <div class="wrap">
+      <div class="title">MPDC Stakeholder CRM – Contacts</div>
+      <div class="subtle">Live data view</div>
+    </div>
+  </header>
 
-<div class="head-band">
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo-wrap" aria-hidden="true">
-          <!-- Cog icon -->
-          <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
-            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
-          </svg>
-        </div>
-        <h1>MPDC Stakeholder CRM</h1>
-      </div>
-
-      <div class="under-title">
-        <div class="toolbar">
-          <!-- LEFT -->
-          <div class="toolbar-left">
-            <div class="toolbar-row">
-              <div class="search" title="Type to filter contacts/organisations">
-                <span>🔎</span>
-                <input id="searchBox" type="search" placeholder="Search name, org, email, group…" />
-                <button id="btnClearSearch" class="clear" title="Clear search">✕</button>
-              </div>
-
-              <!-- Groups -->
-              <div class="panel" id="groupsPanel">
-                <button class="btn" id="btnGroups" title="Filter by one or more groups">Groups ▾</button>
-                <div class="pop" id="groupsMenu">
-                  <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
-                  <div class="groups-grid" id="groupsGrid"></div>
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-                    <a href="#" id="linkClearGroups" style="color:#0b65c2;text-decoration:none">Clear</a>
-                    <button class="btn" id="btnCloseGroups">Close</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Export -->
-              <div class="panel" id="exportPanel">
-                <button class="btn" id="btnExportCsv" title="Export contacts to CSV">Export ▾</button>
-                <div class="pop">
-                  <h4 style="margin:4px 0 10px;font-size:14px">Export CSV</h4>
-                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="filtered" checked/> Filtered (current view)</label></div>
-                  <div style="margin:6px 0"><label><input type="radio" name="exportScope" value="all" /> All contacts</label></div>
-                  <div style="margin:6px 0"><small style="color:#3b5a73">Select columns:</small></div>
-                  <div id="colChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px"></div>
-                  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                    <button class="btn" id="btnCancelExport">Cancel</button>
-                    <button class="btn primary" id="btnDoExport">Export</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tips -->
-              <div class="panel" id="helpPanel">
-                <button class="btn" id="btnHelp" title="How to use filters, sorting, expanders">Tips ▾</button>
-                <div class="pop" id="helpMenu" style="max-width:520px">
-                  <ul class="tips" style="padding-left:18px;margin:0">
-                    <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-                    <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
-                    <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
-                    <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
-                    <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
-                    <li><strong>Sort</strong>: in the Contacts header, choose A–Z or newest added.</li>
-                    <li><strong>Export</strong>: choose filtered/all and the columns you need.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div class="toolbar-row" style="gap:12px">
-              <span id="chip" class="chip">Data: loading…</span>
-              <span class="stamp" id="lastStamp">Last updated: —</span>
-            </div>
-
-            <!-- Add Stakeholder button -->
-            <div class="toolbar-row">
-              <a
-                class="btn primary"
-                id="btnAddStakeholder"
-                href="https://forms.office.com/Pages/ResponsePage.aspx?id=iqvrZPTMXEui0ytOly2Wsrl40AF9vslDorV-Toe-MB5UMVRTWTlTT1lETU45TjVNU0ZQNzU3QUhVMi4u"
-                target="_blank"
-                rel="noopener"
-                title="Open the form to add a stakeholder"
-              >Add Stakeholder</a>
-            </div>
-          </div>
-
-          <!-- RIGHT -->
-          <div class="toolbar-row">
-            <button class="btn" id="btnReload" title="Reload remote JSON">Reload data</button>
-
-            <div class="panel" id="adminPanel">
-              <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
-              <div class="pop" id="adminMenu" style="min-width:220px">
-                <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
-                <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
-                <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
-              </div>
-            </div>
-
-            <input type="file" id="fileCsv" accept=".csv,text/csv" hidden />
-            <input type="file" id="fileJson" accept=".json,application/json" hidden />
-          </div>
-        </div>
-
-        <div id="err" class="err"></div>
-      </div>
-    </header>
-  </div>
-</div>
-
-<div class="wrap">
   <main>
-    <!-- CONTACTS -->
-    <section class="card" id="sec-contacts">
-      <div class="card-head">
-        <div>
-          <h2>Contacts <span class="count" id="countContacts"></span></h2>
-          <div class="subhint">Click a row to view details; use Sort for A–Z or newest</div>
-        </div>
-        <div class="right">
-          <button class="btn" id="expContacts">Expand list</button>
-          <div class="panel" id="sortPanelContacts">
-            <button class="btn" id="btnSortContacts">Sort ▾</button>
-            <div class="pop" id="sortMenuContacts">
-              <h4 style="margin:4px 0 10px;font-size:14px">Sort contacts</h4>
-              <div style="margin:6px 0"><button class="btn" data-sort="name-asc">Name A–Z</button></div>
-              <div style="margin:6px 0"><button class="btn" data-sort="name-desc">Name Z–A</button></div>
-              <div style="margin:6px 0"><button class="btn" data-sort="org-asc">Organisation A–Z</button></div>
-              <div style="margin:6px 0"><button class="btn" data-sort="org-desc">Organisation Z–A</button></div>
-              <div style="margin:6px 0"><button class="btn primary" data-sort="added-desc">Last added (newest)</button></div>
-            </div>
-          </div>
-        </div>
+    <!-- Filters -->
+    <section class="filters" aria-label="Filters">
+      <!-- Keep naming as it was for Group -->
+      <div class="filter">
+        <label for="filterGroupPrimary">Group</label>
+        <select id="filterGroupPrimary">
+          <option>All</option>
+        </select>
       </div>
-      <div class="scroll-top"><div class="scroll-spacer" id="sp-contacts"></div></div>
-      <div class="card-body">
-        <div class="table-wrap" id="tw-contacts">
-          <table>
-            <thead>
-              <tr>
-                <th class="w-name">Name</th>
-                <th class="w-org">Organisation</th>
-                <th class="w-group">Group</th>
-                <th class="w-role">Role</th>
-                <th class="w-email">Email</th>
-                <th class="w-phone">Phone</th>
-                <th class="w-date">Last contact</th>
-                <th class="w-subj">Last subject</th>
-                <th class="w-notes">Notes</th>
-              </tr>
-            </thead>
-            <tbody id="tb-contacts"></tbody>
-          </table>
-        </div>
+      <div class="filter">
+        <label for="filterGroupSub">Sub-Group</label>
+        <select id="filterGroupSub">
+          <option>All</option>
+        </select>
+      </div>
+
+      <!-- New: Project filter, with similar look/feel -->
+      <div class="filter">
+        <label for="filterProjectPrimary">Project</label>
+        <select id="filterProjectPrimary">
+          <option>All</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label for="filterProjectSub">Sub-Project</label>
+        <select id="filterProjectSub">
+          <option>All</option>
+        </select>
+      </div>
+
+      <div class="filter" style="grid-column: span 2;">
+        <label for="filterSearch">Search (name, org, email, role, group, project)</label>
+        <input id="filterSearch" type="text" placeholder="Type to filter…" />
       </div>
     </section>
 
-    <!-- ORGANISATIONS -->
-    <section class="card" id="sec-orgs">
-      <div class="card-head">
-        <div>
-          <h2>Organisations <span class="count" id="countOrgs"></span></h2>
-          <div class="subhint">Click a row to see people and email-all</div>
-        </div>
-        <div class="right">
-          <button class="btn" id="expOrgs">Expand list</button>
-        </div>
-      </div>
-      <div class="scroll-top"><div class="scroll-spacer" id="sp-orgs"></div></div>
-      <div class="card-body">
-        <div class="table-wrap" id="tw-orgs">
-          <table>
-            <thead>
-              <tr>
-                <th class="w-org">Organisation</th>
-                <th>Contacts</th>
-                <th class="w-date">Last contact</th>
-                <th class="w-subj">Subject</th>
-              </tr>
-            </thead>
-            <tbody id="tb-orgs"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONSULTANTS / CONTRACTORS -->
-    <section class="card" id="sec-consultants">
-      <div class="card-head">
-        <div>
-          <h2>Consultants & Contractors <span class="count" id="countConsultants"></span></h2>
-          <div class="subhint">Quick view of people tagged as consultants/contractors</div>
-        </div>
-        <div class="right">
-          <button class="btn" id="expConsultants">Expand list</button>
-        </div>
-      </div>
-      <div class="scroll-top"><div class="scroll-spacer" id="sp-consultants"></div></div>
-      <div class="card-body">
-        <div class="table-wrap" id="tw-consultants">
-          <table>
-            <thead>
-              <tr>
-                <th class="w-name">Name</th>
-                <th class="w-org">Organisation</th>
-                <th class="w-role">Role</th>
-                <th class="w-email">Email</th>
-                <th class="w-phone">Phone</th>
-                <th class="w-group">Group</th>
-                <th class="w-date">Last contact</th>
-              </tr>
-            </thead>
-            <tbody id="tb-consultants"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- INTERACTIONS -->
-    <section class="card" id="sec-ints">
-      <div class="card-head">
-        <div>
-          <h2>Interactions <span class="count" id="countInts"></span></h2>
-          <div class="subhint">Chronological view; click a row for details</div>
-        </div>
-        <div class="right">
-          <button class="btn" id="expInts">Expand list</button>
-        </div>
-      </div>
-      <div class="scroll-top"><div class="scroll-spacer" id="sp-ints"></div></div>
-      <div class="card-body">
-        <div class="table-wrap" id="tw-ints">
-          <table>
-            <thead>
-              <tr>
-                <th class="w-date">Date</th>
-                <th class="w-name">Contact</th>
-                <th class="w-org">Organisation</th>
-                <th class="w-subj">Subject</th>
-                <th>Summary</th>
-              </tr>
-            </thead>
-            <tbody id="tb-ints"></tbody>
-          </table>
-        </div>
-      </div>
+    <!-- Results -->
+    <section class="results" aria-label="Contacts">
+      <div class="count" id="resultCount" style="padding:10px 12px;">Loading…</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:240px;">Contact</th>
+            <th>Organisation</th>
+            <th>Email / Phone</th>
+            <th>Role</th>
+            <!-- Show the four NEW columns (replace old Group/Project interest) -->
+            <th>Group (Primary)</th>
+            <th>Sub-Group</th>
+            <th>Project Interest (Primary)</th>
+            <th>Sub-Project</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <!-- injected -->
+        </tbody>
+      </table>
     </section>
   </main>
-</div>
 
-<div class="foot-band">
-  <div class="wrap">
-    <footer>
-      <span>MPDC Stakeholder CRM — please talk to the Comms team for assistance or to suggest edits</span>
-      <a href="#" class="top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
-    </footer>
-  </div>
-</div>
+  <script>
+    // ---------- Helpers for new schema (with spaces & parentheses) ----------
+    const gp = r => (r && r["Group (Primary)"]) || "";
+    const gs = r => (r && r["Sub-Group"]) || "";
+    const pp = r => (r && r["Project Interest (Primary)"]) || "";
+    const ps = r => (r && r["Sub-Project"]) || "";
+    const org = r => (r && r["Organisation"]) || "";
+    const phone = r => (r && (r["Phone number"] || r["Phone"])) || "";
+    const nameOf = r => (r && r["Name"]) || "";
+    const emailOf = r => (r && r["Email"]) || "";
+    const roleOf = r => (r && r["Role"]) || "";
+    const latestDate = r => (r && r["Latest Interaction Date"]) || "";
+    const latestSubject = r => (r && r["Latest interaction subject"]) || "";
 
-<script>
-(function(){
-  const DATA_URL = '/data/data.json';
+    function uniqueSorted(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
 
-  const chip = document.getElementById('chip');
-  const lastStamp = document.getElementById('lastStamp');
-  const errBar = document.getElementById('err');
-
-  const searchBox = document.getElementById('searchBox');
-  const btnClearSearch = document.getElementById('btnClearSearch');
-  const btnReload = document.getElementById('btnReload');
-
-  const exportPanel = document.getElementById('exportPanel');
-  const btnExportCsv = document.getElementById('btnExportCsv');
-  const btnCancelExport = document.getElementById('btnCancelExport');
-  const btnDoExport = document.getElementById('btnDoExport');
-  const colChecks = document.getElementById('colChecks');
-
-  const btnGroups = document.getElementById('btnGroups');
-  const groupsMenu = document.getElementById('groupsMenu');
-  const groupsGrid = document.getElementById('groupsGrid');
-  const linkClearGroups = document.getElementById('linkClearGroups');
-  const btnCloseGroups = document.getElementById('btnCloseGroups');
-
-  const btnHelp = document.getElementById('btnHelp');
-  const helpMenu = document.getElementById('helpMenu');
-
-  const btnAdmin = document.getElementById('btnAdmin');
-  const adminMenu = document.getElementById('adminMenu');
-  const amLoadCsv = document.getElementById('amLoadCsv');
-  const amLoadJson = document.getElementById('amLoadJson');
-  const amExportJson = document.getElementById('amExportJson');
-
-  const btnSortContacts   = document.getElementById('btnSortContacts');
-  const sortMenuContacts  = document.getElementById('sortMenuContacts');
-
-  const countContactsEl = document.getElementById('countContacts');
-  const countOrgsEl = document.getElementById('countOrgs');
-  const countIntsEl = document.getElementById('countInts');
-
-  const contactBody = document.getElementById('tb-contacts');
-  const orgBody = document.getElementById('tb-orgs');
-  const intBody = document.getElementById('tb-ints');
-
-  const twContacts = document.getElementById('tw-contacts');
-  const twOrgs = document.getElementById('tw-orgs');
-  const twInts = document.getElementById('tw-ints');
-
-  const spContacts = document.getElementById('sp-contacts');
-  const spOrgs = document.getElementById('sp-orgs');
-  const spInts = document.getElementById('sp-ints');
-
-  /* Consultants elements */
-  const tbConsultants = document.getElementById('tb-consultants');
-  const countConsultantsEl = document.getElementById('countConsultants');
-  const twConsultants = document.getElementById('tw-consultants');
-  const spConsultants = document.getElementById('sp-consultants');
-
-  let st = { organisations: [], contacts: [], interactions: [], _meta: null };
-  let limits = { contacts: 5, orgs: 5, consultants: 2, ints: 5 };
-  let search = '';
-  let selectedGroups = new Set();
-  let allGroups = [];
-  let expandedOrgs = new Set();
-  let expandedContacts = new Set();
-  let expandedInts = new Set();
-  let contactSort = { mode:'name', dir:1 };
-
-  /* ---------- DATE HELPERS (Outlook-aware, AU-first) */
-  function isMonthNamey(s){
-    return /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\b/i.test(s);
-  }
-  function looksUSSlashWithTime(s){
-    // e.g., 9/10/2025 3:15 PM or 09/10/2025 11 AM (typical Outlook text)
-    return /^\s*\d{1,2}\/\d{1,2}\/\d{2,4}(?:[ T]\d{1,2}(?::\d{2})?\s*(?:AM|PM))?\s*$/i.test(s);
-  }
-  function tryDate(y, m, d){
-    const dt = new Date(y, m - 1, d);
-    return isNaN(dt) ? null : dt;
-  }
-  function parseDateSmart(input){
-    if(!input) return null;
-    const s = String(input).trim();
-    if(!s) return null;
-
-    // Month-name strings: "29 September 2025"
-    if(isMonthNamey(s)){
-      const d = new Date(s);
-      return isNaN(d) ? null : d;
-    }
-
-    // ISO first (yyyy-mm-dd)
-    if(/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)){
-      const d = new Date(s);
-      return isNaN(d) ? null : d;
-    }
-
-    // Numeric dd/mm/yyyy or mm/dd/yyyy (allow -)
-    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:.*)?$/);
-    if(m){
-      let a = parseInt(m[1],10);
-      let b = parseInt(m[2],10);
-      let y = parseInt(m[3],10); if(y < 100) y += 2000;
-
-      // If looks like Outlook US (slashes + optional AM/PM), prefer US mm/dd.
-      if (looksUSSlashWithTime(s)) {
-        const us = tryDate(y, a, b);
-        if (us) return us;
-        const au = tryDate(y, b, a);
-        return au;
-      } else {
-        // AU-first (dd/mm). If AU impossible (b>12) try US.
-        if (b > 12 && a >= 1 && a <= 12) {
-          const us = tryDate(y, a, b);
-          if (us) return us;
-        }
-        const au = tryDate(y, b, a);
-        if (au) return au;
-        const us = tryDate(y, a, b);
-        if (us) return us;
-      }
-    }
-
-    // Final fallback
-    const loose = new Date(s);
-    return isNaN(loose) ? null : loose;
-  }
-
-  // AU display: dd/mm/yyyy
-  function fmtDate(v){
-    const d = parseDateSmart(v);
-    if(!d) return (v ?? '') + '';
-    const dd = String(d.getDate()).padStart(2,'0');
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  function toISOorBlank(v){
-    const d = parseDateSmart(v);
-    return d ? d.toISOString() : null;
-  }
-
-  /* ---------- UI HELPERS */
-  const esc = s => (s??'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const by = (k, dir=1) => (a,b)=> (a[k]??'').toString().localeCompare((b[k]??'').toString(),undefined,{numeric:true,sensitivity:'base'})*dir;
-  const clean = v => (v??'').toString().trim();
-  const norm = v => clean(v).toLowerCase();
-
-  function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
-  function clearError(){ errBar.textContent = ''; errBar.style.display = 'none'; }
-  function setLastUpdated(dt){
-    if(!dt){ lastStamp.textContent = 'Last updated: —'; return; }
-    const d = parseDateSmart(dt) || new Date(dt);
-    try{ lastStamp.textContent = 'Last updated: ' + new Intl.DateTimeFormat('en-AU',{dateStyle:'medium', timeStyle:'short'}).format(d); }
-    catch(e){ lastStamp.textContent = 'Last updated: ' + (d.toLocaleString ? d.toLocaleString('en-AU') : dt); }
-  }
-
-  function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
-  function pillColors(name){
-    const base = 205 + (hashStr(name)%20);
-    const s = 18 + ((hashStr(name)>>3)%10);
-    const l = 95 - ((hashStr(name)>>5)%3);
-    const bg = `hsl(${base} ${s}% ${l}%)`;
-    const bd = `hsl(${base} ${Math.min(30,s+8)}% ${Math.max(70,l-18)}%)`;
-    const fg = '#0e2b40';
-    return {bg, bd, fg};
-  }
-  function renderTag(label){
-    const {bg, bd, fg} = pillColors(label);
-    return `<span class="tag" style="background:${bg};border-color:${bd};color:${fg}" title="${esc(label)}">${esc(label)}</span>`;
-  }
-
-  function syncTopScroller(wrapper, spacer){
-    function updateSpacer(){ spacer.style.width = wrapper.scrollWidth + 'px'; }
-    updateSpacer();
-    wrapper.addEventListener('scroll', ()=> { spacer.parentElement.scrollLeft = wrapper.scrollLeft; });
-    spacer.parentElement.addEventListener('scroll', ()=> { wrapper.scrollLeft = spacer.parentElement.scrollLeft; });
-    new ResizeObserver(updateSpacer).observe(wrapper);
-  }
-  syncTopScroller(twContacts, spContacts);
-  syncTopScroller(twOrgs, spOrgs);
-  syncTopScroller(twConsultants, spConsultants);
-  syncTopScroller(twInts, spInts);
-
-  /* OPEN/CLOSE MENUS */
-  const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
-  document.getElementById('btnGroups').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
-  document.getElementById('btnCloseGroups').addEventListener('click', ()=> groupsMenu.style.display='none');
-  document.getElementById('btnAdmin').addEventListener('click', ()=> toggle(adminMenu));
-  document.getElementById('btnHelp').addEventListener('click', ()=> toggle(helpMenu));
-  document.getElementById('btnExportCsv').addEventListener('click', ()=> toggle(exportPanel.querySelector('.pop')));
-  document.getElementById('btnCancelExport').addEventListener('click', ()=> exportPanel.querySelector('.pop').style.display='none');
-
-  document.addEventListener('click', (e)=>{
-    const inside = p => p && p.contains(e.target);
-    if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
-    if(!inside(document.getElementById('groupsPanel'))) groupsMenu.style.display='none';
-    if(!inside(document.getElementById('adminPanel')))  adminMenu.style.display='none';
-    if(!inside(document.getElementById('sortPanelContacts'))) sortMenuContacts.style.display='none';
-    if(!inside(document.getElementById('helpPanel'))) helpMenu.style.display='none';
-  });
-
-  /* SORT menu */
-  document.getElementById('btnSortContacts').addEventListener('click', (e)=>{
-    e.stopPropagation();
-    sortMenuContacts.style.display = (sortMenuContacts.style.display==='block' ? 'none' : 'block');
-  });
-  document.getElementById('sortMenuContacts').addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const btn = e.target.closest('button[data-sort]');
-    if(!btn) return;
-    const val = btn.dataset.sort;
-    if(val==='name-asc')   contactSort = {mode:'name',  dir: 1};
-    if(val==='name-desc')  contactSort = {mode:'name',  dir:-1};
-    if(val==='org-asc')    contactSort = {mode:'org',   dir: 1};
-    if(val==='org-desc')   contactSort = {mode:'org',   dir:-1};
-    if(val==='added-desc') contactSort = {mode:'added', dir:-1};
-    sortMenuContacts.style.display='none';
-    render();
-  });
-
-  /* Groups normalise */
-  function normalizeGroups(val){
-    if(val == null) return [];
-    if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
-    if(typeof val === 'object'){
-      if(Array.isArray(val.results)) return finaliseGroups(flattenArray(val.results));
-      if('Value' in val) return finaliseGroups([clean(String(val.Value))]);
-      return fromString(String(val));
-    }
-    return fromString(String(val));
-  }
-  function fromString(s){
-    s = String(s).trim(); if(!s) return [];
-    s = s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
-    if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) s = s.slice(1,-1).trim();
-    if(/^\s*\[.*\]\s*$/.test(s)){
-      const p = tryParseJsonArray(s);
-      if(p) return finaliseGroups(flattenArray(p));
-    }
-    s = s.replace(/[\[\]]/g,'').replace(/["']/g,'');
-    const parts = s.split(/[;,|]/).map(x=>x.trim()).filter(Boolean);
-    return finaliseGroups(parts);
-  }
-  function tryParseJsonArray(s){
-    try{ const a = JSON.parse(s); return Array.isArray(a)?a:null; }catch(_){}
-    try{ const a = JSON.parse(s.replace(/'/g,'"')); return Array.isArray(a)?a:null; }catch(_){}
-    try{ const a = JSON.parse(s.replace(/""/g,'"')); return Array.isArray(a)?a:null; }catch(_){}
-    return null;
-  }
-  function flattenArray(arr){
-    const out = [];
-    for(const x of arr){
-      if(x == null) continue;
-      if(typeof x === 'string'){ out.push(clean(x)); continue; }
-      if(typeof x === 'object'){
-        if('Value' in x){ out.push(clean(String(x.Value))); continue; }
-        if('value' in x){ out.push(clean(String(x.value))); continue; }
-        if('Title' in x){ out.push(clean(String(x.Title))); continue; }
-        if(Array.isArray(x.results)){ out.push(...x.results.map(v=>clean(String(v)))); continue; }
-        out.push(clean(String(x).replace(/[\[\]"']/g,''))); continue;
-      }
-      out.push(clean(String(x)));
-    }
-    return out;
-  }
-  function finaliseGroups(parts){
-    const seen = new Set(), kept = [];
-    for(let v of parts){
-      v = clean(v); if(!v) continue;
-      const k = v.toLowerCase();
-      if(!seen.has(k)){ seen.add(k); kept.push(v); }
-    }
-    return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
-  }
-
-  /* Case-insensitive org merge */
-  function deriveOrgs(contacts){
-    const m = new Map();
-    for(const c of contacts){
-      const orgRaw = clean(c.organisation);
-      if(!orgRaw) continue;
-      const key = orgRaw.toLowerCase();
-      if(!m.has(key)) m.set(key,{ organisationDisplay: orgRaw, contact_names: [], last_contact_at: null, recent_topics: [] });
-      const o = m.get(key);
-      if(clean(c.display_name)) o.contact_names.push(c.display_name);
-      if(c.last_contact_at){
-        const d = parseDateSmart(c.last_contact_at) || new Date(c.last_contact_at);
-        if(!o.last_contact_at || (parseDateSmart(o.last_contact_at) || new Date(o.last_contact_at)) < d){
-          o.last_contact_at = d.toISOString();
-        }
-      }
-      if(clean(c.last_subject)) o.recent_topics.push(c.last_subject);
-      if(orgRaw.length > o.organisationDisplay.length) o.organisationDisplay = orgRaw;
-    }
-    return Array.from(m.values()).map(o=>{
-      const n = o.contact_names.length;
-      const previewArr = o.contact_names.slice(0, 3);
-      let preview = previewArr.join(', ');
-      if(n > 3){ preview += ` …(+${n - 3})`; }
-      return {
-        organisation: o.organisationDisplay,
-        contacts: o.contact_names.join(', '),
-        contacts_preview: preview,
-        contacts_count: n,
-        last_contact_at: o.last_contact_at,
-        recent_topics: Array.from(new Set(o.recent_topics.filter(Boolean))).slice(0,3).join(' • ')
-      };
-    });
-  }
-
-  /* Build groups menu */
-  function rebuildGroupIndex(){
-    const counts = new Map(), display = new Map();
-    for(const c of st.contacts){
-      const gs = normalizeGroups(c.group);
-      c.group = gs;
-      for(const g of gs){
-        const key = g.toLowerCase();
-        counts.set(key, (counts.get(key)||0)+1);
-        if(!display.has(key)) display.set(key, g);
-      }
-    }
-    allGroups = Array.from(counts.entries())
-      .map(([key,count])=>({ key, name: display.get(key), count }))
-      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
-    buildGroupMenu();
-  }
-  function buildGroupMenu(){
-    groupsGrid.innerHTML = '';
-    allGroups.forEach(({key,name,count})=>{
-      const btn = document.createElement('button');
-      btn.type='button';
-      btn.className='tag';
-      btn.dataset.groupKey=key;
-      const col = pillColors(name);
-      btn.style.background = col.bg;
-      btn.style.borderColor = col.bd;
-      btn.style.color = col.fg;
-      const selected = selectedGroups.has(key);
-      btn.innerHTML = `<span class="tick">✓</span><span>${esc(name)}</span> <span class="count">(${count})</span>`;
-      if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
-      btn.addEventListener('click', ()=>{
-        if(selectedGroups.has(key)) selectedGroups.delete(key); else selectedGroups.add(key);
-        buildGroupMenu(); updateGroupsButton(); render();
-      });
-      groupsGrid.appendChild(btn);
-    });
-    updateGroupsButton();
-  }
-  function updateGroupsButton(){
-    const n = selectedGroups.size;
-    btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
-  }
-
-  /* EXPORT CSV */
-  function buildExportChecks(){
-    colChecks.innerHTML = '';
-    [
-      {key:'display_name', label:'Name', checked:true},
-      {key:'organisation', label:'Organisation', checked:true},
-      {key:'group',        label:'Group', checked:true},
-      {key:'job_title',    label:'Role', checked:false},
-      {key:'email',        label:'Email', checked:true},
-      {key:'phone',        label:'Phone', checked:true},
-      {key:'last_contact_at', label:'Last contact', checked:true},
-      {key:'last_subject', label:'Last subject', checked:true},
-      {key:'notes',        label:'Notes', checked:false},
-    ].forEach(c=>{
-      const id = 'col_'+c.key;
-      const w = document.createElement('label');
-      w.innerHTML = `<input type="checkbox" id="${id}" ${c.checked?'checked':''}/> ${c.label}`;
-      colChecks.appendChild(w);
-    });
-  }
-  buildExportChecks();
-
-  document.getElementById('btnDoExport').addEventListener('click', ()=>{
-    const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'filtered';
-    const cols = Array.from(colChecks.querySelectorAll('input[type="checkbox"]'))
-      .filter(i=>i.checked).map(i=> i.id.replace(/^col_/,'')); 
-    const list = scope==='all' ? st.contacts : filteredContacts();
-    const rows = list.map(c=>{
-      const obj = {};
-      cols.forEach(k=>{
-        let v = c[k];
-        if(k==='group'){
-          v = Array.isArray(v)? v.join('; ') : (normalizeGroups(v).join('; '));
-        }
-        if(k==='last_contact_at' && v){ v = fmtDate(v); }
-        obj[k] = v ?? '';
-      });
-      return obj;
-    });
-    const csv = toCSV(rows, cols);
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'contacts_export.csv';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    exportPanel.querySelector('.pop').style.display='none';
-  });
-
-  function toCSV(rows, headers){
-    const q = (v)=>{
-      const s = String(v ?? '');
-      if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-      return s;
+    // ---------- State ----------
+    let data = [];
+    const els = {
+      groupPrimary: document.getElementById("filterGroupPrimary"),
+      groupSub: document.getElementById("filterGroupSub"),
+      projPrimary: document.getElementById("filterProjectPrimary"),
+      projSub: document.getElementById("filterProjectSub"),
+      search: document.getElementById("filterSearch"),
+      rows: document.getElementById("rows"),
+      count: document.getElementById("resultCount"),
     };
-    const head = headers.map(q).join(',');
-    const body = rows.map(r => headers.map(h=> q(r[h])).join(',')).join('\n');
-    return head+'\n'+body;
-  }
 
-  /* Search & Sort */
-  let tSearch;
-  function setSearch(val){ search = val; render(); }
-  btnReload.addEventListener('click', ()=> init(true));
-  function applyContactSort(list){
-    const L = [...list];
-    if(contactSort.mode==='name') L.sort(by('display_name', contactSort.dir));
-    else if(contactSort.mode==='org') L.sort(by('organisation', contactSort.dir));
-    else if(contactSort.mode==='added'){ L.sort((a,b)=> ((+b.id||0) - (+a.id||0)) ); }
-    return L;
-  }
-  searchBox.addEventListener('input', ()=>{
-    clearTimeout(tSearch);
-    const v = searchBox.value;
-    tSearch = setTimeout(()=> setSearch(v), 120);
-  });
-  btnClearSearch.addEventListener('click', ()=>{
-    searchBox.value = '';
-    setSearch('');
-    searchBox.focus();
-  });
+    // ---------- Populate selects ----------
+    function fillSelect(select, options){
+      select.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join("");
+    }
 
-  function filteredContacts(){
-    const q = norm(search);
-    const hasSearch = q.length>0;
-    const hasGroupFilter = selectedGroups.size>0;
-    return st.contacts.filter(c=>{
-      if(hasGroupFilter){
-        const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).map(g=>g.toLowerCase());
-        if(!keys.some(k => selectedGroups.has(k))) return false;
-      }
-      if(!hasSearch) return true;
-      const fields = [
-        c.display_name, c.organisation, c.job_title, c.email, c.phone,
-        (Array.isArray(c.group)? c.group.join(', ') : c.group), c.last_subject, c.notes
-      ];
-      return fields.some(v => norm(v).includes(q));
-    });
-  }
+    function buildPrimaries(){
+      fillSelect(els.groupPrimary, ["All"].concat(uniqueSorted(data.map(gp))));
+      fillSelect(els.projPrimary, ["All"].concat(uniqueSorted(data.map(pp))));
+      // fire to populate subs
+      els.groupPrimary.dispatchEvent(new Event("change"));
+      els.projPrimary.dispatchEvent(new Event("change"));
+    }
 
-  function render(){
-    const contactsView = applyContactSort( filteredContacts() );
-    const orgsView = deriveOrgs(contactsView);
-    renderContacts(contactsView);
-    renderOrgs(orgsView);
-    renderConsultants();
-    renderInts(st.interactions);
-    countContactsEl.textContent    = contactsView.length ? `(${contactsView.length})` : '';
-    countOrgsEl.textContent        = orgsView.length ? `(${orgsView.length})` : '';
-    countConsultantsEl.textContent = ''; // set in renderConsultants
-    countIntsEl.textContent        = st.interactions.length ? `(${st.interactions.length})` : '';
-  }
-
-  /* CONTACTS expanders */
-  function closeAllContactExpanders(){
-    document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
-      const prev = el.previousElementSibling;
-      if(prev) prev.setAttribute('aria-expanded','false');
-      el.remove();
-    });
-    expandedContacts.clear();
-  }
-  contactBody.addEventListener('click', (e)=>{
-    const tr = e.target.closest('tr[data-id]');
-    if(!tr) return;
-    const id = tr.dataset.id;
-    const isOpen = expandedContacts.has(String(id));
-    if(isOpen){ closeAllContactExpanders(); return; }
-    closeAllContactExpanders();
-    expandedContacts.add(String(id));
-    tr.insertAdjacentHTML('afterend', buildContactExpanderRow(getContactById(id)));
-    tr.setAttribute('aria-expanded','true');
-  });
-  function getContactById(id){ return (st.contacts||[]).find(c=> String(c.id)===String(id)); }
-
-  function renderContacts(list){
-    const rows = [...list].slice(0, limits.contacts);
-    contactBody.innerHTML = rows.map(c=>{
-      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
-      const email = clean(c.email);
-      const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
-      const row = `
-        <tr data-id="${esc(String(c.id))}" aria-expanded="${expandedContacts.has(String(c.id))?'true':'false'}">
-          <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
-          <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
-          <td class="w-group">${groupsHtml}</td>
-          <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
-          <td class="w-email">${emailHtml}</td>
-          <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-date">${fmtDate(c.last_contact_at)}</td>
-          <td class="w-subj" title="${esc(c.last_subject)}">${esc(c.last_subject)}</td>
-          <td class="w-notes" title="${esc(c.notes)}">${esc(c.notes)}</td>
-        </tr>`;
-      const exp = expandedContacts.has(String(c.id)) ? buildContactExpanderRow(c) : '';
-      return row + exp;
-    }).join('');
-  }
-  function buildContactExpanderRow(c){
-    const groups = (Array.isArray(c.group)? c.group : normalizeGroups(c.group));
-    const chips = groups.map(g=>renderTag(g)).join('') || '<span class="muted">—</span>';
-    const emailBtn = clean(c.email) ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email</a>` : '';
-    return `
-      <tr class="contact-expander"><td colspan="9">
-        <div class="contact-card">
-          <div class="contact-actions">
-            <h3>${esc(c.display_name || '(No name)')}</h3>
-            ${emailBtn}
-          </div>
-          <div class="compact-line">
-            <span class="lab">Organisation</span><span>${esc(c.organisation) || '—'}</span>
-            ${c.job_title ? `<span class="sep">•</span><span class="lab">Role</span><span>${esc(c.job_title)}</span>`:''}
-            ${clean(c.email) ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(c.email)}">${esc(c.email)}</a>`:''}
-            ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
-          </div>
-          <div class="compact-line"><span class="lab">Groups</span>${chips ? `<span class="sep">•</span>${chips}` : '<span>—</span>'}</div>
-          <div class="compact-line">
-            <span class="lab">Last</span>
-            <span>${fmtDate(c.last_contact_at) || '—'}</span>
-            ${c.last_subject ? `<span class="sep">•</span><span>${esc(c.last_subject)}</span>`:''}
-          </div>
-          ${c.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(c.notes)}</span></div>`:''}
-        </div>
-      </td></tr>
-    `;
-  }
-
-  /* ORGS expanders */
-  function closeAllOrgExpanders(){
-    document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
-      const prev = el.previousElementSibling;
-      if(prev) prev.setAttribute('aria-expanded','false');
-      el.remove();
-    });
-    expandedOrgs.clear();
-  }
-  orgBody.addEventListener('click', (e)=>{
-    const tr = e.target.closest('tr[data-org]');
-    if(!tr) return;
-    const org = tr.dataset.org;
-    const isOpen = expandedOrgs.has(org);
-    if(isOpen){ closeAllOrgExpanders(); return; }
-    closeAllOrgExpanders();
-    expandedOrgs.add(org);
-    tr.insertAdjacentHTML('afterend', buildOrgExpanderRow(org));
-    tr.setAttribute('aria-expanded','true');
-  });
-
-  function renderOrgs(list){
-    const rows = [...list].sort((a,b)=> a.organisation.localeCompare(b.organisation,undefined,{sensitivity:'base'})).slice(0, limits.orgs);
-    orgBody.innerHTML = rows.map(o=>`
-      <tr data-org="${esc(o.organisation)}" aria-expanded="${expandedOrgs.has(o.organisation)?'true':'false'}">
-        <td class="w-org" title="${esc(o.organisation)}">${esc(o.organisation)}</td>
-        <td title="${esc(o.contacts)}">${esc(o.contacts_preview || o.contacts)}</td>
-        <td class="w-date">${fmtDate(o.last_contact_at)}</td>
-        <td class="w-subj" title="${esc(o.recent_topics)}">${esc(o.recent_topics)}</td>
-      </tr>
-      ${expandedOrgs.has(o.organisation) ? buildOrgExpanderRow(o.organisation) : ''}
-    `).join('');
-  }
-  function buildOrgExpanderRow(orgName){
-    const all = filteredContacts().filter(c=> clean(c.organisation).toLowerCase() === clean(orgName).toLowerCase());
-    const emails = all.map(c=> clean(c.email)).filter(Boolean);
-    const mailAll = emails.length ? `mailto:${encodeURIComponent(emails.join(','))}` : null;
-    const people = all.map(c=>{
-      const gg = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const chip = gg.map(g=>renderTag(g)).join(' ');
-      const email = clean(c.email);
-      return `
-        <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px dashed #cfe2f2;border-radius:10px;padding:6px 8px;font-size:13px;line-height:1.25;background:#fbfdff">
-          <span style="font-weight:600">${esc(c.display_name || '(No name)')}</span>
-          ${c.job_title ? `<span class="sep">•</span><span style="color:#3b5a73">${esc(c.job_title)}</span>`:''}
-          ${email ? `<span class="sep">•</span><a class="mail" href="mailto:${encodeURIComponent(email)}">${esc(email)}</a>`:''}
-          ${c.phone ? `<span class="sep">•</span><span>${esc(c.phone)}</span>`:''}
-          ${chip ? `<span class="sep">•</span>${chip}`:''}
-        </div>
-      `;
-    }).join('');
-    return `
-      <tr class="org-expander"><td colspan="4">
-        <div class="org-card">
-          <div class="org-actions">
-            <h3>${esc(orgName)}</h3>
-            ${mailAll ? `<a class="btn" href="${mailAll}" title="Email all contacts at ${esc(orgName)}">Email all</a>`:''}
-          </div>
-          ${people ? `<div>${people}</div>` : `<div class="muted">No contacts (matches current filters)</div>`}
-        </div>
-      </td></tr>
-    `;
-  }
-
-  /* INTERACTIONS */
-  function closeAllIntExpanders(){
-    document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
-      const prev = el.previousElementSibling;
-      if(prev) prev.setAttribute('aria-expanded','false');
-      el.remove();
-    });
-    expandedInts.clear();
-  }
-  intBody.addEventListener('click', (e)=>{
-    const tr = e.target.closest('tr[data-int]');
-    if(!tr) return;
-    const key = tr.dataset.int;
-    const isOpen = expandedInts.has(key);
-    if(isOpen){ closeAllIntExpanders(); return; }
-    closeAllIntExpanders();
-    const idx = Number(tr.getAttribute('data-idx')||0);
-    const item = getInteractionByKey(key, idx);
-    expandedInts.add(key);
-    tr.insertAdjacentHTML('afterend', buildIntExpanderRow(item));
-    tr.setAttribute('aria-expanded','true');
-  });
-  function getInteractionByKey(key, idx){
-    const exact = (st.interactions||[]).find(i=> String(i.id ?? '') === key);
-    if(exact) return exact;
-    return st.interactions[idx] || null;
-  }
-  function findContactByName(name){
-    if(!name) return null;
-    const n = norm(name);
-    return (st.contacts||[]).find(c => norm(c.display_name)===n) || null;
-  }
-  function renderInts(list){
-    const sorted = [...list].sort((a,b)=>{
-      const da = parseDateSmart(a.date) || new Date(a.date);
-      const db = parseDateSmart(b.date) || new Date(b.date);
-      return (db - da);
-    });
-    const rows = sorted.slice(0, limits.ints);
-    intBody.innerHTML = rows.map((i,idx)=>{
-      const key = String(i.id ?? `${i.date ?? ''}__${i.contact ?? ''}`);
-      const contact = findContactByName(i.contact);
-      const org = contact ? contact.organisation : (i.organisation || '');
-      const base = `
-        <tr data-int="${esc(key)}" data-idx="${idx}" aria-expanded="${expandedInts.has(key)?'true':'false'}">
-          <td class="w-date">${fmtDate(i.date)}</td>
-          <td class="w-name" title="${esc(i.contact)}">${esc(i.contact)}</td>
-          <td class="w-org" title="${esc(org)}">${esc(org)}</td>
-          <td class="w-subj" title="${esc(i.subject)}">${esc(i.subject)}</td>
-          <td title="${esc(i.summary)}">${esc(i.summary || '')}</td>
-        </tr>`;
-      const exp = expandedInts.has(key) ? buildIntExpanderRow({...i, organisation: org}) : '';
-      return base + exp;
-    }).join('');
-  }
-  function buildIntExpanderRow(i){
-    const c = findContactByName(i.contact);
-    const emailBtn = c && c.email ? `<a class="btn" href="mailto:${encodeURIComponent(c.email)}">Email ${esc(c.display_name||'contact')}</a>` : '';
-    return `
-      <tr class="int-expander"><td colspan="5">
-        <div class="int-card">
-          <div class="int-actions">
-            <h3>${esc(i.subject || 'Interaction')}</h3>
-            ${emailBtn}
-          </div>
-          <div class="compact-line">
-            <span class="lab">Date</span><span>${fmtDate(i.date) || '—'}</span>
-            ${i.contact ? `<span class="sep">•</span><span class="lab">Contact</span><span>${esc(i.contact)}</span>`:''}
-            ${i.organisation ? `<span class="sep">•</span><span class="lab">Organisation</span><span>${esc(i.organisation)}</span>`:''}
-          </div>
-          ${i.summary ? `<div class="compact-line"><span class="lab">Summary</span><span>${esc(i.summary)}</span></div>`:''}
-          ${i.notes ? `<div class="compact-line"><span class="lab">Notes</span><span>${esc(i.notes)}</span></div>`:''}
-        </div>
-      </td></tr>
-    `;
-  }
-
-  /* CONSULTANTS / CONTRACTORS */
-  function isConsultantContact(c){
-    const gs = Array.isArray(c.group) ? c.group : normalizeGroups(c.group);
-    const keys = gs.map(g=>g.toLowerCase());
-    const needles = ['consultants/contractors','consultant','consultants','contractor','contractors'];
-    return keys.some(k => needles.some(n => k.includes(n)));
-  }
-  function renderConsultants(){
-    // Using the full contacts set (not filtered) so it always shows the cohort
-    const list = applyContactSort((st.contacts || []).filter(isConsultantContact));
-    const rows = list.slice(0, limits.consultants).map(c=>{
-      const groups = (Array.isArray(c.group) ? c.group : normalizeGroups(c.group))
-        .slice().sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
-      const groupsHtml = groups.map(g=> renderTag(g)).join(' ');
-      const email = (c.email||'').trim();
-      const emailHtml = email ? `<a class="mail" href="mailto:${encodeURIComponent(email)}" title="Email ${esc(c.display_name||email)}">${esc(email)}</a>` : '';
-      return `
-        <tr>
-          <td class="w-name" title="${esc(c.display_name)}">${esc(c.display_name)}</td>
-          <td class="w-org" title="${esc(c.organisation)}">${esc(c.organisation)}</td>
-          <td class="w-role" title="${esc(c.job_title)}">${esc(c.job_title)}</td>
-          <td class="w-email">${emailHtml}</td>
-          <td class="w-phone" title="${esc(c.phone)}">${esc(c.phone)}</td>
-          <td class="w-group">${groupsHtml}</td>
-          <td class="w-date">${fmtDate(c.last_contact_at)}</td>
-        </tr>
-      `;
-    }).join('');
-    tbConsultants.innerHTML = rows || '';
-    countConsultantsEl.textContent = list.length ? `(${list.length})` : '';
-  }
-
-  /* Expand toggles (consultants default is 2 rows) */
-  function hookExpand(id, key){
-    document.getElementById(id).addEventListener('click', ()=>{
-      const base = (key==='consultants' ? 2 : 5);
-      const isCollapsed = limits[key] === base;
-      limits[key] = isCollapsed ? 99999 : base;
-      const tw = document.getElementById('tw-'+key);
-      if(tw){ tw.style.maxHeight = isCollapsed ? '600px' : '420px'; }
-      document.getElementById(id).textContent = isCollapsed ? 'Show fewer' : 'Expand list';
+    els.groupPrimary.addEventListener("change", () => {
+      const sel = els.groupPrimary.value;
+      const subs = sel === "All"
+        ? uniqueSorted(data.map(gs))
+        : uniqueSorted(data.filter(r => gp(r) === sel).map(gs));
+      fillSelect(els.groupSub, ["All"].concat(subs));
       render();
-      if(!isCollapsed){
-        if(key==='contacts') closeAllContactExpanders();
-        if(key==='orgs') closeAllOrgExpanders();
-        if(key==='ints') closeAllIntExpanders();
-      }
     });
-  }
-  hookExpand('expContacts','contacts');
-  hookExpand('expOrgs','orgs');
-  hookExpand('expConsultants','consultants');
-  hookExpand('expInts','ints');
 
-  /* ---------- CSV/JSON loaders & export */
-  function finder(headers){
-    const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
-    const map = {}; headers.forEach(h=> map[normKey(h)] = h);
-    return (...cands)=> { for(const c of cands){ const hit = map[normKey(c)]; if(hit) return hit; } return null; };
-  }
-
-  function contactsToInteractions(contacts){
-    return (contacts||[])
-      .filter(c => c.last_contact_at)
-      .map((c, i) => ({
-        id: c.id ?? ('c_'+i),
-        date: c.last_contact_at,
-        contact: c.display_name || c.email || '(Unknown)',
-        subject: c.last_subject || '',
-        organisation: c.organisation || '',
-        summary: ''
-      }))
-      .sort((a,b)=>{
-        const da = parseDateSmart(a.date) || new Date(a.date);
-        const db = parseDateSmart(b.date) || new Date(b.date);
-        return db - da;
-      });
-  }
-
-  function normalizeInteractions(arr){
-    if(!Array.isArray(arr)) return [];
-    return arr.map((it, idx)=>{
-      const get = (...keys)=> { for(const k of keys){ if(it && it[k]!=null && String(it[k]).trim()!=='') return it[k]; } return ''; };
-      const rawDate = get('date','Date','interactionDate','InteractionDate','created_at','CreatedAt');
-      const iso = toISOorBlank(rawDate);
-      const contact = String(get('contact','Contact','name','Name')).trim();
-      const subject = String(get('subject','Subject','title','Title')).trim();
-      const summary = String(get('summary','Summary','notes','Notes','body','Body')).trim();
-      const organisation = String(get('organisation','Organization','Organisation')).trim();
-      const id = String(get('id','Id','ID') || `${rawDate||''}__${contact||idx}`);
-      return { id, date: iso || String(rawDate||''), contact, subject, summary, organisation };
-    }).filter(x => x.contact || x.subject || x.date);
-  }
-
-  async function csvToState(csvText){
-    return new Promise((resolve)=>{
-      Papa.parse(csvText,{
-        header:true, skipEmptyLines:true, transformHeader: h=>h.trim(),
-        complete: res=>{
-          const headers = res.meta.fields||[];
-          const find = finder(headers);
-
-          const H = {
-            name: find('Name','Title','Full Name','display_name'),
-            organisation: find('Organisation','Organization'),
-            group: find('Group','Groups','Stakeholder Group'),
-            role: find('Role','Job Title','Position','job_title'),
-            email: find('Email','E-mail'),
-            phone: find('Phone','Phone number','Mobile'),
-            lastDate: find('Last contact','Latest interactions','Latest Interaction Date','Last Contact Date','last_contact','Last Contact'),
-            lastSubj: find('Last subject','Latest interaction subject','Latest Interaction Subject','last_subject','Last Subject'),
-            notes: find('Notes','Comment','Comments','notes')
-          };
-
-          const HI = {
-            date: find('Interaction Date','Date','InteractionDate'),
-            subject: find('Interaction Subject','Subject','InteractionSubject'),
-            summary: find('Summary','Notes','Interaction Notes','InteractionSummary'),
-            contact: find('Contact','Contact Name','Name','Full Name','Title'),
-            organisation: find('Organisation','Organization'),
-            type: find('Type','Interaction Type')
-          };
-
-          let id = 1;
-          const contacts = res.data.map(r=>{
-            const groups = normalizeGroups(r[H.group]);
-            const iso = toISOorBlank(clean(r[H.lastDate]));
-            return {
-              id: id++,
-              display_name: clean(r[H.name] ?? r[H.name]),
-              email: clean(r[H.email]),
-              organisation: clean(r[H.organisation]),
-              group: groups,
-              job_title: clean(r[H.role]),
-              phone: clean(r[H.phone]),
-              last_contact_at: iso || clean(r[H.lastDate]),
-              last_subject: clean(r[H.lastSubj]),
-              notes: clean(r[H.notes])
-            };
-          }).filter(c=> Object.values(c).some(v=> String(v||'').length));
-
-          const interactionsRaw = res.data.map((r, i)=>{
-            const d = clean(r[HI.date]);
-            const s = clean(r[HI.subject]);
-            if(!d && !s) return null;
-            const iso = toISOorBlank(d);
-            return {
-              id: 'csv_'+(i+1),
-              date: iso || d,
-              contact: clean(r[HI.contact] || r[H.name] || r[H.email]) || '',
-              subject: s || '',
-              organisation: clean(r[HI.organisation] || r[H.organisation]) || '',
-              summary: clean(r[HI.summary]) || ''
-            };
-          }).filter(Boolean);
-
-          const interactions = interactionsRaw.length ? interactionsRaw : contactsToInteractions(contacts);
-          const organisations = deriveOrgs(contacts);
-          resolve({organisations, contacts, interactions});
-        }
-      });
+    els.projPrimary.addEventListener("change", () => {
+      const sel = els.projPrimary.value;
+      const subs = sel === "All"
+        ? uniqueSorted(data.map(ps))
+        : uniqueSorted(data.filter(r => pp(r) === sel).map(ps));
+      fillSelect(els.projSub, ["All"].concat(subs));
+      render();
     });
-  }
 
-  document.getElementById('amLoadCsv').addEventListener('click', ()=> { adminMenu.style.display='none'; fileCsv.click(); });
-  document.getElementById('amLoadJson').addEventListener('click', ()=> { adminMenu.style.display='none'; fileJson.click(); });
-  document.getElementById('amExportJson').addEventListener('click', ()=> { adminMenu.style.display='none'; downloadJson(); });
+    els.groupSub.addEventListener("change", render);
+    els.projSub.addEventListener("change", render);
+    els.search.addEventListener("input", () => {
+      // light debounce
+      clearTimeout(els.search._t);
+      els.search._t = setTimeout(render, 120);
+    });
 
-  const fileCsv = document.getElementById('fileCsv');
-  const fileJson = document.getElementById('fileJson');
+    // ---------- Filtering ----------
+    function recordMatches(r, q){
+      if (q.gp !== "All" && gp(r) !== q.gp) return false;
+      if (q.gs !== "All" && gs(r) !== q.gs) return false;
+      if (q.pp !== "All" && pp(r) !== q.pp) return false;
+      if (q.ps !== "All" && ps(r) !== q.ps) return false;
 
-  fileCsv.addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    const text = await file.text();
-    st = await csvToState(text);
-    limits = {contacts:5,orgs:5,consultants:2,ints:5};
-    chip.className='chip'; chip.textContent='Data: loaded from CSV (local)';
-    setLastUpdated(new Date());
-    clearError();
-    rebuildGroupIndex(); render();
-    closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
-    e.target.value='';
-  });
-
-  fileJson.addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    try{
-      const text = await file.text();
-      const data = JSON.parse(text);
-      st = {
-        organisations: data.organisations||[],
-        contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-        interactions: normalizeInteractions(data.interactions||[]),
-        _meta: data._meta||null
-      };
-      if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
-        st.organisations = deriveOrgs(st.contacts);
+      if (q.txt){
+        const hay = [
+          nameOf(r), org(r), emailOf(r), phone(r), roleOf(r),
+          gp(r), gs(r), pp(r), ps(r)
+        ].join(" ").toLowerCase();
+        if (!hay.includes(q.txt)) return false;
       }
-      if(!st.interactions || st.interactions.length===0){
-        st.interactions = contactsToInteractions(st.contacts);
-      }
-      limits = {contacts:5,orgs:5,consultants:2,ints:5};
-      chip.className='chip'; chip.textContent='Data: loaded from JSON (local)';
-      setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
-      clearError();
-      rebuildGroupIndex(); render();
-      closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
-    }catch(err){ showError('Invalid JSON file'); }
-    e.target.value='';
-  });
-
-  function downloadJson(){
-    const out = {
-      organisations: st.organisations||[],
-      contacts: (st.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-      interactions: st.interactions||[],
-      _meta: { updated_at: new Date().toISOString(), source: 'manual-export', contact_count: st.contacts?.length || 0 }
-    };
-    const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'data.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  async function init(forceNoCache=false){
-    try{
-       clearError();
-       const url = DATA_URL + (forceNoCache ? ('?v=' + Date.now()) : '');
-       const r = await fetch(url, {cache: 'no-store'});
-       if(!r.ok) throw new Error('HTTP '+r.status);
-       const data = await r.json();
-       st = {
-         organisations: data.organisations||[],
-         contacts: (data.contacts||[]).map(c=> ({...c, group: normalizeGroups(c.group)})),
-         interactions: normalizeInteractions(data.interactions||[]),
-         _meta: data._meta||null
-       };
-       if((st.organisations||[]).length===0 && (st.contacts||[]).length>0){
-         st.organisations = deriveOrgs(st.contacts);
-       }
-       if(!st.interactions || st.interactions.length===0){
-         st.interactions = contactsToInteractions(st.contacts);
-       }
-       chip.className='chip';
-       chip.textContent = `Data: Connected ✓ — ${(st.contacts?.length||0)} contacts`;
-       let updated = (data && data._meta && data._meta.updated_at) ? data._meta.updated_at : r.headers.get('last-modified');
-       setLastUpdated(updated || new Date());
-       limits = {contacts:5,orgs:5,consultants:2,ints:5};
-       rebuildGroupIndex(); render();
-       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
-    }catch(err){
-       chip.className='chip';
-       chip.textContent='Data: local only (no remote)';
-       setLastUpdated(null);
-       showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
-       rebuildGroupIndex(); render();
-       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
+      return true;
     }
-  }
 
-  document.getElementById('linkClearGroups').addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
+    // ---------- Rendering ----------
+    function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
 
-  /* init */
-  init();
-})();
-</script>
+    function render(){
+      const q = {
+        gp: els.groupPrimary.value || "All",
+        gs: els.groupSub.value || "All",
+        pp: els.projPrimary.value || "All",
+        ps: els.projSub.value || "All",
+        txt: (els.search.value || "").trim().toLowerCase()
+      };
+      const rows = data.filter(r => recordMatches(r, q));
+
+      els.count.textContent = `${rows.length.toLocaleString()} contact${rows.length===1?"":"s"} shown`;
+
+      const html = rows.map(r => {
+        const nm = escapeHtml(nameOf(r));
+        const og = escapeHtml(org(r));
+        const em = (emailOf(r) || "").trim();
+        const ph = escapeHtml(phone(r));
+        const rl = escapeHtml(roleOf(r));
+
+        const gpr = escapeHtml(gp(r));
+        const sgr = escapeHtml(gs(r));
+        const ppr = escapeHtml(pp(r));
+        const spr = escapeHtml(ps(r));
+
+        const emailBtn = em ? `<a class="btn" href="mailto:${encodeURIComponent(em)}?subject=${encodeURIComponent('Hello from MPDC')}" title="Email ${nm}">Email</a>` : `<span class="subtle">No email</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div class="name">${nm || "(No name)"}${rl ? ` <span class="subtle">· ${rl}</span>` : ""}</div>
+              ${latestDate(r) || latestSubject(r) ? `<div class="subtle">Latest: ${escapeHtml(latestDate(r))}${latestSubject(r)?` – ${escapeHtml(latestSubject(r))}`:""}</div>`:""}
+            </td>
+            <td>${og || "<span class='subtle'>(No organisation)</span>"}</td>
+            <td>
+              <div class="controls" style="margin-bottom:6px;">${emailBtn}</div>
+              ${em ? `<div class="subtle">${escapeHtml(em)}</div>`:""}
+              ${ph ? `<div class="subtle">${ph}</div>`:""}
+            </td>
+            <td>${rl || "<span class='subtle'>–</span>"}</td>
+            <!-- NEW visible columns -->
+            <td>${gpr || "<span class='subtle'>–</span>"}</td>
+            <td>${sgr || "<span class='subtle'>–</span>"}</td>
+            <td>${ppr || "<span class='subtle'>–</span>"}</td>
+            <td>${spr || "<span class='subtle'>–</span>"}</td>
+          </tr>
+        `;
+      }).join("");
+
+      els.rows.innerHTML = html || `<tr><td colspan="8" class="subtle" style="padding:18px;">No results.</td></tr>`;
+    }
+
+    // ---------- Boot ----------
+    (async function boot(){
+      try{
+        const res = await fetch("/data/data.json", {cache:"no-store"});
+        if(!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        const json = await res.json();
+        // Accept array or object with .items
+        data = Array.isArray(json) ? json : (json.items || []);
+        // Build primaries and render
+        buildPrimaries();
+        render();
+      }catch(err){
+        els.count.textContent = "Failed to load data.";
+        console.error(err);
+      }
+    })();
+  </script>
 </body>
 </html>
