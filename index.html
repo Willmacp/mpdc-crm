@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r29 — AU date parser; Consultants card; Project filter; 4 new columns; sub-field cleanup; consultants cols trimmed -->
+<!-- Build r30 — AU date parser; Project filter; 4 new columns; sub-field cleanup; consultants cols trimmed; dependent sub-filters -->
 <style>
   :root{
     --accent:#5f809b;
@@ -147,7 +147,7 @@
         <div class="logo-wrap" aria-hidden="true">
           <!-- Cog icon -->
           <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
-            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0-.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35,1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0,.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35,1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a.5.5,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -170,6 +170,13 @@
                 <div class="pop" id="groupsMenu">
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
                   <div class="groups-grid" id="groupsGrid"></div>
+
+                  <!-- NEW: dependent sub-groups -->
+                  <div id="subGroupsBlock" style="margin-top:12px; display:none">
+                    <h4 style="margin:8px 0 8px;font-size:14px">Sub-groups</h4>
+                    <div class="groups-grid" id="subGroupsGrid"></div>
+                  </div>
+
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
                     <a href="#" id="linkClearGroups" style="color:#0b65c2;text-decoration:none">Clear</a>
                     <button class="btn" id="btnCloseGroups">Close</button>
@@ -177,12 +184,19 @@
                 </div>
               </div>
 
-              <!-- NEW: Projects (matches Groups UX; reads Project Interest (Primary)) -->
+              <!-- Projects (matches Groups UX; reads Project Interest (Primary)) -->
               <div class="panel" id="projectsPanel">
                 <button class="btn" id="btnProjects" title="Filter by one or more projects">Projects ▾</button>
                 <div class="pop" id="projectsMenu">
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by project</h4>
                   <div class="projects-grid" id="projectsGrid"></div>
+
+                  <!-- NEW: dependent sub-projects -->
+                  <div id="subProjectsBlock" style="margin-top:12px; display:none">
+                    <h4 style="margin:8px 0 8px;font-size:14px">Sub-projects</h4>
+                    <div class="projects-grid" id="subProjectsGrid"></div>
+                  </div>
+
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
                     <a href="#" id="linkClearProjects" style="color:#0b65c2;text-decoration:none">Clear</a>
                     <button class="btn" id="btnCloseProjects">Close</button>
@@ -212,8 +226,8 @@
                 <div class="pop" id="helpMenu" style="max-width:520px">
                   <ul class="tips" style="padding-left:18px;margin:0">
                     <li><strong>Search</strong>: filters by name, organisation, email, group, subject, notes.</li>
-                    <li><strong>Groups</strong>: select one or more tags; chosen tags show ✓ and highlight.</li>
-                    <li><strong>Projects</strong>: select one or more project tags.</li>
+                    <li><strong>Groups</strong>: select one or more tags; sub-groups appear when a group is selected.</li>
+                    <li><strong>Projects</strong>: select one or more project tags; sub-projects appear when a project is selected.</li>
                     <li><strong>Contacts</strong>: click a row to open a compact details card.</li>
                     <li><strong>Organisations</strong>: click a row to see all people (email-all button included).</li>
                     <li><strong>Expand list</strong>: shows more rows; click again to collapse.</li>
@@ -350,7 +364,7 @@
       <div class="card-head">
         <div>
           <h2>Consultants & Contractors <span class="count" id="countConsultants"></span></h2>
-          <div class="subhint">Quick view of people tagged as consultants/contractors</div>
+        <div class="subhint">Quick view of people tagged as consultants/contractors</div>
         </div>
         <div class="right">
           <button class="btn" id="expConsultants">Expand list</button>
@@ -440,12 +454,18 @@
   const linkClearGroups = document.getElementById('linkClearGroups');
   const btnCloseGroups = document.getElementById('btnCloseGroups');
 
-  /* NEW: Projects controls */
+  /* Projects controls */
   const btnProjects = document.getElementById('btnProjects');
   const projectsMenu = document.getElementById('projectsMenu');
   const projectsGrid = document.getElementById('projectsGrid');
   const linkClearProjects = document.getElementById('linkClearProjects');
   const btnCloseProjects = document.getElementById('btnCloseProjects');
+
+  /* Sub filter elements */
+  const subGroupsBlock   = document.getElementById('subGroupsBlock');
+  const subGroupsGrid    = document.getElementById('subGroupsGrid');
+  const subProjectsBlock = document.getElementById('subProjectsBlock');
+  const subProjectsGrid  = document.getElementById('subProjectsGrid');
 
   const btnHelp = document.getElementById('btnHelp');
   const helpMenu = document.getElementById('helpMenu');
@@ -484,11 +504,19 @@
   let st = { organisations: [], contacts: [], interactions: [], _meta: null };
   let limits = { contacts: 5, orgs: 5, consultants: 2, ints: 5 };
   let search = '';
+
+  /* Selected sets */
   let selectedGroups = new Set();
+  let selectedSubGroups = new Set();
   let allGroups = [];
-  /* NEW: project filters */
+
   let selectedProjects = new Set();
+  let selectedSubProjects = new Set();
   let allProjects = [];
+
+  /* Indices mapping primary -> sub options (counts) */
+  let subGroupIndex = new Map();    // Map<groupKey, Map<subKey, {name,count}>>
+  let subProjectIndex = new Map();  // Map<projectKey, Map<subKey, {name,count}>>
 
   let expandedOrgs = new Set();
   let expandedContacts = new Set();
@@ -512,33 +540,31 @@
     const s = String(input).trim();
     if(!s) return null;
 
-    // Month-name strings: "29 September 2025"
+    // Month-name strings
     if(isMonthNamey(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // ISO first (yyyy-mm-dd)
+    // ISO first
     if(/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // Numeric dd/mm/yyyy or mm/dd/yyyy (allow -)
+    // Numeric dd/mm/yyyy or mm/dd/yyyy
     const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:.*)?$/);
     if(m){
       let a = parseInt(m[1],10);
       let b = parseInt(m[2],10);
       let y = parseInt(m[3],10); if(y < 100) y += 2000;
 
-      // If looks like Outlook US (slashes + optional AM/PM), prefer US mm/dd.
       if (looksUSSlashWithTime(s)) {
         const us = tryDate(y, a, b);
         if (us) return us;
         const au = tryDate(y, b, a);
         return au;
       } else {
-        // AU-first (dd/mm). If AU impossible (b>12) try US.
         if (b > 12 && a >= 1 && a <= 12) {
           const us = tryDate(y, a, b);
           if (us) return us;
@@ -550,7 +576,6 @@
       }
     }
 
-    // Final fallback
     const loose = new Date(s);
     return isNaN(loose) ? null : loose;
   }
@@ -575,7 +600,7 @@
   const clean = v => (v??'').toString().trim();
   const norm = v => clean(v).toLowerCase();
 
-  // NEW: tidy sub-fields that may arrive as '["..."]', arrays, or delimited strings (preserve order)
+  // Normalise sub-fields that may arrive as '["..."]', arrays, or delimited strings (preserve order)
   function subText(v){
     if (Array.isArray(v)) return v.map(x => clean(String(x))).filter(Boolean).join('; ');
     const s = clean(v);
@@ -584,6 +609,15 @@
     const noBr = s.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '');
     const parts = noBr.split(/[;,|]/).map(x => x.replace(/^["']|["']$/g,'').trim()).filter(Boolean);
     return parts.join('; ');
+  }
+  // Same as above but return array
+  function subArray(v){
+    if (Array.isArray(v)) return v.map(x => clean(String(x))).filter(Boolean);
+    const s = clean(v);
+    if (!s) return [];
+    try { const arr = JSON.parse(s); if (Array.isArray(arr)) return arr.map(x => clean(String(x))).filter(Boolean); } catch(_) {}
+    const noBr = s.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '');
+    return noBr.split(/[;,|]/).map(x => x.replace(/^["']|["']$/g,'').trim()).filter(Boolean);
   }
 
   function showError(msg){ errBar.textContent = msg; errBar.style.display = 'block'; }
@@ -627,7 +661,6 @@
   document.getElementById('btnGroups').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
   document.getElementById('btnCloseGroups').addEventListener('click', ()=> groupsMenu.style.display='none');
 
-  /* NEW: Projects open/close */
   document.getElementById('btnProjects').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(projectsMenu); });
   document.getElementById('btnCloseProjects').addEventListener('click', ()=> projectsMenu.style.display='none');
 
@@ -665,7 +698,7 @@
     render();
   });
 
-  /* Groups normalise (now reading the new Primary column via csv/JSON mapping) */
+  /* --------- Primary tags normalise */
   function normalizeGroups(val){
     if(val == null) return [];
     if(Array.isArray(val)) return finaliseGroups(flattenArray(val));
@@ -720,7 +753,7 @@
     return kept.sort((a,b)=> a.localeCompare(b, undefined, {sensitivity:'base'}));
   }
 
-  /* Case-insensitive org merge */
+  /* --------- Orgs rollup */
   function deriveOrgs(contacts){
     const m = new Map();
     for(const c of contacts){
@@ -755,7 +788,7 @@
     });
   }
 
-  /* Build groups menu (uses contact.group which is now derived from Group (Primary)) */
+  /* --------- Build primary indices + menus */
   function rebuildGroupIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -772,34 +805,7 @@
       .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
     buildGroupMenu();
   }
-  function buildGroupMenu(){
-    groupsGrid.innerHTML = '';
-    allGroups.forEach(({key,name,count})=>{
-      const btn = document.createElement('button');
-      btn.type='button';
-      btn.className='tag';
-      btn.dataset.groupKey=key;
-      const col = pillColors(name);
-      btn.style.background = col.bg;
-      btn.style.borderColor = col.bd;
-      btn.style.color = col.fg;
-      const selected = selectedGroups.has(key);
-      btn.innerHTML = `<span class="tick">✓</span><span>${esc(name)}</span> <span class="count">(${count})</span>`;
-      if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
-      btn.addEventListener('click', ()=>{
-        if(selectedGroups.has(key)) selectedGroups.delete(key); else selectedGroups.add(key);
-        buildGroupMenu(); updateGroupsButton(); render();
-      });
-      groupsGrid.appendChild(btn);
-    });
-    updateGroupsButton();
-  }
-  function updateGroupsButton(){
-    const n = selectedGroups.size;
-    btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
-  }
 
-  /* NEW: Build projects menu (uses contact.project from Project Interest (Primary)) */
   function rebuildProjectIndex(){
     const counts = new Map(), display = new Map();
     for(const c of st.contacts){
@@ -816,6 +822,77 @@
       .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
     buildProjectMenu();
   }
+
+  /* --------- Build dependent sub indices */
+  function rebuildSubGroupIndex(){
+    subGroupIndex = new Map();
+    for (const c of st.contacts){
+      const prims = Array.isArray(c.group) ? c.group : normalizeGroups(c.group);
+      const subs  = subArray(c.group_sub);
+      if (!prims.length || !subs.length) continue;
+      for (const p of prims){
+        const pKey = p.toLowerCase();
+        if (!subGroupIndex.has(pKey)) subGroupIndex.set(pKey, new Map());
+        const bucket = subGroupIndex.get(pKey);
+        for (const s of subs){
+          const sKey = s.toLowerCase();
+          const cur = bucket.get(sKey) || {name: s, count:0};
+          cur.count += 1;
+          bucket.set(sKey, cur);
+        }
+      }
+    }
+  }
+  function rebuildSubProjectIndex(){
+    subProjectIndex = new Map();
+    for (const c of st.contacts){
+      const prims = Array.isArray(c.project) ? c.project : normalizeGroups(c.project);
+      const subs  = subArray(c.project_sub);
+      if (!prims.length || !subs.length) continue;
+      for (const p of prims){
+        const pKey = p.toLowerCase();
+        if (!subProjectIndex.has(pKey)) subProjectIndex.set(pKey, new Map());
+        const bucket = subProjectIndex.get(pKey);
+        for (const s of subs){
+          const sKey = s.toLowerCase();
+          const cur = bucket.get(sKey) || {name: s, count:0};
+          cur.count += 1;
+          bucket.set(sKey, cur);
+        }
+      }
+    }
+  }
+
+  /* --------- Menus */
+  function buildGroupMenu(){
+    groupsGrid.innerHTML = '';
+    allGroups.forEach(({key,name,count})=>{
+      const btn = document.createElement('button');
+      btn.type='button';
+      btn.className='tag';
+      btn.dataset.groupKey=key;
+      const col = pillColors(name);
+      btn.style.background = col.bg;
+      btn.style.borderColor = col.bd;
+      btn.style.color = col.fg;
+      const selected = selectedGroups.has(key);
+      btn.innerHTML = `<span class="tick">✓</span><span>${esc(name)}</span> <span class="count">(${count})</span>`;
+      if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
+      btn.addEventListener('click', ()=>{
+        if(selectedGroups.has(key)) selectedGroups.delete(key); else selectedGroups.add(key);
+        if (selectedGroups.size === 0) selectedSubGroups.clear();
+        buildGroupMenu(); updateGroupsButton(); buildSubGroupMenu(); render();
+      });
+      groupsGrid.appendChild(btn);
+    });
+    updateGroupsButton();
+    buildSubGroupMenu(); // keep sub menu in sync
+  }
+  function updateGroupsButton(){
+    const n = selectedGroups.size;
+    btnGroups.textContent = n>0 ? `Groups (${n}) ▾` : 'Groups ▾';
+  }
+
   function buildProjectMenu(){
     projectsGrid.innerHTML = '';
     allProjects.forEach(({key,name,count})=>{
@@ -832,18 +909,101 @@
       if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
       btn.addEventListener('click', ()=>{
         if(selectedProjects.has(key)) selectedProjects.delete(key); else selectedProjects.add(key);
-        buildProjectMenu(); updateProjectsButton(); render();
+        if (selectedProjects.size === 0) selectedSubProjects.clear();
+        buildProjectMenu(); updateProjectsButton(); buildSubProjectMenu(); render();
       });
       projectsGrid.appendChild(btn);
     });
     updateProjectsButton();
+    buildSubProjectMenu(); // keep sub menu in sync
   }
   function updateProjectsButton(){
     const n = selectedProjects.size;
     btnProjects.textContent = n>0 ? `Projects (${n}) ▾` : 'Projects ▾';
   }
 
-  /* EXPORT CSV (unchanged) */
+  /* --------- Dependent sub menus */
+  function buildSubGroupMenu(){
+    const hasPrim = selectedGroups.size > 0;
+    subGroupsBlock.style.display = hasPrim ? 'block' : 'none';
+    if (!hasPrim){ subGroupsGrid.innerHTML = ''; selectedSubGroups.clear(); return; }
+
+    const merged = new Map();
+    for (const g of selectedGroups){
+      const bucket = subGroupIndex.get(g);
+      if (!bucket) continue;
+      for (const [k,info] of bucket.entries()){
+        const existing = merged.get(k) || {name: info.name, count:0};
+        existing.count += info.count;
+        merged.set(k, existing);
+      }
+    }
+
+    const items = Array.from(merged.entries())
+      .map(([k,info]) => ({ key:k, name:info.name, count:info.count }))
+      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+
+    subGroupsGrid.innerHTML = '';
+    items.forEach(({key,name,count})=>{
+      const btn = document.createElement('button');
+      btn.type='button';
+      btn.className='tag';
+      const col = pillColors(name);
+      btn.style.background = col.bg;
+      btn.style.borderColor = col.bd;
+      btn.style.color = col.fg;
+      const selected = selectedSubGroups.has(key);
+      btn.innerHTML = `<span class="tick">✓</span><span>${esc(name)}</span> <span class="count">(${count})</span>`;
+      if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
+      btn.addEventListener('click', ()=>{
+        if(selectedSubGroups.has(key)) selectedSubGroups.delete(key); else selectedSubGroups.add(key);
+        buildSubGroupMenu(); render();
+      });
+      subGroupsGrid.appendChild(btn);
+    });
+  }
+
+  function buildSubProjectMenu(){
+    const hasPrim = selectedProjects.size > 0;
+    subProjectsBlock.style.display = hasPrim ? 'block' : 'none';
+    if (!hasPrim){ subProjectsGrid.innerHTML = ''; selectedSubProjects.clear(); return; }
+
+    const merged = new Map();
+    for (const p of selectedProjects){
+      const bucket = subProjectIndex.get(p);
+      if (!bucket) continue;
+      for (const [k,info] of bucket.entries()){
+        const existing = merged.get(k) || {name: info.name, count:0};
+        existing.count += info.count;
+        merged.set(k, existing);
+      }
+    }
+
+    const items = Array.from(merged.entries())
+      .map(([k,info]) => ({ key:k, name:info.name, count:info.count }))
+      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
+
+    subProjectsGrid.innerHTML = '';
+    items.forEach(({key,name,count})=>{
+      const btn = document.createElement('button');
+      btn.type='button';
+      btn.className='tag';
+      const col = pillColors(name);
+      btn.style.background = col.bg;
+      btn.style.borderColor = col.bd;
+      btn.style.color = col.fg;
+      const selected = selectedSubProjects.has(key);
+      btn.innerHTML = `<span class="tick">✓</span><span>${esc(name)}</span> <span class="count">(${count})</span>`;
+      if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
+      btn.addEventListener('click', ()=>{
+        if(selectedSubProjects.has(key)) selectedSubProjects.delete(key); else selectedSubProjects.add(key);
+        buildSubProjectMenu(); render();
+      });
+      subProjectsGrid.appendChild(btn);
+    });
+  }
+
+  /* --------- EXPORT CSV (unchanged) */
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -903,7 +1063,7 @@
     return head+'\n'+body;
   }
 
-  /* Search & Sort */
+  /* --------- Search & Sort */
   let tSearch;
   function setSearch(val){ search = val; render(); }
   btnReload.addEventListener('click', ()=> init(true));
@@ -925,25 +1085,41 @@
     searchBox.focus();
   });
 
+  /* --------- Filtering (primary + dependent sub filters) */
   function filteredContacts(){
     const q = norm(search);
     const hasSearch = q.length>0;
+
     const hasGroupFilter = selectedGroups.size>0;
     const hasProjectFilter = selectedProjects.size>0;
+    const hasSubGroupFilter   = hasGroupFilter   && selectedSubGroups.size>0;
+    const hasSubProjectFilter = hasProjectFilter && selectedSubProjects.size>0;
+
     return st.contacts.filter(c=>{
       if(hasGroupFilter){
         const keys = (Array.isArray(c.group)? c.group : normalizeGroups(c.group)).map(g=>g.toLowerCase());
         if(!keys.some(k => selectedGroups.has(k))) return false;
       }
+      if(hasSubGroupFilter){
+        const subs = subArray(c.group_sub).map(s=>s.toLowerCase());
+        if(!subs.some(s => selectedSubGroups.has(s))) return false;
+      }
+
       if(hasProjectFilter){
         const keys = (Array.isArray(c.project)? c.project : normalizeGroups(c.project)).map(p=>p.toLowerCase());
         if(!keys.some(k => selectedProjects.has(k))) return false;
       }
+      if(hasSubProjectFilter){
+        const subs = subArray(c.project_sub).map(s=>s.toLowerCase());
+        if(!subs.some(s => selectedSubProjects.has(s))) return false;
+      }
+
       if(!hasSearch) return true;
       const fields = [
         c.display_name, c.organisation, c.job_title, c.email, c.phone,
         (Array.isArray(c.group)? c.group.join(', ') : c.group),
         (Array.isArray(c.project)? c.project.join(', ') : c.project),
+        c.group_sub, c.project_sub,
         c.last_subject, c.notes
       ];
       return fields.some(v => norm(v).includes(q));
@@ -963,7 +1139,7 @@
     countIntsEl.textContent        = st.interactions.length ? `(${st.interactions.length})` : '';
   }
 
-  /* CONTACTS expanders */
+  /* --------- CONTACTS expanders */
   function closeAllContactExpanders(){
     document.querySelectorAll('#tb-contacts tr.contact-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -1047,7 +1223,7 @@
     `;
   }
 
-  /* ORGS expanders */
+  /* --------- ORGS expanders */
   function closeAllOrgExpanders(){
     document.querySelectorAll('#tb-orgs tr.org-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -1111,7 +1287,7 @@
     `;
   }
 
-  /* INTERACTIONS */
+  /* --------- INTERACTIONS */
   function closeAllIntExpanders(){
     document.querySelectorAll('#tb-ints tr.int-expander').forEach(el=>{
       const prev = el.previousElementSibling;
@@ -1188,7 +1364,7 @@
     `;
   }
 
-  /* CONSULTANTS / CONTRACTORS */
+  /* --------- CONSULTANTS / CONTRACTORS */
   function isConsultantContact(c){
     const gs = Array.isArray(c.group) ? c.group : normalizeGroups(c.group);
     const keys = gs.map(g=>g.toLowerCase());
@@ -1196,7 +1372,6 @@
     return keys.some(k => needles.some(n => k.includes(n)));
   }
   function renderConsultants(){
-    // Using the full contacts set (not filtered) so it always shows the cohort
     const list = applyContactSort((st.contacts || []).filter(isConsultantContact));
     const rows = list.slice(0, limits.consultants).map(c=>{
       const email = (c.email||'').trim();
@@ -1215,7 +1390,7 @@
     countConsultantsEl.textContent = list.length ? `(${list.length})` : '';
   }
 
-  /* Expand toggles (consultants default is 2 rows) */
+  /* --------- Expand toggles */
   function hookExpand(id, key){
     document.getElementById(id).addEventListener('click', ()=>{
       const base = (key==='consultants' ? 2 : 5);
@@ -1237,7 +1412,7 @@
   hookExpand('expConsultants','consultants');
   hookExpand('expInts','ints');
 
-  /* ---------- CSV/JSON loaders & export */
+  /* --------- CSV/JSON loaders & export */
   function finder(headers){
     const normKey = x => x.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     const map = {}; headers.forEach(h=> map[normKey(h)] = h);
@@ -1347,7 +1522,9 @@
     setLastUpdated(new Date());
     clearError();
     rebuildGroupIndex();
-    rebuildProjectIndex();     // NEW
+    rebuildProjectIndex();
+    rebuildSubGroupIndex();
+    rebuildSubProjectIndex();
     render();
     closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     e.target.value='';
@@ -1362,7 +1539,6 @@
         organisations: data.organisations||[],
         contacts: (data.contacts||[]).map(c=> ({
           ...c,
-          // prefer new fields if they exist; otherwise keep existing
           group: normalizeGroups(c["Group (Primary)"] ?? c.group),
           group_sub: c["Sub-Group"] ?? c.group_sub ?? '',
           project: normalizeGroups(c["Project Interest (Primary)"] ?? c.project),
@@ -1382,7 +1558,9 @@
       setLastUpdated(data && data._meta && data._meta.updated_at ? data._meta.updated_at : new Date());
       clearError();
       rebuildGroupIndex();
-      rebuildProjectIndex();   // NEW
+      rebuildProjectIndex();
+      rebuildSubGroupIndex();
+      rebuildSubProjectIndex();
       render();
       closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){ showError('Invalid JSON file'); }
@@ -1439,7 +1617,9 @@
        setLastUpdated(updated || new Date());
        limits = {contacts:5,orgs:5,consultants:2,ints:5};
        rebuildGroupIndex();
-       rebuildProjectIndex();   // NEW
+       rebuildProjectIndex();
+       rebuildSubGroupIndex();
+       rebuildSubProjectIndex();
        render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }catch(err){
@@ -1448,14 +1628,27 @@
        setLastUpdated(null);
        showError('Could not load /data/data.json — check Netlify “_redirects” points to your SharePoint download link (with &download=1).');
        rebuildGroupIndex();
-       rebuildProjectIndex();   // NEW
+       rebuildProjectIndex();
+       rebuildSubGroupIndex();
+       rebuildSubProjectIndex();
        render();
        closeAllContactExpanders(); closeAllOrgExpanders(); closeAllIntExpanders();
     }
   }
 
-  document.getElementById('linkClearGroups').addEventListener('click', (e)=>{ e.preventDefault(); selectedGroups.clear(); buildGroupMenu(); updateGroupsButton(); render(); });
-  document.getElementById('linkClearProjects').addEventListener('click', (e)=>{ e.preventDefault(); selectedProjects.clear(); buildProjectMenu(); updateProjectsButton(); render(); });
+  /* Clear links include sub selections */
+  document.getElementById('linkClearGroups').addEventListener('click', (e)=>{
+    e.preventDefault();
+    selectedGroups.clear();
+    selectedSubGroups.clear();
+    buildGroupMenu(); updateGroupsButton(); buildSubGroupMenu(); render();
+  });
+  document.getElementById('linkClearProjects').addEventListener('click', (e)=>{
+    e.preventDefault();
+    selectedProjects.clear();
+    selectedSubProjects.clear();
+    buildProjectMenu(); updateProjectsButton(); buildSubProjectMenu(); render();
+  });
 
   /* init */
   init();
