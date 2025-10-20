@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MPDC Stakeholder CRM</title>
-<!-- Build r30 — AU date parser; Project filter; 4 new columns; sub-field cleanup; consultants cols trimmed; dependent sub-filters -->
+<!-- Build r31 — dependent sub-filters + “keep open until sub selected” lock -->
 <style>
   :root{
     --accent:#5f809b;
@@ -147,7 +147,7 @@
         <div class="logo-wrap" aria-hidden="true">
           <!-- Cog icon -->
           <svg class="icon-cog" viewBox="0 0 24 24" role="img" aria-label="Settings">
-            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0,.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35,1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a.5.5,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+            <path fill="#5f809b" d="M19.14,12.94a7.06,7.06,0,0,0,0-1.88l2-1.52a.5.5,0,0,0,.12-.65l-1.9-3.29a.5.5,0,0,0-.61-.22l-2.35,1a7.28,7.28,0,0,0-1.63-.95l-.36-2.52A.5.5,0,0,0,13.91,2H10.09a.5.5,0,0,0-.49.41L9.24,4.93a7.28,7.28,0,0,0-1.63.95l-2.35-1a.5.5,0,0,0-.61.22L2.75,8.37a.5.5,0,0,0,.12.65l2,1.52a7.06,7.06,0,0,0,0,1.88l-2,1.52a.5.5,0,0,0,.12.65l1.9,3.29a.5.5,0,0,0,.61.22l2.35-1a7.28,7.28,0,0,0,1.63.95l.36,2.52a.5.5,0,0,0,.49.41h3.82a.5.5,0,0,0,.49-.41l.36-2.52a7.28,7.28,0,0,0,1.63-.95l2.35,1a.5.5,0,0,0,.61-.22l1.9-3.29a.5.5,0,0,0,.12-.65ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
           </svg>
         </div>
         <h1>MPDC Stakeholder CRM</h1>
@@ -171,7 +171,7 @@
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by group</h4>
                   <div class="groups-grid" id="groupsGrid"></div>
 
-                  <!-- NEW: dependent sub-groups -->
+                  <!-- Sub-groups (dependent) -->
                   <div id="subGroupsBlock" style="margin-top:12px; display:none">
                     <h4 style="margin:8px 0 8px;font-size:14px">Sub-groups</h4>
                     <div class="groups-grid" id="subGroupsGrid"></div>
@@ -191,7 +191,7 @@
                   <h4 style="margin:4px 0 10px;font-size:14px">Filter by project</h4>
                   <div class="projects-grid" id="projectsGrid"></div>
 
-                  <!-- NEW: dependent sub-projects -->
+                  <!-- Sub-projects (dependent) -->
                   <div id="subProjectsBlock" style="margin-top:12px; display:none">
                     <h4 style="margin:8px 0 8px;font-size:14px">Sub-projects</h4>
                     <div class="projects-grid" id="subProjectsGrid"></div>
@@ -364,7 +364,7 @@
       <div class="card-head">
         <div>
           <h2>Consultants & Contractors <span class="count" id="countConsultants"></span></h2>
-        <div class="subhint">Quick view of people tagged as consultants/contractors</div>
+          <div class="subhint">Quick view of people tagged as consultants/contractors</div>
         </div>
         <div class="right">
           <button class="btn" id="expConsultants">Expand list</button>
@@ -514,6 +514,10 @@
   let selectedSubProjects = new Set();
   let allProjects = [];
 
+  /* Dependent menu lock flags: keep open until a sub is chosen */
+  let requireSubSelectGroups = false;
+  let requireSubSelectProjects = false;
+
   /* Indices mapping primary -> sub options (counts) */
   let subGroupIndex = new Map();    // Map<groupKey, Map<subKey, {name,count}>>
   let subProjectIndex = new Map();  // Map<projectKey, Map<subKey, {name,count}>>
@@ -528,7 +532,6 @@
     return /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\b/i.test(s);
   }
   function looksUSSlashWithTime(s){
-    // e.g., 9/10/2025 3:15 PM or 09/10/2025 11 AM (typical Outlook text)
     return /^\s*\d{1,2}\/\d{1,2}\/\d{2,4}(?:[ T]\d{1,2}(?::\d{2})?\s*(?:AM|PM))?\s*$/i.test(s);
   }
   function tryDate(y, m, d){
@@ -540,19 +543,16 @@
     const s = String(input).trim();
     if(!s) return null;
 
-    // Month-name strings
     if(isMonthNamey(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // ISO first
     if(/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // Numeric dd/mm/yyyy or mm/dd/yyyy
     const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:.*)?$/);
     if(m){
       let a = parseInt(m[1],10);
@@ -580,7 +580,6 @@
     return isNaN(loose) ? null : loose;
   }
 
-  // AU display: dd/mm/yyyy
   function fmtDate(v){
     const d = parseDateSmart(v);
     if(!d) return (v ?? '') + '';
@@ -600,7 +599,7 @@
   const clean = v => (v??'').toString().trim();
   const norm = v => clean(v).toLowerCase();
 
-  // Normalise sub-fields that may arrive as '["..."]', arrays, or delimited strings (preserve order)
+  // Normalise sub-fields that may arrive as '["..."]', arrays, or delimited strings
   function subText(v){
     if (Array.isArray(v)) return v.map(x => clean(String(x))).filter(Boolean).join('; ');
     const s = clean(v);
@@ -610,7 +609,6 @@
     const parts = noBr.split(/[;,|]/).map(x => x.replace(/^["']|["']$/g,'').trim()).filter(Boolean);
     return parts.join('; ');
   }
-  // Same as above but return array
   function subArray(v){
     if (Array.isArray(v)) return v.map(x => clean(String(x))).filter(Boolean);
     const s = clean(v);
@@ -659,10 +657,16 @@
   /* OPEN/CLOSE MENUS */
   const toggle = el => el.style.display = (el.style.display==='block'?'none':'block');
   document.getElementById('btnGroups').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(groupsMenu); });
-  document.getElementById('btnCloseGroups').addEventListener('click', ()=> groupsMenu.style.display='none');
+  document.getElementById('btnCloseGroups').addEventListener('click', ()=>{
+    requireSubSelectGroups = false; // allow close regardless
+    groupsMenu.style.display='none';
+  });
 
   document.getElementById('btnProjects').addEventListener('click', (e)=>{ e.stopPropagation(); toggle(projectsMenu); });
-  document.getElementById('btnCloseProjects').addEventListener('click', ()=> projectsMenu.style.display='none');
+  document.getElementById('btnCloseProjects').addEventListener('click', ()=>{
+    requireSubSelectProjects = false;
+    projectsMenu.style.display='none';
+  });
 
   document.getElementById('btnAdmin').addEventListener('click', ()=> toggle(adminMenu));
   document.getElementById('btnHelp').addEventListener('click', ()=> toggle(helpMenu));
@@ -671,9 +675,17 @@
 
   document.addEventListener('click', (e)=>{
     const inside = p => p && p.contains(e.target);
+
     if(!inside(exportPanel)) exportPanel.querySelector('.pop').style.display='none';
-    if(!inside(document.getElementById('groupsPanel'))) groupsMenu.style.display='none';
-    if(!inside(document.getElementById('projectsPanel'))) projectsMenu.style.display='none';
+
+    // Only close if not in lock mode (require sub selection)
+    if(!inside(document.getElementById('groupsPanel'))){
+      if(!requireSubSelectGroups) groupsMenu.style.display='none';
+    }
+    if(!inside(document.getElementById('projectsPanel'))){
+      if(!requireSubSelectProjects) projectsMenu.style.display='none';
+    }
+
     if(!inside(document.getElementById('adminPanel')))  adminMenu.style.display='none';
     if(!inside(document.getElementById('sortPanelContacts'))) sortMenuContacts.style.display='none';
     if(!inside(document.getElementById('helpPanel'))) helpMenu.style.display='none';
@@ -880,13 +892,18 @@
       if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
       btn.addEventListener('click', ()=>{
         if(selectedGroups.has(key)) selectedGroups.delete(key); else selectedGroups.add(key);
-        if (selectedGroups.size === 0) selectedSubGroups.clear();
+
+        // Lock open if there is at least one primary and no sub yet
+        if (selectedGroups.size > 0 && selectedSubGroups.size === 0) requireSubSelectGroups = true;
+        // If all primaries cleared, also clear subs and unlock
+        if (selectedGroups.size === 0) { selectedSubGroups.clear(); requireSubSelectGroups = false; }
+
         buildGroupMenu(); updateGroupsButton(); buildSubGroupMenu(); render();
       });
       groupsGrid.appendChild(btn);
     });
     updateGroupsButton();
-    buildSubGroupMenu(); // keep sub menu in sync
+    buildSubGroupMenu();
   }
   function updateGroupsButton(){
     const n = selectedGroups.size;
@@ -909,13 +926,18 @@
       if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
       btn.addEventListener('click', ()=>{
         if(selectedProjects.has(key)) selectedProjects.delete(key); else selectedProjects.add(key);
-        if (selectedProjects.size === 0) selectedSubProjects.clear();
+
+        // Lock open if there is at least one primary and no sub yet
+        if (selectedProjects.size > 0 && selectedSubProjects.size === 0) requireSubSelectProjects = true;
+        // If all primaries cleared, also clear subs and unlock
+        if (selectedProjects.size === 0) { selectedSubProjects.clear(); requireSubSelectProjects = false; }
+
         buildProjectMenu(); updateProjectsButton(); buildSubProjectMenu(); render();
       });
       projectsGrid.appendChild(btn);
     });
     updateProjectsButton();
-    buildSubProjectMenu(); // keep sub menu in sync
+    buildSubProjectMenu();
   }
   function updateProjectsButton(){
     const n = selectedProjects.size;
@@ -957,6 +979,8 @@
       if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
       btn.addEventListener('click', ()=>{
         if(selectedSubGroups.has(key)) selectedSubGroups.delete(key); else selectedSubGroups.add(key);
+        // Unlock groups menu if at least one sub selected; re-lock if none
+        requireSubSelectGroups = (selectedGroups.size > 0 && selectedSubGroups.size === 0);
         buildSubGroupMenu(); render();
       });
       subGroupsGrid.appendChild(btn);
@@ -997,13 +1021,15 @@
       if(selected){ btn.classList.add('selected'); btn.setAttribute('aria-pressed','true'); }
       btn.addEventListener('click', ()=>{
         if(selectedSubProjects.has(key)) selectedSubProjects.delete(key); else selectedSubProjects.add(key);
+        // Unlock projects menu if at least one sub selected; re-lock if none
+        requireSubSelectProjects = (selectedProjects.size > 0 && selectedSubProjects.size === 0);
         buildSubProjectMenu(); render();
       });
       subProjectsGrid.appendChild(btn);
     });
   }
 
-  /* --------- EXPORT CSV (unchanged) */
+  /* --------- EXPORT CSV */
   function buildExportChecks(){
     colChecks.innerHTML = '';
     [
@@ -1636,17 +1662,19 @@
     }
   }
 
-  /* Clear links include sub selections */
+  /* Clear links include sub selections & unlock */
   document.getElementById('linkClearGroups').addEventListener('click', (e)=>{
     e.preventDefault();
     selectedGroups.clear();
     selectedSubGroups.clear();
+    requireSubSelectGroups = false;
     buildGroupMenu(); updateGroupsButton(); buildSubGroupMenu(); render();
   });
   document.getElementById('linkClearProjects').addEventListener('click', (e)=>{
     e.preventDefault();
     selectedProjects.clear();
     selectedSubProjects.clear();
+    requireSubSelectProjects = false;
     buildProjectMenu(); updateProjectsButton(); buildSubProjectMenu(); render();
   });
 
