@@ -136,7 +136,31 @@
   footer{padding:16px 0;color:#2d4c63;display:flex;justify-content:space-between;align-items:center;font-size:13px}
   a.top{color:#0b65c2;text-decoration:none}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js">
+// Generate last 30 days report
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn = document.getElementById("gen-report");
+  if(btn){
+    btn.addEventListener("click", ()=>{
+      const out = document.getElementById("report-output");
+      out.innerHTML = "";
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate()-30);
+      cutoff.setHours(0,0,0,0);
+      let rows = RAW.map(x=>({...x, dt: parseDateSmart(x.LatestInteractionDate)}))
+        .filter(x=>x.dt && x.dt>=cutoff)
+        .sort((a,b)=>b.dt - a.dt);
+      let htmlTbl = "<h3>Engagement in Last 30 Days</h3><table class='table'><thead><tr><th>Name</th><th>Organisation</th><th>Group</th><th>Project</th><th>Date</th><th>Subject</th></tr></thead><tbody>";
+      rows.forEach(r=>{
+        htmlTbl += `<tr><td>${r.Name||""}</td><td>${r.Organisation||""}</td><td>${r.Group||""}</td><td>${r.ProjectInterest||""}</td><td>${fmtDate(r.LatestInteractionDate)}</td><td>${r.Subject||""}</td></tr>`;
+      });
+      htmlTbl += "</tbody></table>";
+      out.innerHTML = htmlTbl;
+    });
+  }
+});
+
+</script>
 </head>
 <body>
 
@@ -538,42 +562,47 @@
     const dt = new Date(y, m - 1, d);
     return isNaN(dt) ? null : dt;
   }
-  
   function parseDateSmart(input){
     if(!input) return null;
     const s = String(input).trim();
     if(!s) return null;
 
-    // 1) ISO-like (yyyy-mm-dd or yyyy/mm/dd) and keep as-is
-    if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)) {
+    if(isMonthNamey(s)){
       const d = new Date(s);
       return isNaN(d) ? null : d;
     }
 
-    // 2) Explicit dd/mm/yyyy or d/m/yy(yy) -> ALWAYS interpret as AU (day-first)
-    const m = s.match(/^(\d{1,2})[\/](\d{1,2})[\/](\d{2,4})/);
-    if (m) {
-      let day   = parseInt(m[1], 10);
-      let month = parseInt(m[2], 10);
-      let year  = parseInt(m[3], 10);
-
-      if (year < 100) {
-        year += 2000; // 25 -> 2025
-      }
-
-      const d = new Date(year, month - 1, day);
-      if (!isNaN(d)) return d;
-      return null;
+    if(/^\d{4}[-/]\d{2}[-/]\d{2}/.test(s)){
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
     }
 
-    // 3) Anything else: fall back to Date for legacy oddities,
-    //    but if it parses to a year > 2100, treat as invalid.
-    const loose = new Date(s);
-    if (isNaN(loose)) return null;
-    if (loose.getFullYear() > 2100) return null;
-    return loose;
-  }
+    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:.*)?$/);
+    if(m){
+      let a = parseInt(m[1],10);
+      let b = parseInt(m[2],10);
+      let y = parseInt(m[3],10); if(y < 100) y += 2000;
 
+      if (looksUSSlashWithTime(s)) {
+        const us = tryDate(y, a, b);
+        if (us) return us;
+        const au = tryDate(y, b, a);
+        return au;
+      } else {
+        if (b > 12 && a >= 1 && a <= 12) {
+          const us = tryDate(y, a, b);
+          if (us) return us;
+        }
+        const au = tryDate(y, b, a);
+        if (au) return au;
+        const us = tryDate(y, a, b);
+        if (us) return us;
+      }
+    }
+
+    const loose = new Date(s);
+    return isNaN(loose) ? null : loose;
+  }
 
   function fmtDate(v){
     const d = parseDateSmart(v);
@@ -1676,6 +1705,30 @@
   /* init */
   init();
 })();
+
+// Generate last 30 days report
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn = document.getElementById("gen-report");
+  if(btn){
+    btn.addEventListener("click", ()=>{
+      const out = document.getElementById("report-output");
+      out.innerHTML = "";
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate()-30);
+      cutoff.setHours(0,0,0,0);
+      let rows = RAW.map(x=>({...x, dt: parseDateSmart(x.LatestInteractionDate)}))
+        .filter(x=>x.dt && x.dt>=cutoff)
+        .sort((a,b)=>b.dt - a.dt);
+      let htmlTbl = "<h3>Engagement in Last 30 Days</h3><table class='table'><thead><tr><th>Name</th><th>Organisation</th><th>Group</th><th>Project</th><th>Date</th><th>Subject</th></tr></thead><tbody>";
+      rows.forEach(r=>{
+        htmlTbl += `<tr><td>${r.Name||""}</td><td>${r.Organisation||""}</td><td>${r.Group||""}</td><td>${r.ProjectInterest||""}</td><td>${fmtDate(r.LatestInteractionDate)}</td><td>${r.Subject||""}</td></tr>`;
+      });
+      htmlTbl += "</tbody></table>";
+      out.innerHTML = htmlTbl;
+    });
+  }
+});
+
 </script>
 </body>
 </html>
