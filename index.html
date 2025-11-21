@@ -181,6 +181,75 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
 });
 
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn30 = document.getElementById('downloadLast30CSV');
+  if(btn30){
+    btn30.addEventListener('click', ()=>{
+      const cutoff=new Date();
+      cutoff.setDate(cutoff.getDate()-30);
+      cutoff.setHours(0,0,0,0);
+
+      // Original columns
+      const cols = [
+        'display_name',
+        'organisation',
+        'group',
+        'group_sub',
+        'project',
+        'project_sub',
+        'job_title',
+        'email',
+        'phone',
+        'last_contact_at',
+        'last_subject',
+        'notes'
+      ];
+
+      // Assuming st.contacts or RAW equivalent
+      let list = (typeof RAW!=='undefined'? RAW: []);
+
+      // compute rows
+      const rows = list
+        .map(c=>({...c, dt: parseDateSmart(c.latest_interaction_date || c.LastInteractionDate || c.last_contact_at)}))
+        .filter(c=>c.dt && c.dt>=cutoff)
+        .map(c=>({
+          display_name: c.Name || c.display_name || "",
+          organisation: c.Organisation || c.organisation || "",
+          group: c.Group || c.group || "",
+          group_sub: c.SubGroup || c.group_sub || "",
+          project: c.ProjectInterest || c.project || "",
+          project_sub: c.SubProject || c.project_sub || "",
+          job_title: c.Role || c.job_title || "",
+          email: c.Email || c.email || "",
+          phone: c.Phone || c.phone || "",
+          last_contact_at: (c.LatestInteractionDate? fmtDate(c.LatestInteractionDate): (c.last_contact_at? fmtDate(c.last_contact_at): "")),
+          last_subject: c.Subject || c.last_subject || "",
+          notes: c.Notes || c.notes || ""
+        }));
+
+      // Build CSV
+      function toCSV(arr, cols){
+        let lines=[cols.join(",")];
+        arr.forEach(row=>{
+          let vals=cols.map(col=> (row[col]!==undefined? String(row[col]).replace(/"/g,'""'): ""));
+          lines.push(vals.map(v=> `"${v}"`).join(","));
+        });
+        return lines.join("\n");
+      }
+
+      const csv = toCSV(rows, cols);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mpdc_last_30_days.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      document.getElementById('adminMenu').style.display='none';
+    });
+  }
+});
+
 </script>
 </head>
 <body>
@@ -308,6 +377,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
             <div class="panel" id="adminPanel">
               <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
               <div class="pop" id="adminMenu" style="min-width:220px">
+<button class="btn" id="downloadLast30CSV" style="width:100%;text-align:left;margin-top:8px">Download Last 30 Days CSV</button>
 <button class="btn" id="genReportBtn">Generate Last 30 Days Report</button>
 <div id="report-output" style="padding:10px;"></div>
                 <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
@@ -1769,6 +1839,75 @@ document.addEventListener("DOMContentLoaded", ()=>{
       });
       h+="</tbody></table>";
       out.innerHTML=h;
+    });
+  }
+});
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn30 = document.getElementById('downloadLast30CSV');
+  if(btn30){
+    btn30.addEventListener('click', ()=>{
+      const cutoff=new Date();
+      cutoff.setDate(cutoff.getDate()-30);
+      cutoff.setHours(0,0,0,0);
+
+      // Original columns
+      const cols = [
+        'display_name',
+        'organisation',
+        'group',
+        'group_sub',
+        'project',
+        'project_sub',
+        'job_title',
+        'email',
+        'phone',
+        'last_contact_at',
+        'last_subject',
+        'notes'
+      ];
+
+      // Assuming st.contacts or RAW equivalent
+      let list = (typeof RAW!=='undefined'? RAW: []);
+
+      // compute rows
+      const rows = list
+        .map(c=>({...c, dt: parseDateSmart(c.latest_interaction_date || c.LastInteractionDate || c.last_contact_at)}))
+        .filter(c=>c.dt && c.dt>=cutoff)
+        .map(c=>({
+          display_name: c.Name || c.display_name || "",
+          organisation: c.Organisation || c.organisation || "",
+          group: c.Group || c.group || "",
+          group_sub: c.SubGroup || c.group_sub || "",
+          project: c.ProjectInterest || c.project || "",
+          project_sub: c.SubProject || c.project_sub || "",
+          job_title: c.Role || c.job_title || "",
+          email: c.Email || c.email || "",
+          phone: c.Phone || c.phone || "",
+          last_contact_at: (c.LatestInteractionDate? fmtDate(c.LatestInteractionDate): (c.last_contact_at? fmtDate(c.last_contact_at): "")),
+          last_subject: c.Subject || c.last_subject || "",
+          notes: c.Notes || c.notes || ""
+        }));
+
+      // Build CSV
+      function toCSV(arr, cols){
+        let lines=[cols.join(",")];
+        arr.forEach(row=>{
+          let vals=cols.map(col=> (row[col]!==undefined? String(row[col]).replace(/"/g,'""'): ""));
+          lines.push(vals.map(v=> `"${v}"`).join(","));
+        });
+        return lines.join("\n");
+      }
+
+      const csv = toCSV(rows, cols);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mpdc_last_30_days.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      document.getElementById('adminMenu').style.display='none';
     });
   }
 });
