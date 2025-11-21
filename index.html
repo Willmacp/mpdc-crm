@@ -160,6 +160,27 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
 });
 
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const rbtn=document.getElementById('genReportBtn');
+  if(rbtn){
+    rbtn.addEventListener('click', ()=>{
+      const out=document.getElementById('report-output');
+      out.innerHTML='';
+      const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-30); cutoff.setHours(0,0,0,0);
+      let rows=RAW.map(x=>({...x,dt:parseDateSmart(x.LatestInteractionDate)}))
+        .filter(x=>x.dt && x.dt>=cutoff)
+        .sort((a,b)=>b.dt - a.dt);
+      let h="<h3>Engagement in Last 30 Days</h3><table class='table'><thead><tr><th>Name</th><th>Organisation</th><th>Group</th><th>Project</th><th>Date</th><th>Subject</th></tr></thead><tbody>";
+      rows.forEach(r=>{
+        h+=`<tr><td>${r.Name||""}</td><td>${r.Organisation||""}</td><td>${r.Group||""}</td><td>${r.ProjectInterest||""}</td><td>${fmtDate(r.LatestInteractionDate)}</td><td>${r.Subject||""}</td></tr>`;
+      });
+      h+="</tbody></table>";
+      out.innerHTML=h;
+    });
+  }
+});
+
 </script>
 </head>
 <body>
@@ -287,6 +308,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
             <div class="panel" id="adminPanel">
               <button class="btn" id="btnAdmin" title="Load CSV/JSON or export JSON">Admin tools ▾</button>
               <div class="pop" id="adminMenu" style="min-width:220px">
+<button class="btn" id="genReportBtn">Generate Last 30 Days Report</button>
+<div id="report-output" style="padding:10px;"></div>
                 <button class="btn" id="amLoadCsv" style="width:100%;text-align:left">Load CSV…</button>
                 <button class="btn" id="amLoadJson" style="width:100%;text-align:left;margin-top:8px">Load JSON…</button>
                 <button class="btn" id="amExportJson" style="width:100%;text-align:left;margin-top:8px">Export JSON</button>
@@ -1725,6 +1748,27 @@ document.addEventListener("DOMContentLoaded", ()=>{
       });
       htmlTbl += "</tbody></table>";
       out.innerHTML = htmlTbl;
+    });
+  }
+});
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const rbtn=document.getElementById('genReportBtn');
+  if(rbtn){
+    rbtn.addEventListener('click', ()=>{
+      const out=document.getElementById('report-output');
+      out.innerHTML='';
+      const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-30); cutoff.setHours(0,0,0,0);
+      let rows=RAW.map(x=>({...x,dt:parseDateSmart(x.LatestInteractionDate)}))
+        .filter(x=>x.dt && x.dt>=cutoff)
+        .sort((a,b)=>b.dt - a.dt);
+      let h="<h3>Engagement in Last 30 Days</h3><table class='table'><thead><tr><th>Name</th><th>Organisation</th><th>Group</th><th>Project</th><th>Date</th><th>Subject</th></tr></thead><tbody>";
+      rows.forEach(r=>{
+        h+=`<tr><td>${r.Name||""}</td><td>${r.Organisation||""}</td><td>${r.Group||""}</td><td>${r.ProjectInterest||""}</td><td>${fmtDate(r.LatestInteractionDate)}</td><td>${r.Subject||""}</td></tr>`;
+      });
+      h+="</tbody></table>";
+      out.innerHTML=h;
     });
   }
 });
